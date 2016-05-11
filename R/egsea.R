@@ -47,7 +47,7 @@ NULL
 #' \pkg{ora}, 
 #' \pkg{globaltest}, \pkg{plage}, \pkg{safe}, \pkg{zscore}, \pkg{gage}, 
 #' \pkg{ssgsea},
-#' \pkg{roast}, \pkg{padog}, \pkg{camera} and \pkg{gsva}. 
+#' \pkg{roast}, \pkg{fry}, \pkg{padog}, \pkg{camera} and \pkg{gsva}. 
 #' The ora, gage, camera and gsva methods depend on a competitive null 
 #' hypothesis while the 
 #' remaining seven methods are based on a self-contained hypothesis. 
@@ -139,7 +139,7 @@ NULL
 #' \code{\link{buildKEGGIdxEZID}},
 #' \code{\link{buildGeneSetDBIdxEZID}}, and \code{\link{buildCustomIdxEZID}}
 #'
-#' @importFrom limma camera mroast lmFit  contrasts.fit eBayes topTable plotMDS
+#' @importFrom limma camera mroast fry lmFit  contrasts.fit eBayes topTable plotMDS
 #' @importFrom globaltest gt gt.options result
 #' @importFrom PADOG padog
 #' @importFrom GSVA gsva
@@ -149,8 +149,9 @@ NULL
 #' @importFrom stats p.adjust pchisq phyper
 #' @importFrom grDevices pdf dev.off png 
 #' @importFrom graphics par
-#' @importFrom utils write.table browseURL write.csv data
+#' @importFrom utils write.table browseURL write.csv data capture.output
 #' @importFrom gage gage kegg.gsets
+#' @importFrom metap logitp meanp sumlog sump sumz wilkinsonp
 #' @import hwriter HTMLUtils stringi ggplot2 pathview gplots  Biobase topGO
 #' @export
 #' @references 
@@ -170,11 +171,11 @@ NULL
 #'          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
 #' # set report = TRUE to generate the EGSEA interactive report
 #' gsa = egsea(voom.results=v, contrasts=contrasts,  gs.annots=gs.annots, 
-#'          symbolsMap=v$genes, 
-#' baseGSEAs=egsea.base()[-c(2,5,6,9)], display.top = 5,
-#'           sort.by="avg.rank", egsea.dir="./il13-egsea-report", 
+#'          symbolsMap=v$genes, baseGSEAs=egsea.base()[-c(2,5,6,9)], 
+#' 			display.top = 5, sort.by="avg.rank", 
+#' 			egsea.dir="./il13-egsea-report", 
 #'          num.threads = 2, report = FALSE)
-#'  
+#' topSets(gsa) 
 #' 
 
 
@@ -236,7 +237,7 @@ verbose, num.threads, report)))
 #' \pkg{ora}, 
 #' \pkg{globaltest}, \pkg{plage}, \pkg{safe}, \pkg{zscore}, \pkg{gage}, 
 #' \pkg{ssgsea},
-#' \pkg{roast}, \pkg{padog}, \pkg{camera} and \pkg{gsva}. 
+#' \pkg{roast}, \pkg{fry}, \pkg{padog}, \pkg{camera} and \pkg{gsva}. 
 #' The ora, gage, camera and gsva methods depend on a competitive null 
 #' hypothesis while the 
 #' remaining seven methods are based on a self-contained hypothesis. 
@@ -365,7 +366,7 @@ verbose, num.threads, report)))
 #'           sort.by="avg.rank", 
 #' egsea.dir="./il13-egsea-cnt-report", 
 #'          num.threads = 2, report = FALSE)
-#'  
+#' topSets(gsa) 
 #' 
 
 egsea.cnt <- function(counts, group, design = NULL, contrasts, logFC=NULL,
@@ -519,7 +520,7 @@ egsea.cnt <- function(counts, group, design = NULL, contrasts, logFC=NULL,
 #'              symbolsMap=top.Table[, c(1,2)], display.top = 5,
 #'               egsea.dir="./il13-egsea-ora-report", num.threads = 2, 
 #' report = FALSE)
-#' 
+#' topSets(gsa) 
 
 egsea.ora <- function(entrezIDs, universe=NULL, logFC=NULL, title=NULL, 
         gs.annots, symbolsMap=NULL, 
@@ -624,8 +625,8 @@ names.only=TRUE){
                     top.gs = top.gs[order(top.gs[,sort.by],
                             decreasing=(sort.by == "Significance")), ]
                 }   
-                number = ifelse(number <= length(top.gs), number, 
-length(top.gs))
+                number = ifelse(number <= nrow(top.gs), number, 
+nrow(top.gs))
                 #print(names(top.gs))
                 top.gs = top.gs[1:number, ]
                 if (names.only)
@@ -664,7 +665,8 @@ egsea.sort <-function(){
 #' egsea.combine()
 
 egsea.combine <- function(){
-    return(c("average", "fisher"))
+    return(c("fisher", "wilkinson", "average", "logitp", 
+            "sump", "sumz"))
 }
 
 
@@ -677,9 +679,12 @@ egsea.combine <- function(){
 
 egsea.base <- function(){
     return(c("camera", "roast", "safe", "gage", "padog", "plage", "zscore", 
-"gsva", "ssgsea", 
-                    "globaltest", "ora")) # , "SPIA", "gsea", "samgs"
+            "gsva", "ssgsea", "globaltest", "ora")) # , "fry" 
+        # , "SPIA", "gsea", "samgs"
 }
+
+#TODO: use BiocParallel instead of parallel
+#TODO: create S4 class and methods for plotting and show methods for topSets
 
 
 # R CMD build --resave-data EGSEA 

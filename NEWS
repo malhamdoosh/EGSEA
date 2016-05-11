@@ -1,0 +1,8 @@
+EGSEA 1.1.1 (2016-05-10)
+------------------------
+- Improved topSets(...) and the functionality of the "report" argument in the egsea(...) function.
+- Improved verbosity and "print.base" usability in egsea(). The statistics of individual methods can
+now be exported in the output of egsea when print.base = TRUE. 
+- Added the fry(...) gene set test from the limma package.
+- Added multiple methods to combine the p-values of multiple methods. See egsea.combine().
+- Various minor bug fixes. 

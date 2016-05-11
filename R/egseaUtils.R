@@ -4,12 +4,15 @@
 
 
 egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs, 
-combineMethod, 
-        combineWeights,sort.by,  egsea.dir, 
-        kegg.dir, logFC, symbolsMap, minSize, display.top, logFC.cutoff, 
-sum.plot.cutoff,
-        sum.plot.axis, vote.bin.width, print.base, verbose, num.threads, 
-report){
+                combineMethod, combineWeights,sort.by,  egsea.dir, 
+                kegg.dir, logFC, symbolsMap, minSize, display.top, 
+                logFC.cutoff, sum.plot.cutoff, sum.plot.axis, 
+                vote.bin.width, print.base, verbose, num.threads, 
+                report){
+    stopifnot(length(setdiff(baseGSEAs, c(egsea.base(), "fry"))) == 0)
+    stopifnot(combineMethod %in% egsea.combine())
+    stopifnot(sort.by %in% egsea.sort())
+    print("EGSEA analysis has started")
     # check arguments are valid
     if (!is.matrix(contrast)){
         stop("contrast argument must be a matrix object.")
@@ -20,14 +23,20 @@ report){
     baseGSEAs = sapply(baseGSEAs, tolower)
     combineMethod = tolower(combineMethod)  
     # create output directory for 'egsea' results
-    if (! dir.exists(file.path(egsea.dir))){
-        dir.create(file.path(egsea.dir), showWarnings = FALSE)
-        egsea.dir = normalizePath(egsea.dir)
+    if (report){
+        if (! dir.exists(file.path(egsea.dir))){
+            dir.create(file.path(egsea.dir), showWarnings = FALSE)
+            egsea.dir = normalizePath(egsea.dir)
+        }
+        ranked.gs.dir = paste0(egsea.dir, "/ranked-gene-sets-", combineMethod)
+        dir.create(file.path(ranked.gs.dir), showWarnings = FALSE)  
+        top.gs.dir = paste0(egsea.dir, "/top-gene-sets-", combineMethod)
+        dir.create(file.path(top.gs.dir), showWarnings = FALSE)
     }
-    ranked.gs.dir = paste0(egsea.dir, "/ranked-gene-sets-", combineMethod)
-    dir.create(file.path(ranked.gs.dir), showWarnings = FALSE)  
-    top.gs.dir = paste0(egsea.dir, "/top-gene-sets-", combineMethod)
-    dir.create(file.path(top.gs.dir), showWarnings = FALSE)
+    else{
+        top.gs.dir = NULL
+        ranked.gs.dir = NULL
+    }
     
     gsas = list()
     logFC.calculated = "No"
@@ -42,7 +51,7 @@ report){
     if (!is.null(gs.annots$name)){
         gs.annot = gs.annots
         gs.annots = list()
-        gs.annots[[gs.annot$label]] = gs.annots
+        gs.annots[[gs.annot$label]] = gs.annot
     }
     skipped = c()
     for (gs.annot in gs.annots){
@@ -65,35 +74,35 @@ results.file, "\n"))
             cat("If you want to re-run the EGSEA test,\n please remove this 
 file or change the egsea.dir value.\n")
         }else{
-            egsea.results <- runegsea(voom.results = voom.results, 
-contrast=contrast, baseGSEAs=baseGSEAs,
-                    combineMethod = combineMethod, combineWeights = NULL,   
-             
-                    gs.annot = gs.annot, logFC = logFC, logFC.cutoff = 
-logFC.cutoff,
-                    ranked.gs.dir = ranked.gs.dir, 
-                    vote.bin.width=vote.bin.width,
-                    print.base = print.base,
-                    num.workers = num.threads)
-            save(egsea.results, file=results.file)
+            results <- runegsea(voom.results = voom.results, 
+                    contrast=contrast, baseGSEAs=baseGSEAs,
+                    combineMethod = combineMethod, combineWeights = NULL,
+                    gs.annot = gs.annot, logFC = logFC, 
+                    logFC.cutoff = logFC.cutoff, ranked.gs.dir = ranked.gs.dir, 
+                    vote.bin.width=vote.bin.width, print.base = print.base,
+                    report = report, num.workers = num.threads, verbose=verbose)            
+            if (report){
+                save(results, file=results.file)
+            }
         }   
+        egsea.results = results[["egsea.results"]]
         # order results based on the sort.by argument
         for (i in 1:length(egsea.results)){
             # sort based on the average ranking
-            egsea.results[[i]] = 
-egsea.results[[i]][order(egsea.results[[i]][,sort.by],
-                            decreasing=(sort.by == "Significance")), ]      
+            egsea.results[[i]] = egsea.results[[i]][
+                                order(egsea.results[[i]][,sort.by],
+                                decreasing=(sort.by == "Significance")), 
+                                ]      
         }   
         
-        # select top gene sets that pass an FDR cut-off threshold
-        print(paste0("Writing out the top-ranked gene sets for each contrast .. 
-",
-                        toupper(gs.annot$label), " gene sets"))
+        # select top gene sets that pass an FDR cut-off threshold        
         gsets.top = egsea.selectTopGeneSets(egsea.results=egsea.results, 
-fdr=display.top, 
-                gs.annot=gs.annot, top.gs.dir=top.gs.dir)   
+                        fdr=display.top, gs.annot=gs.annot, 
+                        top.gs.dir=top.gs.dir, report=report)   
         
         gsa = list("top.gene.sets"=gsets.top, "test.results"=egsea.results)
+        if (print.base)
+            gsa[["base.results"]] = results[["base.results"]]        
         
         # Generate heatmaps, pathways, GO graphs and summary plots
         if (report){
@@ -163,7 +172,8 @@ file.name.sum[i])
         
         # Comparison analysis reports generated here
         if (length(gsets.top) > 1){         
-            egsea.comparison = createComparison(egsea.results,
+            egsea.comparison = createComparison(egsea.results, 
+                    combineMethod = combineMethod, 
                     display.top=Inf, sort.by = sort.by)
             gsa[["comparison"]] = list()
             gsa$comparison[["test.results"]] = egsea.comparison
@@ -227,18 +237,19 @@ file.name.sum)
     if (report){
         gs.annots = gs.annots[! names(gs.annots) %in% skipped]
         generateEGSEAReport(voom.results, contrast, gs.annots, baseGSEAs, 
-combineMethod, 
-                sort.by,  egsea.dir, kegg.dir, logFC.calculated, symbolsMap)    
+                            combineMethod, sort.by,  egsea.dir, kegg.dir, 
+                            logFC.calculated, symbolsMap)    
         if (interactive()) try(browseURL(paste0("file://", 
-normalizePath(egsea.dir),
+                                normalizePath(egsea.dir),
                                     '/index.html')))
-    }
+    }    
+    print("EGSEA analysis has completed")
     return(gsas)
 }
 
 
 egsea.selectTopGeneSets <- function(egsea.results, fdr, gs.annot, 
-top.gs.dir=NULL){
+top.gs.dir=NULL, report=TRUE){
     file.name = paste0(top.gs.dir, "/top-", gs.annot$label, "-gene-sets-", 
             sub(" - ", "-", names(egsea.results)), '.txt')
     contrast.names = names(egsea.results)
@@ -254,28 +265,30 @@ fdr,length(gs.annot$idx))
         if (num.gene.sets.fdr > 0){
             egsea.results.top = egsea.results[[i]][1:num.gene.sets.fdr,]    
         
-            gene.sets.fdr.detail[[i]] = rownames(egsea.results.top)
-            if (is.null(top.gs.dir))
-                next
-            print(paste0("The top gene sets for contrast ", contrast.names[i], 
-" are:"))
-            if (length(grep("^kegg", gs.annot$label)) == 0){
-                top.table = cbind(gs.annot$anno[
-                                match(rownames(egsea.results.top), 
-gs.annot$anno[,2])
-                                ,-6],
-                        egsea.results.top)
-                print(top.table[1:top.print, c("ID", "p.adj")])
-            }else{
-                top.table = cbind(gs.annot$anno[
-                                match(rownames(egsea.results.top), 
-gs.annot$anno[,2])
-                                ,-2],
-                        egsea.results.top)
-                print(top.table[1:top.print, c("Type", "p.adj")])
+            gene.sets.fdr.detail[[i]] = rownames(egsea.results.top) 
+            if (report){
+                print(paste0("The top gene sets for contrast ", 
+                                contrast.names[i], " are:"))
+                if (length(grep("^kegg", gs.annot$label)) == 0){
+                    top.table = cbind(gs.annot$anno[
+                    match(rownames(egsea.results.top), gs.annot$anno[,2])
+                                    ,-6],
+                            egsea.results.top)
+                    print(top.table[1:top.print, c("ID", "p.adj")])
+                }else{
+                    top.table = cbind(gs.annot$anno[
+                                    match(rownames(egsea.results.top), 
+    gs.annot$anno[,2])
+                                    ,-2],
+                            egsea.results.top)
+                    print(top.table[1:top.print, c("Type", "p.adj")])
+                }
+            
+                print(paste0("Writing out the top-ranked gene sets for each contrast .. 
+                                        ", toupper(gs.annot$label), " gene sets"))
+                write.table(top.table, file=file.name[i], sep="\t", quote=FALSE, 
+row.names=FALSE)        
             }
-            write.table(top.table, file=file.name[i], sep="\t", quote=FALSE, 
-row.names=FALSE)            
             
         }else{
             write("No gene sets below current FDR found for this contrast, \n 
@@ -296,27 +309,33 @@ runbaseGSEAParallelWorker <- function(args){
     #print(paste0("Running ", toupper(args$baseGSEA), " on all contrasts ... "))
     tryCatch({
                 temp.result = runbaseGSEA(method=args$baseGSEA, 
-args$voom.results, args$contrast, args$gs.annot,
+                        args$voom.results, args$contrast, args$gs.annot,
                         args$ranked.gs.dir, output.base = args$print.base, 
-num.threads = args$num.threads)
-                print(paste0("Running ", toupper(args$baseGSEA), " on all 
-contrasts ... COMPLETED "))
+                        num.threads = args$num.threads, verbose=args$verbose)
+                if (args$verbose)
+                    print(paste0("Running ", toupper(args$baseGSEA), " on all 
+							contrasts ... COMPLETED "))
+                else{
+                    cat(args$baseGSEA)
+                    cat("*")
+                }
                 return(temp.result)
             }, 
             error = function(e) {
                 print(paste0("ERROR: ",toupper(args$baseGSEA), " encountered an 
-error ", e ))
+							error ", e ))
             })
     return(NULL)
 }
 
 runegsea <- function(voom.results, contrast, baseGSEAs, combineMethod, 
-combineWeights=NULL, gs.annot, 
-        logFC, logFC.cutoff, ranked.gs.dir, vote.bin.width, print.base=TRUE, 
-num.workers=8){     
+                    combineWeights=NULL, gs.annot, logFC, logFC.cutoff, 
+                    ranked.gs.dir, vote.bin.width, print.base=TRUE, 
+                    report = TRUE, num.workers=8, verbose=FALSE){     
     # run egsea and write out ranked 'gene sets' for each 'contrast'    
     
     contrast.names = colnames(contrast)     
+    # egsea.results.details stores Contrasts ==> Individual Results
     egsea.results.details = vector("list", ncol(contrast))  
     names(egsea.results.details) = contrast.names
     for (i in 1:length(contrast.names)){
@@ -328,12 +347,14 @@ num.workers=8){
     threads.per.base = ceiling(num.workers / length(baseGSEAs))
     for (baseGSEA in baseGSEAs){
         args.all[[baseGSEA]] = list(baseGSEA=baseGSEA, 
-voom.results=voom.results,
-                contrast=contrast, gs.annot=gs.annot, 
-ranked.gs.dir=ranked.gs.dir,
-                print.base=print.base, num.threads=threads.per.base)
+                    voom.results=voom.results,
+                    contrast=contrast, gs.annot=gs.annot, 
+                    ranked.gs.dir=ranked.gs.dir,
+                    print.base=(report && print.base), 
+                    num.threads=threads.per.base,
+                    verbose=verbose)
     }
-    
+    # temp.results stores Methods ==> Contrasts
     if (Sys.info()['sysname'] == "Windows" || num.workers <= 1 || 
 length(baseGSEAs) == 1)
         # sequential processing
@@ -342,6 +363,8 @@ length(baseGSEAs) == 1)
         # parallel processing
         temp.results = mclapply(args.all, runbaseGSEAParallelWorker, 
 mc.cores=num.workers)   
+    if (!verbose)
+        cat("\n")
     # collect results   
 #    print(baseGSEAs)
     for (baseGSEA in baseGSEAs){
@@ -353,12 +376,14 @@ dataset (",baseGSEA , ").\nRemove it and try again.\nSee error messages for
 more information.")
                 stop(err)
             }
-            #print(paste0(baseGSEA, colnames(contrast)[i]))
+#            print(paste0(baseGSEA, colnames(contrast)[i]))
+#            if (baseGSEA == "gage")
+#                print(head(temp.results[[baseGSEA]][[i]]))
             egsea.results.details[[i]][[baseGSEA]] = 
 temp.results[[baseGSEA]][[i]][names(gs.annot$idx),]         
         }
     }   
-    
+  
     # combine the results of base methods 
 #    print(names(egsea.results.details))
     egsea.results = combineBaseGSEAs(results.multi=egsea.results.details, 
@@ -406,63 +431,82 @@ egsea.results[[i]][, (n-m+1):n] )
         }
     }
     names(egsea.results) = colnames(contrast)
-    return(egsea.results)
+    results = list("egsea.results"=egsea.results)
+    if (print.base){
+        results[["base.results"]] = egsea.results.details
+    }
+    return(results)
 }
 
 
+combinePvalues <- function(data, combineMethod, combineWeights = NULL){
+    if (combineMethod == "average"){
+        pvalues = sapply(apply(data,  1, function(x) meanp(x[!is.na(x)])), 
+                function(x) x$p)            
+    } else if (combineMethod == "fisher"){        
+        data[data == 0] = 1*10^-22           
+        pvalues = sapply(apply(data,  1, function(x) sumlog(x[!is.na(x)])), 
+                function(x) x$p)            
+    } else if (combineMethod == "logitp"){        
+        data[data == 0] = 1*10^-22
+        data[data == 1] = 1 - 1*10^-5
+        pvalues = sapply(apply(data,  1, function(x) logitp(x[!is.na(x)])), 
+                function(x) x$p)            
+    }else if (combineMethod == "sump"){
+        pvalues = sapply(apply(data,  1, function(x) sump(x[!is.na(x)])), 
+                function(x) x$p)            
+    }else if (combineMethod == "sumz"){        
+        data[data == 0] = 1*10^-22
+        data[data == 1] = 1 - 1*10^-5
+        pvalues = sapply(apply(data,  1, function(y) sumz(y[!is.na(y)])), #, combineWeights 
+                function(x) x$p)           
+    }else if (combineMethod == "wilkinson"){        
+        data[data == 0] = 1*10^-22
+        data[data == 1] = 1 - 1*10^-5
+        pvalues = sapply(apply(data,  1, function(y) wilkinsonp(y[!is.na(y)], r = 1)), 
+                function(x) x$p)            
+    }    
+    adj.pvals = p.adjust(pvalues, method="BH")
+    return(list(pvalues=pvalues, adj.pvals = adj.pvals))
+}
 
 combineBaseGSEAs <- function(results.multi, combineMethod, combineWeights=NULL, 
-bin.width=5){
+                    bin.width=5){
     if (length(results.multi[[1]]) == 1 && names(results.multi[[1]]) == "ora"){
         results.multi[[1]] = results.multi[[1]][[1]]
-        results.multi[[1]] = results.multi[[1]][, colnames(results.multi[[1]]) 
-!= "Rank"]
+        results.multi[[1]] = results.multi[[1]][, 
+                colnames(results.multi[[1]]) != "Rank"]
         return(results.multi)
     }
-    temp = extractPvaluesRanks(results.multi) # compress detailed results into 
-# matrices
+    # compress detailed results into matrices
+    temp = extractAdjPvaluesRanks(results.multi) 
     results.comp = temp$pvalues
     results.ranked = temp$ranks # gene sets ranked for each method
     results.combined = vector('list', length(results.ranked))
     names(results.combined) = names(results.comp)
 #   results.comp = extractFDRs(results.multi)
-    if (combineMethod == "average"){
-        for (i in 1:length(results.comp)){ # i over contrasts
-            pvalues = 2^rowSums(log2(results.comp[[i]]), na.rm=TRUE)
-            results.combined[[i]] = data.frame(cbind("p.value"=pvalues, 
-                            "p.adj"=p.adjust(pvalues, method="BH"), 
-                            "vote.rank" = voteRank(results.ranked[[i]], 
-bin.width=bin.width),
-                            "avg.rank"=rowMeans(results.ranked[[i]], 
-na.rm=TRUE), 
-                            "med.rank"=rowMedians(results.ranked[[i]], 
-na.rm=TRUE),
-                            "min.pvalue"=sapply(1:nrow(results.comp[[i]]), 
-function(x) min(results.comp[[i]][x, ], na.rm=TRUE)),
-                            "min.rank"=sapply(1:nrow(results.ranked[[i]]), 
-function(x) min(results.ranked[[i]][x, ], na.rm=TRUE)),
+    
+    for (i in 1:length(results.comp)){ # i over contrasts
+        temp = combinePvalues(results.comp[[i]], combineMethod, combineWeights)
+        pvalues = temp$pvalues
+        adj.pvals = temp$adj.pvals
+        results.combined[[i]] = data.frame(cbind(
+                "p.value"=pvalues, 
+                "p.adj"=adj.pvals, 
+                "vote.rank" = voteRank(results.ranked[[i]], 
+                                        bin.width=bin.width),
+                "avg.rank"=rowMeans(results.ranked[[i]], 
+                            na.rm=TRUE), 
+                "med.rank"=rowMedians(results.ranked[[i]], 
+                            na.rm=TRUE),
+                "min.pvalue"=sapply(1:nrow(results.comp[[i]]), 
+                        function(x) min(results.comp[[i]][x, ], na.rm=TRUE)),
+                "min.rank"=sapply(1:nrow(results.ranked[[i]]), 
+                        function(x) min(results.ranked[[i]][x, ], na.rm=TRUE)),
                             results.ranked[[i]]))
-            rownames(results.combined[[i]]) = rownames(results.comp[[i]])   
+        rownames(results.combined[[i]]) = rownames(results.comp[[i]])   
         
-        }
-    }else if( combineMethod == "fisher"){   
-        for (i in 1:length(results.comp)){ # i over contrasts
-            results.combined[[i]] = cbind(fisher.method(results.comp[[i]], 
-na.rm=TRUE)[, c("p.value", "p.adj")], 
-                    "vote.rank" = voteRank(results.ranked[[i]], bin.width = 
-bin.width),
-                    "avg.rank"=rowMeans(results.ranked[[i]], na.rm=TRUE), 
-                    "med.rank"=rowMedians(results.ranked[[i]], na.rm=TRUE),
-                    "min.pvalue"=sapply(1:nrow(results.comp[[i]]), function(x) 
-min(results.comp[[i]][x, ], na.rm=TRUE)),
-                    "min.rank"=sapply(1:nrow(results.ranked[[i]]), function(x) 
-min(results.ranked[[i]][x, ], na.rm=TRUE)),
-                    
-                    results.ranked[[i]])            
-            rownames(results.combined[[i]]) = rownames(results.comp[[i]])
-            
-        }
-    }   
+    }    
     
     #TODO: weighted average ranking
     #"wavg.rank"=rowMeans(sweep(results.ranked[[i]], MARGIN=2, combineWeights, 
@@ -499,6 +543,61 @@ voteRank <- function(results.ranked, bin.width=5){
 
 
 
+extractAdjPvaluesRanks <- function(results.multi){
+    results.comp = vector("list", length(results.multi))
+    names(results.comp) = names(results.multi)
+    results.ranked = vector("list", length(results.comp))
+    names(results.ranked) = names(results.comp)
+    for (i in 1:length(results.multi)){ # i over contrasts
+        results.comp[[i]] = matrix(0, nrow(results.multi[[i]][[1]]), 
+                length(results.multi[[i]]))
+        rownames(results.comp[[i]]) = rownames(results.multi[[i]][[1]])
+        colnames(results.comp[[i]]) = names(results.multi[[i]]) 
+        results.ranked[[i]] = matrix(0, nrow(results.comp[[i]]), 
+                ncol(results.comp[[i]]))    
+        rownames(results.ranked[[i]]) = rownames(results.comp[[i]])
+        colnames(results.ranked[[i]]) = colnames(results.comp[[i]])
+        j = 1
+        #print(names(results.comp)[i])
+        for (method in names(results.multi[[i]])){ # j is over base methods
+            #print(method)
+            #print(summary(results.multi[[i]][[j]]))
+            if (method %in% c("camera", "roast", "fry")){
+                results.comp[[i]][,j] = as.numeric(results.multi[[i]][[j]][, 
+                                "FDR"])  
+            }else if (method == "gage"){
+                results.comp[[i]][,j] = as.numeric(results.multi[[i]][[j]][, 
+                                "q.val"])
+            }else if (method == "padog"){
+                results.comp[[i]][,j] = as.numeric(results.multi[[i]][[j]][, 
+                                "Ppadog"])
+            }else if (method %in% c("plage","zscore", "gsva", "ssgsea")){
+                results.comp[[i]][,j] = as.numeric(results.multi[[i]][[j]][, 
+                                "adj.P.Val"]) 
+            }else if (method == "globaltest"){
+                results.comp[[i]][,j] = as.numeric(results.multi[[i]][[j]][, 
+                                "p-value"])
+            }else if (method == "ora"){
+                results.comp[[i]][,j] = as.numeric(results.multi[[i]][[j]][, 
+                                "p.adj"])
+            }else if (method == "safe"){
+                results.comp[[i]][,j] = as.numeric(results.multi[[i]][[j]][, 
+                                "Adj.p.value"]) 
+            }else if (method == "spia"){
+                results.comp[[i]][,j] = as.numeric(results.multi[[i]][[j]][, 
+                                "pG"])
+            }
+            results.ranked[[i]][,j] = as.numeric(results.multi[[i]][[j]][, 
+                            "Rank"])
+            if (max(results.comp[[i]][,j], na.rm = TRUE) < 0.000001)
+                print(paste0("WARNING: ", method, " produces very low p-values 
+                                        on ", names(results.comp)[i]))
+            j = j + 1
+        }
+    }
+    return(list(pvalues=results.comp, ranks=results.ranked))
+}
+
 extractPvaluesRanks <- function(results.multi){
     results.comp = vector("list", length(results.multi))
     names(results.comp) = names(results.multi)
@@ -518,7 +617,7 @@ ncol(results.comp[[i]]))
         for (method in names(results.multi[[i]])){ # j is over base methods
             #print(method)
             #print(summary(results.multi[[i]][[j]]))
-            if (method %in% c("camera", "roast")){
+            if (method %in% c("camera", "roast", "fry")){
                 results.comp[[i]][,j] = as.numeric(results.multi[[i]][[j]][, 
 "PValue"])  
             }else if (method == "gage"){
@@ -555,63 +654,68 @@ on ", names(results.comp)[i]))
 }
 
 runbaseGSEA <- function(method, voom.results, contrast, gs.annot, 
-ranked.gs.dir, output.base=TRUE,
-        num.threads = 4){
+                        ranked.gs.dir, output.base=TRUE,
+                        num.threads = 4, verbose=TRUE){
     if (method == "camera"){        
         return(runcamera(voom.results = voom.results, contrast = contrast, 
 gs.annot = gs.annot, 
                         ranked.gs.dir= ranked.gs.dir, output = output.base, 
-num.workers = num.threads))     
+num.workers = num.threads, verbose = verbose))     
     }else if (method == "roast"){       
         return(runroast(voom.results = voom.results, contrast = contrast, 
 gs.annot = gs.annot, 
                         ranked.gs.dir= ranked.gs.dir, output = output.base, 
-num.workers = num.threads))     
+num.workers = num.threads, verbose = verbose))     
+    }else if (method == "fry"){
+        return(runfry(voom.results = voom.results, contrast = contrast, 
+                        gs.annot = gs.annot, 
+                        ranked.gs.dir= ranked.gs.dir, output = output.base, 
+                        num.workers = num.threads, verbose = verbose))
     }else if (method == "gage"){        
         return(rungage(voom.results = voom.results, contrast = contrast, 
 gs.annot = gs.annot, 
                         ranked.gs.dir= ranked.gs.dir, output = output.base, 
-num.workers = num.threads))     
+num.workers = num.threads, verbose = verbose))     
     }else if (method == "padog"){       
         return(runpadog(voom.results = voom.results, contrast = contrast, 
 gs.annot = gs.annot, 
                         ranked.gs.dir= ranked.gs.dir, output = output.base, 
-num.workers = num.threads))
+num.workers = num.threads, verbose = verbose))
     }else if (method == "plage"){       
         return(rungsva(method="plage", voom.results = voom.results, contrast = 
 contrast, gs.annot = gs.annot, 
                         ranked.gs.dir= ranked.gs.dir, output = output.base, 
-num.workers = num.threads))
+num.workers = num.threads, verbose = verbose))
     }else if (method == "zscore"){  
         return(rungsva(method="zscore", voom.results = voom.results, contrast = 
 contrast, gs.annot = gs.annot, 
                         ranked.gs.dir= ranked.gs.dir, output = output.base, 
-num.workers = num.threads))
+num.workers = num.threads, verbose = verbose))
     }else if (method == "gsva"){        
         return(rungsva(method="gsva", voom.results = voom.results, contrast = 
 contrast, gs.annot = gs.annot, 
                         ranked.gs.dir= ranked.gs.dir, output = output.base, 
-num.workers = num.threads))
+num.workers = num.threads, verbose = verbose))
     }else if (method == "ssgsea"){  
         return(rungsva(method="ssgsea", voom.results = voom.results, contrast = 
 contrast, gs.annot = gs.annot, 
                         ranked.gs.dir= ranked.gs.dir, output = output.base, 
-num.workers = num.threads))
+num.workers = num.threads, verbose = verbose))
     }else if (method == "globaltest"){      
         return(runglobaltest(voom.results = voom.results, contrast = contrast, 
 gs.annot = gs.annot, 
                         ranked.gs.dir= ranked.gs.dir, output = output.base, 
-num.workers = num.threads))
+num.workers = num.threads, verbose = verbose))
     }else if (method == "safe"){        
         return(runsafe(voom.results = voom.results, contrast = contrast, 
 gs.annot = gs.annot, 
                         ranked.gs.dir= ranked.gs.dir, output = output.base, 
-num.workers = num.threads))
+num.workers = num.threads, verbose = verbose))
     }else if (method == "ora"){
         return (runora(voom.results = voom.results, contrast = contrast, 
 gs.annot = gs.annot, 
                         ranked.gs.dir= ranked.gs.dir, output = output.base, 
-num.workers = num.threads))         
+num.workers = num.threads, verbose = verbose))         
     }else{
         stop("Method not recognized. Type egsea.base() to see supported base 
 methods.")
@@ -621,43 +725,46 @@ methods.")
 
 
 
-createComparison <- function(egsea.results, display.top=100, sort.by="p.value"){
+createComparison <- function(egsea.results, combineMethod="fisher", display.top=100, 
+        sort.by="p.value"){
     egsea.comparison = numeric(0)
     col.names = colnames(egsea.results[[1]])
     gset.names =  rownames(egsea.results[[1]])
-    for (i in 1:length(col.names)){
-        if (col.names[i] == "p.adj")
+    for (i in 1:length(col.names)){ # iterate over egsea.results columns
+        if (col.names[i] == "p.value")
             next
         temp= numeric(0)
-        for (j in 1:length(egsea.results)){
+        for (j in 1:length(egsea.results)){ # iterate over contrasts
             temp = cbind(temp, egsea.results[[j]][gset.names, i])
         }
         
-        if (col.names[i] == "p.value"){         
+        if (col.names[i] == "p.adj"){         
+            temp = combinePvalues(temp, combineMethod)
+            pvalues = temp$pvalues
+            adj.pvals = temp$adj.pvals
             egsea.comparison = cbind(egsea.comparison, 
-                    as.matrix(fisher.method(temp, na.rm=TRUE)[, c("p.value", 
-"p.adj")]))
+                    pvalues, adj.pvals)
         }
         else if (col.names[i] == "med.rank"){
             egsea.comparison = cbind(egsea.comparison, rowMedians(temp, 
-na.rm=TRUE))
+                    na.rm=TRUE))
         }
         else if (length(grep("min", col.names[i])) > 0){
             minVals = sapply(1:nrow(temp), function(x) min(temp[x, ], 
-na.rm=TRUE))
+                    na.rm=TRUE))
             egsea.comparison = cbind(egsea.comparison, minVals)
         }
         else if (col.names[i] %in% c("avg.rank", "Direction", "Significance", 
-"avg.logFC"))
+                "avg.logFC"))
             egsea.comparison = cbind(egsea.comparison, rowMeans(temp, 
-na.rm=TRUE))
+                na.rm=TRUE))
         else if (col.names[i] == "vote.rank"){
             if (length(egsea.results) > 2)
                 egsea.comparison = cbind(egsea.comparison, voteRank(temp, 
-bin.width = -1))
+                    bin.width = -1))
             else
                 egsea.comparison = cbind(egsea.comparison, rowMeans(temp, 
-na.rm=TRUE))
+                            na.rm=TRUE))
         }
     }
     rownames(egsea.comparison) = gset.names

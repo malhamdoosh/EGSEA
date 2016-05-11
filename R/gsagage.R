@@ -2,7 +2,7 @@
 
 rungage <- function(voom.results, contrast, gs.annot, ranked.gs.dir="", output 
 = TRUE,
-        num.workers=4){     
+        num.workers=4, verbose = TRUE){     
     # run GAGE and write out ranked 'gene sets' for each 'contrast'
 
     file.name = paste0(ranked.gs.dir, "/gage-ranked-", gs.annot$label, 
@@ -24,7 +24,10 @@ rungage <- function(voom.results, contrast, gs.annot, ranked.gs.dir="", output
     #print(contrast)
     #print(design)
     for(i in 1:ncol(contrast)){
-        print(paste0("   Running GAGE for ", colnames(contrast)[i]))
+        if (verbose)
+            print(paste0("   Running GAGE for ", colnames(contrast)[i]))
+        else
+            cat(".")
         d = design[, contrast[,i] > 0]
         if (is.null(ncol(d))){
             tre.sam.indx = sam.idx[ d == 1]
@@ -73,7 +76,7 @@ ref=seq(1,length(cnt.sam.indx)),
 gage.results[[i]][order(gage.results[[i]][,"p.val"]),]  
         gage.results[[i]] = cbind(Rank=seq(1, nrow(gage.results[[i]])), 
 gage.results[[i]])
-        #print(summary(gage.results[[i]]))
+        #print(head(gage.results[[i]]))
         
         if (!output)
             next

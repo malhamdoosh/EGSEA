@@ -132,7 +132,7 @@ gs.annots=gs.annots,
              symbolsMap=top.Table[, c(1,2)], display.top = 5,
               egsea.dir="./il13-egsea-ora-report", num.threads = 2, 
 report = FALSE)
-
+topSets(gsa) 
 }
 \references{
 Monther Alhamdoosh, Milica Ng, Nicholas J. Wilson, Julie M. Sheridan, Huy 

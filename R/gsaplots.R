@@ -24,15 +24,15 @@ gs.annot$label, "-top-")
         mappingDB = "org.Mm.eg.db"
     }
 #   print(mappingDB)
-    topGOdataBP <- new("topGOdata",ontology = "BP", allGenes = gl,
+    capture.output(topGOdataBP <- new("topGOdata",ontology = "BP", allGenes = gl,
             geneSel = topDiffGenes, nodeSize = 10, annot = 
-annFUN.org, mapping=mappingDB)
-    topGOdataMF <- new("topGOdata",ontology = "MF", allGenes = gl,
+annFUN.org, mapping=mappingDB))
+capture.output(topGOdataMF <- new("topGOdata",ontology = "MF", allGenes = gl,
             geneSel = topDiffGenes, nodeSize = 10, annot = 
-annFUN.org, mapping=mappingDB)
-    topGOdataCC <- new("topGOdata",ontology = "CC", allGenes = gl,
+annFUN.org, mapping=mappingDB))
+capture.output(topGOdataCC <- new("topGOdata",ontology = "CC", allGenes = gl,
             geneSel = topDiffGenes, nodeSize = 10, annot = 
-annFUN.org, mapping=mappingDB)
+annFUN.org, mapping=mappingDB))
 #   print(topGOdataBP)
 #   print(summary(topGOdataBP))
     

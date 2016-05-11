@@ -3,7 +3,7 @@
 
 runglobaltest <- function(voom.results, contrast, gs.annot,  ranked.gs.dir="", 
 output = TRUE,
-        num.workers=4){     
+        num.workers=4, verbose = TRUE){     
 
     # run globaltest and write out ranked 'gene sets' for each 'contrast'   
     file.name = paste0(ranked.gs.dir, "/globaltest-ranked-", 
@@ -18,8 +18,11 @@ gs.annot$label, "-gene-sets-",
     gt.options(transpose=TRUE)
     
     for(i in 1:ncol(contrast)){
-        print(paste0("   Running GLOBALTEST for ", 
-colnames(contrast)[i]))
+        if (verbose)
+            print(paste0("   Running GLOBALTEST for ", 
+                        colnames(contrast)[i]))
+        else
+            cat(".")
         d = design[, contrast[,i] > 0]
         if (is.null(ncol(d))){
             tre.sam.indx = sam.idx[ d == 1]

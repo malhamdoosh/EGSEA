@@ -3,8 +3,8 @@
 # 
 #
 fisher.method <- function(pvals, method=c("fisher"), 
-p.corr=c("bonferroni","BH","none"), zero.sub=0.00001, na.rm=FALSE, 
-mc.cores=NULL){
+                p.corr=c("bonferroni","BH","none"), zero.sub=1*10^-22, 
+                na.rm=FALSE,  mc.cores=NULL){
   stopifnot(method %in% c("fisher"))
   stopifnot(p.corr %in% c("none","bonferroni","BH"))
   stopifnot(all(pvals>=0, na.rm=TRUE) & all(pvals<=1, na.rm=TRUE))
@@ -27,10 +27,9 @@ zero.sub=zero.sub, na.rm=na.rm)))
   rownames(fisher.sums) <- rownames(pvals)
   fisher.sums$p.value <- 1-pchisq(fisher.sums$S, df=2*fisher.sums$num.p)
   fisher.sums$p.adj <- switch(p.corr,
-                              bonferroni = p.adjust(fisher.sums$p.value, 
-"bonferroni"),
-                              BH = p.adjust(fisher.sums$p.value, "BH"),
-                              none = fisher.sums$p.value)
+                bonferroni = p.adjust(fisher.sums$p.value, "bonferroni"),
+                BH = p.adjust(fisher.sums$p.value, "BH"),
+                none = fisher.sums$p.value)
   return(fisher.sums)
 }
 

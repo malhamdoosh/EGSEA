@@ -1,15 +1,17 @@
 # Wrapper function to run CAMERA on different contrasts
 
 runcamera <- function(voom.results, contrast, gs.annot,  ranked.gs.dir="", 
-output=TRUE,
-        num.workers=4){     
+                    output=TRUE, num.workers=4, verbose = TRUE){     
     # run CAMERA and write out ranked 'gene sets' for each 'contrast'   
     file.name = paste0(ranked.gs.dir, "/camera-ranked-", gs.annot$label, 
 "-gene-sets-", 
             sub(" - ", "-", colnames(contrast)), '.txt')        
     camera.results = vector("list", ncol(contrast)) 
     for(i in 1:ncol(contrast)){     
-        print(paste0("   Running CAMERA for ", colnames(contrast)[i]))
+        if (verbose)
+            print(paste0("   Running CAMERA for ", colnames(contrast)[i]))
+        else
+            cat(".")
         camera.results[[i]] = camera(y=voom.results, 
 index=gs.annot$idx, 
                 design=voom.results$design, 

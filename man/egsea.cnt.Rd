@@ -131,7 +131,7 @@ collective significance scores for gene sets. These methods include:
 \pkg{ora}, 
 \pkg{globaltest}, \pkg{plage}, \pkg{safe}, \pkg{zscore}, \pkg{gage}, 
 \pkg{ssgsea},
-\pkg{roast}, \pkg{padog}, \pkg{camera} and \pkg{gsva}. 
+\pkg{roast}, \pkg{fry}, \pkg{padog}, \pkg{camera} and \pkg{gsva}. 
 The ora, gage, camera and gsva methods depend on a competitive null 
 hypothesis while the 
 remaining seven methods are based on a self-contained hypothesis. 
@@ -164,7 +164,7 @@ display.top = 5,
           sort.by="avg.rank", 
 egsea.dir="./il13-egsea-cnt-report", 
          num.threads = 2, report = FALSE)
- 
+topSets(gsa) 
 
 }
 \references{

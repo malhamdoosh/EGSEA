@@ -3,7 +3,7 @@
 
 runsafe <- function(voom.results, contrast, gs.annot,  ranked.gs.dir="", output 
 = TRUE,
-        num.workers=4){     
+        num.workers=4, verbose = TRUE){     
 
     # run safe and write out ranked 'gene sets' for each 'contrast' 
     file.name = paste0(ranked.gs.dir, "/safe-ranked-", gs.annot$label, 
@@ -20,12 +20,15 @@ runsafe <- function(voom.results, contrast, gs.annot,  ranked.gs.dir="", output
         gsets[[j]] = as.character(gs.annot$idx[[j]])
     }
     names(gsets) = names(gs.annot$idx)  
-    C.mat = getCmatrix(keyword.list=gsets, present.genes=rownames(data.log))
+    capture.output(C.mat <- getCmatrix(keyword.list=gsets, present.genes=rownames(data.log)))
     set.seed(05081986)
 #   print(C.mat)
 #   print(names(gsets)[which(!names(gsets) %in% C.mat$col.names)])
     for(i in 1:ncol(contrast)){
-        print(paste0("   Running SAFE for ", colnames(contrast)[i]))
+        if (verbose)
+            print(paste0("   Running SAFE for ", colnames(contrast)[i]))
+        else
+            cat(".")
         d = design[, contrast[,i] > 0]
         if (is.null(ncol(d))){
             tre.sam.indx = sam.idx[ d == 1]
@@ -62,8 +65,8 @@ length(cnt.sam.indx)))
         group = c(rep("1", length(tre.sam.indx)), rep("0", 
 length(cnt.sam.indx)))
         
-        temp = safe(X.mat=data.log.sel, y.vec=group,C.mat=C.mat, 
-                print.it=FALSE, Pi.mat=100)#, 
+        capture.output(temp <- safe(X.mat=data.log.sel, y.vec=group,C.mat=C.mat, 
+                print.it=FALSE, Pi.mat=100))#, 
 # method="bootstrap.t", , method="express"
 #       print(temp)
         safe.results[[i]] = safe.toptable(temp, 

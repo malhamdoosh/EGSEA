@@ -2,7 +2,7 @@
 
 runroast <- function(voom.results, contrast, gs.annot,  ranked.gs.dir="", 
 output = TRUE,
-        num.workers=4){     
+        num.workers=4, verbose = TRUE){     
     # run ROAST and write out ranked 'gene sets' for each 'contrast'    
 
     file.name = paste0(ranked.gs.dir, "/roast-ranked-", gs.annot$label, 
@@ -10,12 +10,15 @@ output = TRUE,
             sub(" - ", "-", colnames(contrast)), '.txt')        
     roast.results = vector("list", ncol(contrast))  
     for(i in 1:ncol(contrast)){
-        print(paste0("   Running ROAST for ", colnames(contrast)[i]))
+        if (verbose)
+            print(paste0("   Running ROAST for ", colnames(contrast)[i]))
+        else
+            cat(".")
         roast.results[[i]] = mroast(y=voom.results, 
                 index=gs.annot$idx[as.numeric(gs.annot$anno[, 
 "NumGenes"]) < 2000], 
                 design=voom.results$design, 
-                contrast=contrast[,i], nrot=9999)
+                contrast=contrast[,i], nrot=999)
         # returns PropDown/PropUp ==> proportion of genes that are 
 # down/up-regulated
         roast.results[[i]] = roast.results[[i]][order(roast.results[[i]][, 

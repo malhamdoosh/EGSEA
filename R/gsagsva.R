@@ -3,7 +3,7 @@
 
 rungsva <- function(method, voom.results, contrast, gs.annot,  
 ranked.gs.dir="", output = TRUE,
-        num.workers=4){     
+        num.workers=4, verbose = TRUE){     
 
     # run gsva and write out ranked 'gene sets' for each 'contrast'
     
@@ -23,24 +23,16 @@ gs.annot$label, "-gene-sets-",
     
     args.all = list()
     for(i in 1:ncol(contrast)){
-        args.all[[colnames(contrast)[i]]] = list(contrast=contrast,
-                                        
-        i = i,
-                                        
-        design = design,
-                                        
-        method=method,
-                                        
-        data.log = data.log,
-                                        
-        gsets = gsets,
-                                        
-        gs.annot = gs.annot,
-                                        
-        file.name = file.name[i],
-                                        
-        output = output                                                
-                                        
+        args.all[[colnames(contrast)[i]]] = list(contrast=contrast,                                        
+        i = i,                                        
+        design = design,                                        
+        method=method,                                        
+        data.log = data.log,                                        
+        gsets = gsets,                                        
+        gs.annot = gs.annot,                                        
+        file.name = file.name[i],                                        
+        output = output,
+        verbose = verbose                                        
         )
     }
     if (Sys.info()['sysname'] == "Windows" || ncol(contrast) <= 1)
@@ -54,8 +46,11 @@ mc.cores=num.workers)
 
 rungsva.contrast <- function(args){
     set.seed(519863)
-    print(paste0("   Running ", toupper(args$method)," for ", 
-colnames(args$contrast)[args$i]))   
+    if (args$verbose)
+        print(paste0("   Running ", toupper(args$method)," for ", 
+                colnames(args$contrast)[args$i]))
+    else
+        cat(".")
     d = args$design[, args$contrast[,args$i] > 0]
     sam.idx = 1:ncol(args$data.log)
     if (is.null(ncol(d))){      

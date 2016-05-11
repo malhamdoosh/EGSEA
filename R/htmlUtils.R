@@ -34,7 +34,7 @@ colnames(annot.frame)]
     table.data = data.frame(annot.frame, gsa.results)   
 
     
-    HTMLsortedTable(table.data, title, title, file=file, path=path)
+    capture.output(HTMLsortedTable(table.data, title, title, file=file, path=path))
     
     annot.frame = gs.annot$anno[match(rownames(gsa.results), 
 gs.annot$anno[,"GeneSet"]),]
@@ -173,7 +173,7 @@ as.character(lapply(as.numeric(table.data[, "Direction"]),
 "Down" else "No Change"))
 
     }
-    HTMLsortedTable(table.data, title, title, file=file, path=path)
+    capture.output(HTMLsortedTable(table.data, title, title, file=file, path=path))
     
 }
 

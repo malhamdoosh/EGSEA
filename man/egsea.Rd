@@ -124,7 +124,7 @@ collective significance scores for gene sets. These methods include:
 \pkg{ora}, 
 \pkg{globaltest}, \pkg{plage}, \pkg{safe}, \pkg{zscore}, \pkg{gage}, 
 \pkg{ssgsea},
-\pkg{roast}, \pkg{padog}, \pkg{camera} and \pkg{gsva}. 
+\pkg{roast}, \pkg{fry}, \pkg{padog}, \pkg{camera} and \pkg{gsva}. 
 The ora, gage, camera and gsva methods depend on a competitive null 
 hypothesis while the 
 remaining seven methods are based on a self-contained hypothesis. 
@@ -145,11 +145,11 @@ msigdb.gsets="none",
          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
 # set report = TRUE to generate the EGSEA interactive report
 gsa = egsea(voom.results=v, contrasts=contrasts,  gs.annots=gs.annots, 
-         symbolsMap=v$genes, 
-baseGSEAs=egsea.base()[-c(2,5,6,9)], display.top = 5,
-          sort.by="avg.rank", egsea.dir="./il13-egsea-report", 
+         symbolsMap=v$genes, baseGSEAs=egsea.base()[-c(2,5,6,9)], 
+			display.top = 5, sort.by="avg.rank", 
+			egsea.dir="./il13-egsea-report", 
          num.threads = 2, report = FALSE)
- 
+topSets(gsa) 
 
 }
 \references{

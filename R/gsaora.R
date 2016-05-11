@@ -3,7 +3,7 @@
 
 runora <- function(voom.results, contrast, gs.annot,  
         ranked.gs.dir="", output=TRUE,
-        num.workers=4){     
+        num.workers=4, verbose = TRUE){     
     # run hypergeomteric test and write out ranked 'gene sets' for each 
 'contrast'
     # The p-value you want is the probability of getting 100 white balls in 
@@ -43,7 +43,10 @@ runora <- function(voom.results, contrast, gs.annot,
     
     ora.results = vector("list", ncol(contrast))    
     for(i in 1:ncol(contrast)){     
-        print(paste0("   Running ORA for ", colnames(contrast)[i]))
+        if (verbose)
+            print(paste0("   Running ORA for ", colnames(contrast)[i]))
+        else
+            cat(".")
         if (!is.null(voom.results$E)){
             deGenes = rownames(topTable(vfit, coef=i, number=Inf, 
 p.value=pvalue.cut, 
