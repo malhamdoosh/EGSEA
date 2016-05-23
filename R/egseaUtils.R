@@ -12,6 +12,14 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
     stopifnot(length(setdiff(baseGSEAs, c(egsea.base(), "fry"))) == 0)
     stopifnot(combineMethod %in% egsea.combine())
     stopifnot(sort.by %in% egsea.sort())
+    if (length(baseGSEAs) <= 1){
+        print("The ensemble mode was disabled.")
+        if (sort.by %in% c("vote.rank", "avg.rank", "med.rank", 
+               "min.pvalue", "min.rank")){
+            sort.by = "p.value"
+            warning("The sort.by argument was set to \"p.value\"")
+        }
+    }
     print("EGSEA analysis has started")
     # check arguments are valid
     if (!is.matrix(contrast)){
@@ -37,15 +45,15 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
         top.gs.dir = NULL
         ranked.gs.dir = NULL
     }
-    
-    gsas = list()
+        
     logFC.calculated = "No"
     if (is.null(logFC)){
         #row names should be Entrez Gene IDs in order to plot KEGG pathways
         logFC = getlogFCFromLMFit(voom.results, contrast)       
         logFC.calculated = "Yes"
-    }else if (!is.matrix(logFC)){
-        stop("logFC should be a matrix object of at least one column.")
+    }else if (!is.matrix(logFC) || !identical(colnames(logFC), colnames(contrast))){
+        stop("logFC should be a matrix object with column names equal 
+			to the column names of the contrast matrix.")
     }
     
     if (!is.null(gs.annots$name)){
@@ -53,6 +61,13 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
         gs.annots = list()
         gs.annots[[gs.annot$label]] = gs.annot
     }
+    gsas = EGSEAResults(contrasts = colnames(contrast), 
+            sampleSize = getNumberofSamples(voom.results, contrast), 
+            gs.annots = gs.annots, baseMethods=baseGSEAs,
+            combineMethod = combineMethod, sort.by = sort.by,
+            symbolsMap = symbolsMap,
+            logFC = logFC, report = report, report.dir = egsea.dir
+            )
     skipped = c()
     for (gs.annot in gs.annots){
         gs.annot = getGsetAnnot(gs.annot = gs.annot, min.size=minSize)  
@@ -128,7 +143,7 @@ gs.annot=gs.annot,
                     symbolsMap=symbolsMap,
                     gsa.dir=egsea.dir)
             
-            plotSummary(egsea.results = egsea.results, baseGSEAs = baseGSEAs, 
+            generateSumPlots(egsea.results = egsea.results, baseGSEAs = baseGSEAs, 
                     gs.annot = gs.annot, gsa.dir = egsea.dir,
                     sum.plot.cutoff = sum.plot.cutoff, sum.plot.axis = 
 sum.plot.axis)
@@ -183,7 +198,7 @@ file.name.sum[i])
                             display.top, nrow(egsea.comparison)), ]
             gsa$comparison[["top.gene.sets"]] = rownames(egsea.comparison)
             if (report){
-                plotSummary.comparison(egsea.results = egsea.results, 
+                generateSumPlots.comparison(egsea.results = egsea.results, 
                         egsea.comparison = egsea.comparison.all, 
                         gs.annot = gs.annot, gsa.dir = egsea.dir,       
  
@@ -231,8 +246,8 @@ file.name.sum)
             }
             
         }   
-        
-        gsas[[gs.annot$label]] = gsa
+        gsas = addEGSEAResult(gsas, gs.annot$label, gsa)
+        #gsas[[gs.annot$label]] = gsa
     }    
     if (report){
         gs.annots = gs.annots[! names(gs.annots) %in% skipped]
@@ -414,20 +429,20 @@ temp.results[[baseGSEA]][[i]][names(gs.annot$idx),]
         sig = pvalues * gs.avg.fcs
         if (max(sig, na.rm=TRUE) != min(sig, na.rm=TRUE))
             sig = (sig - min(sig, na.rm=TRUE)) / (max(sig, na.rm=TRUE) - 
-min(sig, na.rm=TRUE)) * 100
+                    min(sig, na.rm=TRUE)) * 100
         m = length(baseGSEAs)       
         if (m == 1){            
             egsea.results[[i]] = cbind(egsea.results[[i]], 
-"avg.logFC"=gs.avg.fcs,
+                        "avg.logFC"=gs.avg.fcs,
                     "Direction" = gs.dirs, "Significance" = sig)
         }
         else{
             n = ncol(egsea.results[[i]])
             # insert stat columns in the middle
             egsea.results[[i]] = cbind(egsea.results[[i]][, 1:(n-m)], 
-"avg.logFC"=gs.avg.fcs,
+                            "avg.logFC"=gs.avg.fcs,
                     "Direction" = gs.dirs, "Significance" = sig, 
-egsea.results[[i]][, (n-m+1):n] )
+                    egsea.results[[i]][, (n-m+1):n] )
         }
     }
     names(egsea.results) = colnames(contrast)
@@ -440,32 +455,39 @@ egsea.results[[i]][, (n-m+1):n] )
 
 
 combinePvalues <- function(data, combineMethod, combineWeights = NULL){
-    if (combineMethod == "average"){
-        pvalues = sapply(apply(data,  1, function(x) meanp(x[!is.na(x)])), 
-                function(x) x$p)            
-    } else if (combineMethod == "fisher"){        
-        data[data == 0] = 1*10^-22           
-        pvalues = sapply(apply(data,  1, function(x) sumlog(x[!is.na(x)])), 
-                function(x) x$p)            
-    } else if (combineMethod == "logitp"){        
-        data[data == 0] = 1*10^-22
-        data[data == 1] = 1 - 1*10^-5
-        pvalues = sapply(apply(data,  1, function(x) logitp(x[!is.na(x)])), 
-                function(x) x$p)            
-    }else if (combineMethod == "sump"){
-        pvalues = sapply(apply(data,  1, function(x) sump(x[!is.na(x)])), 
-                function(x) x$p)            
-    }else if (combineMethod == "sumz"){        
-        data[data == 0] = 1*10^-22
-        data[data == 1] = 1 - 1*10^-5
-        pvalues = sapply(apply(data,  1, function(y) sumz(y[!is.na(y)])), #, combineWeights 
-                function(x) x$p)           
-    }else if (combineMethod == "wilkinson"){        
-        data[data == 0] = 1*10^-22
-        data[data == 1] = 1 - 1*10^-5
-        pvalues = sapply(apply(data,  1, function(y) wilkinsonp(y[!is.na(y)], r = 1)), 
-                function(x) x$p)            
-    }    
+    if (ncol(data) > 1){
+        if (combineMethod == "average"){
+            pvalues = sapply(apply(data,  1, 
+                    function(x) ifelse(length(x[!is.na(x)] >= 4), 
+                                        meanp(x[!is.na(x)]),
+                                        mean(x)) ), 
+                    function(x) x$p)            
+        } else if (combineMethod == "fisher"){        
+            data[data == 0] = 1*10^-22           
+            pvalues = sapply(apply(data,  1, function(x) sumlog(x[!is.na(x)])), 
+                    function(x) x$p)            
+        } else if (combineMethod == "logitp"){        
+            data[data == 0] = 1*10^-22
+            data[data == 1] = 1 - 1*10^-5
+            pvalues = sapply(apply(data,  1, function(x) logitp(x[!is.na(x)])), 
+                    function(x) x$p)            
+        }else if (combineMethod == "sump"){
+            pvalues = sapply(apply(data,  1, function(x) sump(x[!is.na(x)])), 
+                    function(x) x$p)            
+        }else if (combineMethod == "sumz"){        
+            data[data == 0] = 1*10^-22
+            data[data == 1] = 1 - 1*10^-5
+            pvalues = sapply(apply(data,  1, function(y) sumz(y[!is.na(y)])), #, combineWeights 
+                    function(x) x$p)           
+        }else if (combineMethod == "wilkinson"){        
+            data[data == 0] = 1*10^-22
+            data[data == 1] = 1 - 1*10^-5
+            pvalues = sapply(apply(data,  1, function(y) wilkinsonp(y[!is.na(y)], r = 1)), 
+                    function(x) x$p)            
+        }    
+    } else{
+        pvalues = data[, 1]
+    }
     adj.pvals = p.adjust(pvalues, method="BH")
     return(list(pvalues=pvalues, adj.pvals = adj.pvals))
 }
@@ -479,7 +501,7 @@ combineBaseGSEAs <- function(results.multi, combineMethod, combineWeights=NULL,
         return(results.multi)
     }
     # compress detailed results into matrices
-    temp = extractAdjPvaluesRanks(results.multi) 
+    temp = extractPvaluesRanks(results.multi) 
     results.comp = temp$pvalues
     results.ranked = temp$ranks # gene sets ranked for each method
     results.combined = vector('list', length(results.ranked))
@@ -492,7 +514,9 @@ combineBaseGSEAs <- function(results.multi, combineMethod, combineWeights=NULL,
         adj.pvals = temp$adj.pvals
         results.combined[[i]] = data.frame(cbind(
                 "p.value"=pvalues, 
-                "p.adj"=adj.pvals, 
+                "p.adj"=adj.pvals))
+        if (ncol(results.ranked[[i]]) > 1){
+            results.combined[[i]] = cbind(results.combined[[i]],  
                 "vote.rank" = voteRank(results.ranked[[i]], 
                                         bin.width=bin.width),
                 "avg.rank"=rowMeans(results.ranked[[i]], 
@@ -503,7 +527,9 @@ combineBaseGSEAs <- function(results.multi, combineMethod, combineWeights=NULL,
                         function(x) min(results.comp[[i]][x, ], na.rm=TRUE)),
                 "min.rank"=sapply(1:nrow(results.ranked[[i]]), 
                         function(x) min(results.ranked[[i]][x, ], na.rm=TRUE)),
-                            results.ranked[[i]]))
+                results.ranked[[i]]
+            )
+        }
         rownames(results.combined[[i]]) = rownames(results.comp[[i]])   
         
     }    

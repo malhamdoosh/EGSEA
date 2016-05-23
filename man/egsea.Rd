@@ -133,7 +133,8 @@ algorithm proposed here is not limited to these eleven GSE methods and new
 GSE tests 
 can be easily integrated into the framework. This function takes the voom 
 object and 
-the contrast matrix as parameters.
+the contrast matrix as parameters. 
+The results of EGSEA can be seen using the \code{\link{topSets}} function.
 }
 \examples{
 library(EGSEAdata)
@@ -160,7 +161,8 @@ methods in gene set enrichment
 analyses.
 }
 \seealso{
-\code{\link{egsea.base}}, \code{\link{egsea.sort}}, 
+\code{\link{topSets}}, \code{\link{egsea.base}}, 
+\code{\link{egsea.sort}}, 
 \code{\link{buildIdxEZID}}, \code{\link{buildMSigDBIdxEZID}}, 
 \code{\link{buildKEGGIdxEZID}},
 \code{\link{buildGeneSetDBIdxEZID}}, and \code{\link{buildCustomIdxEZID}}

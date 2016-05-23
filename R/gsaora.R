@@ -49,8 +49,16 @@ runora <- function(voom.results, contrast, gs.annot,
             cat(".")
         if (!is.null(voom.results$E)){
             deGenes = rownames(topTable(vfit, coef=i, number=Inf, 
-p.value=pvalue.cut, 
-                        lfc=logfc.cut))         
+                        p.value=pvalue.cut, 
+                        lfc=logfc.cut))     
+            if (length(deGenes) == 0){
+                deGenes = rownames(topTable(vfit, coef=i, number=Inf, 
+                                p.value=pvalue.cut, 
+                                lfc=0))
+                if (verbose)
+                    print("ORA used a cut-off logFC = 0")
+            }
+                
         }else{
             deGenes = voom.results$ids          
         }

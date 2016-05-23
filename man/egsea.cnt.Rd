@@ -143,7 +143,8 @@ count matrix,
 the experimental group of each sample, the design matrix and the contrast 
 matrix as parameters. 
 It performs TMM normalization and then applies \link[limma]{voom} to 
-calculate the logCPM and weighting factors.
+calculate the logCPM and weighting factors. 
+The results of EGSEA can be seen using the \code{\link{topSets}} function.
 }
 \examples{
 library(EGSEAdata)
@@ -175,7 +176,8 @@ methods in gene set enrichment
 analyses.
 }
 \seealso{
-\code{\link{egsea.base}}, \code{\link{egsea.sort}}, 
+\code{\link{topSets}}, \code{\link{egsea.base}}, 
+\code{\link{egsea.sort}}, 
 \code{\link{buildIdxEZID}}, \code{\link{buildMSigDBIdxEZID}}, 
 \code{\link{buildKEGGIdxEZID}},
 \code{\link{buildGeneSetDBIdxEZID}}, and \code{\link{buildCustomIdxEZID}}

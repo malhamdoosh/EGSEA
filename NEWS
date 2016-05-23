@@ -6,3 +6,14 @@ now be exported in the output of egsea when print.base = TRUE.
 - Added the fry(...) gene set test from the limma package.
 - Added multiple methods to combine the p-values of multiple methods. See egsea.combine().
 - Various minor bug fixes. 
+
+EGSEA 1.1.4 (2016-05-23)
+------------------------
+- ORA was modified to adapt a cut-off threshold logFC=0 if no DE genes were 
+found at logFC=1. In both cases, the cut-off threshold of adjusted p-value = 0.05.
+- Improve the robustness of the package and allows for single GSE analysis to be
+carried out using EGSEA. 
+- Ensemble mode is disabled if one base GSE method is provided.
+- Created S4 class for the egsea() output, named EGSEAResults.
+- Added generic methods: show(), summary(), plotHeatmap(), plotPathway(), plotMDS(), 
+and plotSummary(). 

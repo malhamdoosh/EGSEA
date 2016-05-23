@@ -106,7 +106,8 @@ from \pkg{EGSEAdata} or a custom-built collection to find over-represented
 gene sets in 
 this list. It takes the advantage of the existing EGSEA reporting 
 capabilities and generate 
-an interative report for the ORA analysis.
+an interative report for the ORA analysis. 
+The results can be explored using the \code{\link{topSets}} function.
 }
 \examples{
 library(EGSEAdata)
@@ -131,7 +132,7 @@ as.character(voom.results$genes[,1]),
 gs.annots=gs.annots, 
              symbolsMap=top.Table[, c(1,2)], display.top = 5,
               egsea.dir="./il13-egsea-ora-report", num.threads = 2, 
-report = FALSE)
+				report = FALSE)
 topSets(gsa) 
 }
 \references{
@@ -142,6 +143,7 @@ methods in gene set enrichment
 analyses.
 }
 \seealso{
+\code{\link{topSets}},
 \code{\link{buildIdxEZID}}, \code{\link{buildMSigDBIdxEZID}}, 
 \code{\link{buildKEGGIdxEZID}},
 \code{\link{buildGeneSetDBIdxEZID}}, and \code{\link{buildCustomIdxEZID}}

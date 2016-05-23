@@ -57,6 +57,7 @@ NULL
 #' can be easily integrated into the framework. This function takes the voom 
 #' object and 
 #' the contrast matrix as parameters. 
+#' The results of EGSEA can be seen using the \code{\link{topSets}} function. 
 #'
 #' @param voom.results list, an EList object generated using the  
 #' \code{\link[limma]{voom}} function. 
@@ -134,7 +135,8 @@ NULL
 #' gene sets and the detailed analysis
 #' results for each contrast and the comparative analysis results.
 #' 
-#' @seealso \code{\link{egsea.base}}, \code{\link{egsea.sort}}, 
+#' @seealso \code{\link{topSets}}, \code{\link{egsea.base}}, 
+#' \code{\link{egsea.sort}}, 
 #' \code{\link{buildIdxEZID}}, \code{\link{buildMSigDBIdxEZID}}, 
 #' \code{\link{buildKEGGIdxEZID}},
 #' \code{\link{buildGeneSetDBIdxEZID}}, and \code{\link{buildCustomIdxEZID}}
@@ -250,6 +252,7 @@ verbose, num.threads, report)))
 #' matrix as parameters. 
 #' It performs TMM normalization and then applies \link[limma]{voom} to 
 #' calculate the logCPM and weighting factors. 
+#' The results of EGSEA can be seen using the \code{\link{topSets}} function. 
 #'
 #' @param counts double, numeric matrix of read counts where genes are the rows 
 #' and samples are
@@ -331,7 +334,8 @@ verbose, num.threads, report)))
 #' gene sets and the detailed analysis
 #' results for each contrast and the comparative analysis results.
 #' 
-#' @seealso \code{\link{egsea.base}}, \code{\link{egsea.sort}}, 
+#' @seealso \code{\link{topSets}}, \code{\link{egsea.base}}, 
+#' \code{\link{egsea.sort}}, 
 #' \code{\link{buildIdxEZID}}, \code{\link{buildMSigDBIdxEZID}}, 
 #' \code{\link{buildKEGGIdxEZID}},
 #' \code{\link{buildGeneSetDBIdxEZID}}, and \code{\link{buildCustomIdxEZID}}
@@ -415,7 +419,8 @@ egsea.cnt <- function(counts, group, design = NULL, contrasts, logFC=NULL,
 #' gene sets in 
 #' this list. It takes the advantage of the existing EGSEA reporting 
 #' capabilities and generate 
-#' an interative report for the ORA analysis.  
+#' an interative report for the ORA analysis. 
+#' The results can be explored using the \code{\link{topSets}} function. 
 #'
 #' @param entrezIDs character, a vector of Entrez Gene IDs to be tested for ORA.
 #' @param universe character, a vector of Enterz IDs to be used as a background 
@@ -480,7 +485,7 @@ egsea.cnt <- function(counts, group, design = NULL, contrasts, logFC=NULL,
 #' gene sets and the detailed analysis
 #' results for each contrast and the comparative analysis results.
 #' 
-#' @seealso 
+#' @seealso \code{\link{topSets}},
 #' \code{\link{buildIdxEZID}}, \code{\link{buildMSigDBIdxEZID}}, 
 #' \code{\link{buildKEGGIdxEZID}},
 #' \code{\link{buildGeneSetDBIdxEZID}}, and \code{\link{buildCustomIdxEZID}}
@@ -519,7 +524,7 @@ egsea.cnt <- function(counts, group, design = NULL, contrasts, logFC=NULL,
 #' gs.annots=gs.annots, 
 #'              symbolsMap=top.Table[, c(1,2)], display.top = 5,
 #'               egsea.dir="./il13-egsea-ora-report", num.threads = 2, 
-#' report = FALSE)
+#' 				report = FALSE)
 #' topSets(gsa) 
 
 egsea.ora <- function(entrezIDs, universe=NULL, logFC=NULL, title=NULL, 
@@ -574,7 +579,7 @@ egsea.ora <- function(entrezIDs, universe=NULL, logFC=NULL, title=NULL,
 #' @description Extract a table of the top-ranked gene sets from an EGSEA 
 #' analysis.
 #' 
-#' @param gsa list, the analysis result object from  \code{\link{egsea}}, 
+#' @param object EGSEAResults object, the analysis result object from  \code{\link{egsea}}, 
 #' \code{\link{egsea.cnt}}
 #' or  \code{\link{egsea.ora}}. 
 #' @param contrast contrast column number or column name specifying which 
@@ -589,11 +594,15 @@ egsea.ora <- function(entrezIDs, universe=NULL, logFC=NULL, title=NULL,
 #' results.
 #' @param number integer, maximum number of gene sets to list
 #' @param names.only logical, whether to display the EGSEA statistics or not. 
+#' @param verbose logical, whether to print out progress messages and warnings. 
 #' 
 #' @export
 #' @return 
 #' A dataframe of top gene sets with the calculated statistics for each if 
 #' names.only = FALSE.
+#' 
+#' @name topSets
+#' @aliases topSets,EGSEAResults-method
 #' 
 #' @examples
 #' library(EGSEAdata)
@@ -606,7 +615,7 @@ egsea.ora <- function(entrezIDs, universe=NULL, logFC=NULL, title=NULL,
 #' gsa = egsea(voom.results=v, contrasts=contrasts,  gs.annots=gs.annots, 
 #'          symbolsMap=v$genes, 
 #' baseGSEAs=egsea.base()[-c(2,5,6,9)], display.top = 5,
-#'           sort.by="avg.rank", egsea.dir="./il13-egsea-report", 
+#'           sort.by="avg.rank",  
 #'          num.threads = 2, report=FALSE)
 #' topSets(gsa, contrast=1, gs.label="kegg", number = 10)
 #' topSets(gsa, contrast=1, gs.label=1, sort.by="ora", number = 10, 
@@ -614,32 +623,539 @@ egsea.ora <- function(entrezIDs, universe=NULL, logFC=NULL, title=NULL,
 #' topSets(gsa, contrast=0, gs.label="kegg", number = 10)
 #' 
 
-topSets <- function(gsa, contrast=1, gs.label=1, sort.by=NULL, number = 10, 
-names.only=TRUE){
-    tryCatch({                
-                if (contrast == 0 || tolower(contrast) == "comparison") 
-                    top.gs = gsa[[gs.label]][["comparison"]][["test.results"]]
-                else
-                    top.gs = gsa[[gs.label]][["test.results"]][[contrast]]
-                if (! is.null(sort.by)){
-                    top.gs = top.gs[order(top.gs[,sort.by],
-                            decreasing=(sort.by == "Significance")), ]
-                }   
-                number = ifelse(number <= nrow(top.gs), number, 
-nrow(top.gs))
-                #print(names(top.gs))
-                top.gs = top.gs[1:number, ]
-                if (names.only)
-                    return(rownames(top.gs))
-                else
-                    return(top.gs)
+setGeneric(name="topSets",
+        def = function(object, contrast=1, gs.label=1, sort.by=NULL, 
+                number = 10, names.only=TRUE, verbose = TRUE){
+            standardGeneric("topSets")
+        }
+)
+
+setMethod(f = "topSets",
+        signature(object = "EGSEAResults"),
+        definition = function(object, contrast=1, gs.label=1, sort.by=NULL, 
+                number = 10, names.only=TRUE, verbose = TRUE){
+            tryCatch({              
+                        if (is.numeric(contrast))
+                            if (contrast != 0)
+                                contrast = object@contrasts[contrast]
+                            else
+                                contrast = "comparison"
+                        if (verbose)
+                            cat(paste0("Extracting the top gene sets of the collection \n",
+                                object@gs.annots[[gs.label]]$name, " for the contrast ",
+                                contrast, "\n Sorted by ", 
+                                ifelse(is.null(sort.by), object@sort.by, sort.by)
+                                , "\n"))
+                        if (tolower(contrast) == "comparison") 
+                            top.gs = object@results[[gs.label]][["comparison"]][["test.results"]]
+                        else
+                            top.gs = object@results[[gs.label]][["test.results"]][[contrast]]
+                        if (! is.null(sort.by)){
+                            top.gs = top.gs[order(top.gs[,sort.by],
+                                            decreasing=(sort.by == "Significance")), ]
+                        }   
+                        top.gs = cbind(Rank=seq(1, nrow(top.gs)), top.gs)
+                        
+                        number = ifelse(number <= nrow(top.gs), number, 
+                                nrow(top.gs))
+                        #print(names(top.gs))
+                        top.gs = top.gs[1:number, ]
+                        if (names.only)
+                            return(rownames(top.gs))
+                        else{
+                            top.gs = as.data.frame(top.gs)
+                            top.gs[, "Direction"] = 
+                                    as.character(lapply(as.numeric(top.gs[, "Direction"]), 
+                                                    function(x) if (x > 0) "Up" else if (x < 0) 
+                                                            "Down" else "No Change"))
+                            return(top.gs)
+                        }
+                    }, 
+                    error = function(e){
+                        cat(paste0("ERROR: topSets(...) encountered an error:\n", e ))
+                    })
+            return(NULL)
+        }
+
+)
+
+
+#' @title Show the content of the EGSEAResults object
+#' @description Show the content of the EGSEAResults object
+#' 
+#' @param object EGSEAResults object, the analysis result object from  \code{\link{egsea}}, 
+#' \code{\link{egsea.cnt}}
+#' or  \code{\link{egsea.ora}}. 
+#' 
+#' @export
+#' @return 
+#' NULL
+#' 
+#' @name show
+#' @aliases show,EGSEAResults-method
+#' 
+#' @examples
+#' library(EGSEAdata)
+#' data(il13.data)
+#' v = il13.data$voom
+#' contrasts = il13.data$contra
+#' gs.annots = buildIdxEZID(entrezIDs=rownames(v$E), species="human", 
+#' msigdb.gsets="none", 
+#'          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
+#' gsa = egsea(voom.results=v, contrasts=contrasts,  gs.annots=gs.annots, 
+#'          symbolsMap=v$genes, 
+#' baseGSEAs=egsea.base()[-c(2,5,6,9)], display.top = 5,
+#'           sort.by="avg.rank", num.threads = 2, report=FALSE)
+#' show(gsa)
+
+#setGeneric(name="show",
+#        def = function(object){
+#            standardGeneric("show")
+#        }
+#)
+
+setMethod(f = "show",
+        signature(object = "EGSEAResults"),
+        definition = function(object){
+            cat("An object of class \"EGSEAResults\"\n")
+            cat(paste0("\tTotal number of genes: ", 
+                            length(object@gs.annots[[1]]$featureIDs), "\n"))
+            cat(paste0("\tTotal number of samples: ", object@sampleSize, "\n"))
+            cat(paste0("\tContrasts: ", paste(object@contrasts, collapse=", "), "\n"))
+            cat(paste0("\tBase GSE methods: ", 
+                            paste(object@baseMethods, collapse=", "), "\n"))
+            cat(paste0("\tP-values combining method: ", object@combineMethod, "\n"))
+            cat(paste0("\tSorting statistic: ", object@sort.by, "\n"))
+            cat(paste0("\tOrganism: ", object@gs.annots[[1]]$species, "\n"))
+            cat(paste0("\tHTML report generated: ", ifelse(object@report, "Yes", "No"), "\n"))
+            if (object@report)
+                cat(paste0("\tHTML report directory: ", object@report.dir, "\n"))
+            cat("\tTested gene set collections: \n")
+            for (gs.annot in object@gs.annots){
+                cat(paste0("\t\t", gs.annot$name, " (", gs.annot$label , "): ",
+                                length(gs.annot$idx), " gene sets\n"))
+            }
+            cat("Use summary(object) and topSets(object, ...) to explore this object.\n")
+        }
+
+)
+
+
+#' @title Summary of the EGSEAResults object
+#' @description Summary of the EGSEAResults object
+#' 
+#' @param object EGSEAResults object, the analysis result object from  \code{\link{egsea}}, 
+#' \code{\link{egsea.cnt}}
+#' or  \code{\link{egsea.ora}}. 
+#' 
+#' @export
+#' @return 
+#' NULL
+#' 
+#' @name summary
+#' @aliases summary,EGSEAResults-method
+#' 
+#' @examples
+#' library(EGSEAdata)
+#' data(il13.data)
+#' v = il13.data$voom
+#' contrasts = il13.data$contra
+#' gs.annots = buildIdxEZID(entrezIDs=rownames(v$E), species="human", 
+#' msigdb.gsets="none", 
+#'          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
+#' gsa = egsea(voom.results=v, contrasts=contrasts,  gs.annots=gs.annots, 
+#'          symbolsMap=v$genes, 
+#' baseGSEAs=egsea.base()[-c(2,5,6,9)], display.top = 5,
+#'           sort.by="avg.rank", num.threads = 2, report=FALSE)
+#' summary(gsa)
+
+#setGeneric(name="summary",
+#        def = function(object){
+#            standardGeneric("summary")
+#        }
+#)
+
+setMethod(f = "summary",
+        signature(object = "EGSEAResults"),
+        definition = function(object){
+            # for each collection and contrast, print top 10 + comparison if exists            
+            for (label in names(object@results)){
+                cat(paste0("*Top 10 gene sets in the ", object@gs.annots[[label]]$name, 
+                                " collection\n"))
+                for (contrast in 1:length(object@contrasts)){     
+                    cat(paste0("**Contrast ", object@contrasts[contrast], "\n"))
+                    cat(paste(topSets(object, contrast, label, verbose=FALSE), collapse=" | "))
+                    cat("\n")
+                }
+                if ("comparison" %in% names(object@results[[label]])){
+                    cat(paste0("**Comparison analysis \n"))
+                    cat(paste(topSets(object, "comparison", label, verbose=FALSE), collapse=" | "))
+                    cat("\n")
+                }
+            }
+        }
+
+)
+
+#' @title Plot a heatmap for a given gene set
+#' @description Summary of the EGSEAResults object
+#' 
+#' @param object EGSEAResults object, the analysis result object from  \code{\link{egsea}}, 
+#' \code{\link{egsea.cnt}}
+#' or  \code{\link{egsea.ora}}. 
+#' @param gene.set character, the name of the gene set. 
+#' See the output of \code{\link{topSets}}.
+#' @param gs.label character or numeric, the index/name of the gene set collection.
+#' See names(object@@gs.annots) for valid values.
+#' @param contrast character or numeric, the index/name of the contrast or 0/"comparison". 
+#' See object@@contrasts for valid values.
+#' @param file.name character, the name of the heatmap file without an extension.
+#' @param format character, takes "pdf" or "png".
+#' @param verbose logical, whether to print out progress messages and warnings.
+#' 
+#' @export
+#' @return 
+#' NULL
+#' 
+#' @name plotHeatmap
+#' @aliases plotHeatmap,EGSEAResults-method
+#' 
+#' @examples
+#' library(EGSEAdata)
+#' data(il13.data)
+#' v = il13.data$voom
+#' contrasts = il13.data$contra
+#' gs.annots = buildIdxEZID(entrezIDs=rownames(v$E), species="human", 
+#' msigdb.gsets="none", 
+#'          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
+#' gsa = egsea(voom.results=v, contrasts=contrasts,  gs.annots=gs.annots, 
+#'          symbolsMap=v$genes, 
+#' baseGSEAs=egsea.base()[-c(2,5,6,9)], display.top = 5,
+#'           sort.by="avg.rank", num.threads = 2, report=FALSE)
+#' plotHeatmap(gsa, "Asthma")
+#' plotHeatmap(gsa, "Asthma", contrast = "comparison", file.name = "asthma.hm.cmp")
+
+setGeneric(name="plotHeatmap",
+        def = function(object, gene.set, gs.label=1, contrast=1, file.name="heatmap", 
+                format = "pdf", verbose=TRUE){
+            standardGeneric("plotHeatmap")
+        }
+)
+
+setMethod(f = "plotHeatmap",
+        signature="EGSEAResults",
+        definition = function(object, gene.set, gs.label=1, contrast=1, 
+                file.name="heatmap", format = "pdf", verbose=TRUE){            
+            tryCatch({            
+                if (is.numeric(contrast))
+                    if (contrast != 0)
+                        contrast = object@contrasts[contrast]
+                    else
+                        contrast = "comparison"
+                if (verbose)
+                    cat(paste0("Plotting heatmap for ", gene.set, 
+                        " from the collection \n",
+                        object@gs.annots[[gs.label]]$name, " and for the contrast ",
+                        contrast, "\n"))
+                if (contrast %in% object@contrasts){
+                    suppressWarnings(generateHeatMap(gene.set, object@gs.annots[[gs.label]], 
+                            object@logFC[, contrast], 
+                            object@symbolsMap, file.name,
+                            format, print.csv = FALSE))
+                }else if (tolower(contrast) == "comparison"){
+                    suppressWarnings(generateHeatMap(gene.set, object@gs.annots[[gs.label]], 
+                            object@logFC, 
+                            object@symbolsMap, file.name,
+                            format, print.csv = FALSE))
+                }else{
+                    stop("Unrecognized contrast value. 
+						Use one of the object@contrasts or a numeric value.")
+                }
             }, 
             error = function(e){
-                cat(paste0("ERROR: topSets(...) encountered an error:\n", e ))
-            })
-    return(NULL)
-}
+                cat(paste0("ERROR: plotHeatmap(...) encountered an error:\n", e ))
+            })            
+        }
+)
 
+#' @title Plot a pathway map for a given KEGG pathway
+#' @description Summary of the EGSEAResults object
+#' 
+#' @param object EGSEAResults object, the analysis result object from  \code{\link{egsea}}, 
+#' \code{\link{egsea.cnt}}
+#' or  \code{\link{egsea.ora}}. 
+#' @param gene.set character, the name of the pathway. 
+#' See the output of \code{\link{topSets}}.
+#' @param gs.label character or numeric, the index/name of the KEGG pathways collection.
+#' See names(object@@gs.annots)[grep("^kegg", names(object@@gs.annots))] for valid values.
+#' @param contrast character or numeric, the index/name of the contrast or 0/"comparison". 
+#' See object@@contrasts for valid values.
+#' @param file.name character, the name of the heatmap file without an extension.
+#' @param verbose logical, whether to print out progress messages and warnings.
+#' 
+#' 
+#' @export
+#' @return 
+#' NULL
+#' 
+#' @name plotPathway
+#' @aliases plotPathway,EGSEAResults-method
+#' 
+#' @examples
+#' library(EGSEAdata)
+#' data(il13.data)
+#' v = il13.data$voom
+#' contrasts = il13.data$contra
+#' gs.annots = buildIdxEZID(entrezIDs=rownames(v$E), species="human", 
+#' msigdb.gsets="none", 
+#'          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
+#' gsa = egsea(voom.results=v, contrasts=contrasts,  gs.annots=gs.annots, 
+#'          symbolsMap=v$genes, 
+#' baseGSEAs=egsea.base()[-c(2,5,6,9)], display.top = 5,
+#'           sort.by="avg.rank", num.threads = 2, report=FALSE)
+#' plotPathway(gsa, "Asthma")
+#' plotPathway(gsa, "Asthma", contrast="comparison", file.name = "asthma.map.cmp")
+
+setGeneric(name="plotPathway",
+        def = function(object, gene.set, gs.label=1, contrast=1, file.name="pathway"
+                , verbose=TRUE){
+            standardGeneric("plotPathway")
+        }
+)
+
+setMethod(f = "plotPathway",
+        signature="EGSEAResults",
+        definition = function(object, gene.set, gs.label=1, contrast=1, 
+                file.name="pathway", verbose=TRUE){            
+            tryCatch({               
+                if (is.numeric(gs.label))
+                    gs.label = names(object@gs.annots)[gs.label]
+                stopifnot(length(grep("^kegg", tolower(gs.label))) == 1)
+                if (is.numeric(contrast))
+                    if (contrast != 0)
+                        contrast = object@contrasts[contrast]
+                    else
+                        contrast = "comparison"
+                if (verbose)
+                    cat(paste0("Plotting pathway map for ", gene.set, 
+                        " from the collection \n",
+                        object@gs.annots[[gs.label]]$name, " and for the contrast ",
+                        contrast, "\n"))
+                if (contrast %in% object@contrasts){
+                    suppressWarnings(generatePathway(gene.set, object@gs.annots[[gs.label]], 
+                                    object@logFC[, contrast], 
+                                    file.name = file.name))
+                }else if (tolower(contrast) == "comparison"){
+                    suppressWarnings(generateComparisonPathway(gene.set, 
+                                    object@gs.annots[[gs.label]], 
+                                    object@logFC, 
+                                    file.name = file.name))
+                }else{
+                    stop("Unrecognized contrast value. 
+                                    Use one of the object@contrasts or a numeric value.")
+                }
+            }, 
+            error = function(e){
+                cat(paste0("ERROR: plotPathway(...) encountered an error:\n", e ))
+            })            
+        }
+)
+
+#' @title Plot a multi-dimensional scaling (MDS) plot for the gene set rankings
+#' @description Plot a multi-dimensional scaling (MDS) plot for the gene set rankings
+#' of the base GSE methods
+#' 
+#' @param object EGSEAResults object, the analysis result object from  \code{\link{egsea}}, 
+#' \code{\link{egsea.cnt}}
+#' or  \code{\link{egsea.ora}}. 
+#' @param gs.label character or numeric, the index/name of the KEGG pathways collection.
+#' See names(object@@gs.annots)[grep("^kegg", names(object@@gs.annots))] for valid values.
+#' @param contrast character or numeric, the index/name of the contrast or 0/"comparison". 
+#' See object@@contrasts for valid values.
+#' @param file.name character, the name of the heatmap file without an extension.
+#' @param format character, takes "pdf" or "png".
+#' @param verbose logical, whether to print out progress messages and warnings. 
+#' 
+#' @export
+#' @return 
+#' NULL
+#' 
+#' @name plotMDS
+#' @aliases plotMDS,EGSEAResults-method
+#' 
+#' @examples
+#' library(EGSEAdata)
+#' data(il13.data)
+#' v = il13.data$voom
+#' contrasts = il13.data$contra
+#' gs.annots = buildIdxEZID(entrezIDs=rownames(v$E), species="human", 
+#' msigdb.gsets="none", 
+#'          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
+#' gsa = egsea(voom.results=v, contrasts=contrasts,  gs.annots=gs.annots, 
+#'          symbolsMap=v$genes, 
+#' baseGSEAs=egsea.base()[-c(2,5,6,9)], display.top = 5,
+#'           sort.by="avg.rank", num.threads = 2, report=FALSE)
+#' plotMDS(gsa)
+
+setGeneric(name="plotMDS",
+            def = function(object, gs.label=1, contrast=1, 
+                file.name="methods.mds", format = "pdf",
+                verbose = TRUE){
+            standardGeneric("plotMDS")
+        }
+)
+
+setMethod(f = "plotMDS",
+        signature="EGSEAResults",
+        definition = function(object, gs.label=1, contrast=1, 
+                file.name="methods.mds", format = "pdf",
+                verbose = TRUE){                
+            tryCatch({         
+                    if (is.numeric(contrast))
+                        if (contrast != 0)
+                            contrast = object@contrasts[contrast]
+                        else
+                            contrast = "comparison"
+                    if (tolower(contrast) == "comparison")
+                        stop("plotMDS(...) is not supported for the comparison analysis")
+                    if (length(object@baseMethods) < 2){
+                        stop("plotMDS(...) requires at least two base methods.")
+                    }
+                    if (verbose)
+                        cat(paste0("Generating MDS plot for the collection \n",
+                            object@gs.annots[[gs.label]]$name, " and for the contrast ",
+                            contrast, "\n"))
+                    capture.output(generateMDSMethodsPlot(object@results[[gs.label]]
+                            [["test.results"]][[contrast]], 
+                            object@baseMethods, 
+                            file.name, format))
+                }, 
+                error = function(e){
+                    cat(paste0("ERROR: plotMDS(...) encountered an error:\n", e ))
+                }
+            )
+            
+        }
+)
+
+
+#' @title Generate a Summary plot for EGSEA analysis
+#' @description Generate a Summary plot for EGSEA analysis
+#' 
+#' @param object EGSEAResults object, the analysis result object from  \code{\link{egsea}}, 
+#' \code{\link{egsea.cnt}}
+#' or  \code{\link{egsea.ora}}. 
+#' @param gs.label character or numeric, the index/name of the KEGG pathways collection.
+#' See names(object@@gs.annots)[grep("^kegg", names(object@@gs.annots))] for valid values.
+#' @param contrast character or numeric, the index/name of the contrast. To compare two
+#' contrasts, pass their indexes/names.
+#' See object@@contrasts for valid values.
+#' @param file.name character, the name of the heatmap file without an extension.
+#' @param format character, takes "pdf" or "png".
+#' @param x.axis character, the x-axis of the summary plot. All the 
+#' values accepted by the 
+#' \strong{sort.by} parameter can be used. Default x.axis="p.value".
+#' @param x.cutoff numeric, cut-off threshold to filter the gene sets of 
+#' the summary plots
+#' based on the values of the \strong{x.axis}. Default 
+#' x.cutoff=NULL.
+#' @param verbose logical, whether to print out progress messages and warnings. 
+#' 
+#' @export
+#' @return 
+#' NULL
+#' 
+#' @name plotSummary
+#' @aliases plotSummary,EGSEAResults-method
+#' 
+#' @examples
+#' library(EGSEAdata)
+#' data(il13.data)
+#' v = il13.data$voom
+#' contrasts = il13.data$contra
+#' gs.annots = buildIdxEZID(entrezIDs=rownames(v$E), species="human", 
+#' msigdb.gsets="none", 
+#'          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
+#' gsa = egsea(voom.results=v, contrasts=contrasts,  gs.annots=gs.annots, 
+#'          symbolsMap=v$genes, 
+#' baseGSEAs=egsea.base()[-c(2,5,6,9)], display.top = 5,
+#'           sort.by="avg.rank", num.threads = 2, report=FALSE)
+#' plotSummary(gsa)
+#' plotSummary(gsa, contrast=c(1,2), file.name = "summary.cmp")
+#' 
+setGeneric(name="plotSummary",
+            def = function(object, gs.label=1, contrast=1, 
+                    file.name="summary", format = "pdf",
+                    x.axis = "p.adj", x.cutoff = NULL,
+                    verbose = TRUE){
+                standardGeneric("plotSummary")
+            }
+)
+
+setMethod(f = "plotSummary",
+        signature="EGSEAResults",
+        definition = function(object, gs.label=1, contrast=1, 
+                file.name="summary", format = "pdf",
+                x.axis = "p.adj", x.cutoff = NULL,
+                verbose = TRUE){                
+            tryCatch({         
+                    if (is.numeric(contrast))                            
+                        contrast = object@contrasts[contrast]                                  
+                    if (is.null(x.cutoff)){
+                        if (x.axis %in% c("p.value", "p.adj"))
+                            x.cutoff = 1     
+                        else
+                            x.cutoff = 10000
+                    }                        
+                    if (length(contrast) == 2){
+                        if (verbose)
+                            cat(paste0("Generating Summary plots for the collection \n",
+                            object@gs.annots[[gs.label]]$name, " and for the comparison ",
+                            paste(contrast, collapse=" vs "), "\n"))                        
+                        plot.data = generatePlotData.comparison(
+                            object@results[[gs.label]][["test.results"]][contrast], 
+                            object@results[[gs.label]][["comparison"]][["test.results"]], 
+                            object@gs.annots[[gs.label]], 
+                            x.axis)
+                        if (x.axis %in% c("p.value", "p.adj")){
+                            generateSummaryPlots(plot.data, file.name,
+                                paste0("-log10(p-value) for ", contrast[1]),
+                                paste0("-log10(p-value) for ", contrast[2]),
+                                format = format)
+                        }else{
+                            generateSummaryPlots(plot.data, file.name,
+                                paste0("1 / ", x.axis, " for ", contrast[1]),
+                                paste0("1 / ", x.axis, " for ", contrast[2]),
+                                format = format)
+                        }
+                    }else if (length(contrast) == 1){
+                        if (verbose)
+                            cat(paste0("Generating Summary plots for the collection \n",
+                            object@gs.annots[[gs.label]]$name, " and for the contrast ",
+                            contrast, "\n"))
+                        plot.data = generatePlotData(
+                                object@results[[gs.label]]
+                                        [["test.results"]][[contrast]], 
+                                object@gs.annots[[gs.label]], 
+                                x.cutoff, x.axis)
+                        if (x.axis %in% c("p.value", "p.adj"))
+                            generateSummaryPlots(plot.data, file.name, 
+                                    format = format)
+                        else
+                            generateSummaryPlots(plot.data, file.name, 
+                                    Xlab = paste0("1 / ", x.axis),
+                                    format = format)
+                    }else{
+                        stop("Wrong number of contrasts. Max is 2.")
+                    }                 
+                }, 
+                error = function(e){
+                    cat(paste0("ERROR: plotMDS(...) encountered an error:\n", e ))
+                }
+            )
+            
+        }
+)
 
 #' @title EGSEA Result Sorting Options
 #' @description It lists the accepted sorting methods for analysis results
@@ -682,6 +1198,11 @@ egsea.base <- function(){
             "gsva", "ssgsea", "globaltest", "ora")) # , "fry" 
         # , "SPIA", "gsea", "samgs"
 }
+
+
+
+
+
 
 #TODO: use BiocParallel instead of parallel
 #TODO: create S4 class and methods for plotting and show methods for topSets

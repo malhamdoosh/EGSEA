@@ -494,7 +494,7 @@ sep="<br />")
 
 getNumberofSamples <- function(voom.results, contrast){
     if (is.null(voom.results$design)){
-        return("N/A")
+        return(0)
     }
     samples = c()
     sam.idx = colnames(voom.results$E)
