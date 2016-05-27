@@ -173,7 +173,7 @@ NULL
 #'          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
 #' # set report = TRUE to generate the EGSEA interactive report
 #' gsa = egsea(voom.results=v, contrasts=contrasts,  gs.annots=gs.annots, 
-#'          symbolsMap=v$genes, baseGSEAs=egsea.base()[-c(2,5,6,9)], 
+#'          symbolsMap=v$genes, baseGSEAs=egsea.base()[-c(2,5,6,9,12)], 
 #' 			display.top = 5, sort.by="avg.rank", 
 #' 			egsea.dir="./il13-egsea-report", 
 #'          num.threads = 2, report = FALSE)
@@ -365,7 +365,7 @@ verbose, num.threads, report)))
 #' # set report = TRUE to generate the EGSEA interactive report
 #' gsa = egsea.cnt(counts=cnt, group=group, design=design, contrasts=contrasts, 
 #'          gs.annots=gs.annots, 
-#'          symbolsMap=genes, baseGSEAs=egsea.base()[-c(2,5,6,9)], 
+#'          symbolsMap=genes, baseGSEAs=egsea.base()[-c(2,5,6,9,12)], 
 #' display.top = 5,
 #'           sort.by="avg.rank", 
 #' egsea.dir="./il13-egsea-cnt-report", 
@@ -614,7 +614,7 @@ egsea.ora <- function(entrezIDs, universe=NULL, logFC=NULL, title=NULL,
 #'          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
 #' gsa = egsea(voom.results=v, contrasts=contrasts,  gs.annots=gs.annots, 
 #'          symbolsMap=v$genes, 
-#' baseGSEAs=egsea.base()[-c(2,5,6,9)], display.top = 5,
+#' baseGSEAs=egsea.base()[-c(2,5,6,9,12)], display.top = 5,
 #'           sort.by="avg.rank",  
 #'          num.threads = 2, report=FALSE)
 #' topSets(gsa, contrast=1, gs.label="kegg", number = 10)
@@ -704,7 +704,7 @@ setMethod(f = "topSets",
 #'          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
 #' gsa = egsea(voom.results=v, contrasts=contrasts,  gs.annots=gs.annots, 
 #'          symbolsMap=v$genes, 
-#' baseGSEAs=egsea.base()[-c(2,5,6,9)], display.top = 5,
+#' baseGSEAs=egsea.base()[-c(2,5,6,9,12)], display.top = 5,
 #'           sort.by="avg.rank", num.threads = 2, report=FALSE)
 #' show(gsa)
 
@@ -765,7 +765,7 @@ setMethod(f = "show",
 #'          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
 #' gsa = egsea(voom.results=v, contrasts=contrasts,  gs.annots=gs.annots, 
 #'          symbolsMap=v$genes, 
-#' baseGSEAs=egsea.base()[-c(2,5,6,9)], display.top = 5,
+#' baseGSEAs=egsea.base()[-c(2,5,6,9,12)], display.top = 5,
 #'           sort.by="avg.rank", num.threads = 2, report=FALSE)
 #' summary(gsa)
 
@@ -830,7 +830,7 @@ setMethod(f = "summary",
 #'          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
 #' gsa = egsea(voom.results=v, contrasts=contrasts,  gs.annots=gs.annots, 
 #'          symbolsMap=v$genes, 
-#' baseGSEAs=egsea.base()[-c(2,5,6,9)], display.top = 5,
+#' baseGSEAs=egsea.base()[-c(2,5,6,9,12)], display.top = 5,
 #'           sort.by="avg.rank", num.threads = 2, report=FALSE)
 #' plotHeatmap(gsa, "Asthma")
 #' plotHeatmap(gsa, "Asthma", contrast = "comparison", file.name = "asthma.hm.cmp")
@@ -911,7 +911,7 @@ setMethod(f = "plotHeatmap",
 #'          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
 #' gsa = egsea(voom.results=v, contrasts=contrasts,  gs.annots=gs.annots, 
 #'          symbolsMap=v$genes, 
-#' baseGSEAs=egsea.base()[-c(2,5,6,9)], display.top = 5,
+#' baseGSEAs=egsea.base()[-c(2,5,6,9,12)], display.top = 5,
 #'           sort.by="avg.rank", num.threads = 2, report=FALSE)
 #' plotPathway(gsa, "Asthma")
 #' plotPathway(gsa, "Asthma", contrast="comparison", file.name = "asthma.map.cmp")
@@ -993,7 +993,7 @@ setMethod(f = "plotPathway",
 #'          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
 #' gsa = egsea(voom.results=v, contrasts=contrasts,  gs.annots=gs.annots, 
 #'          symbolsMap=v$genes, 
-#' baseGSEAs=egsea.base()[-c(2,5,6,9)], display.top = 5,
+#' baseGSEAs=egsea.base()[-c(2,5,6,9,12)], display.top = 5,
 #'           sort.by="avg.rank", num.threads = 2, report=FALSE)
 #' plotMDS(gsa)
 
@@ -1078,7 +1078,7 @@ setMethod(f = "plotMDS",
 #'          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
 #' gsa = egsea(voom.results=v, contrasts=contrasts,  gs.annots=gs.annots, 
 #'          symbolsMap=v$genes, 
-#' baseGSEAs=egsea.base()[-c(2,5,6,9)], display.top = 5,
+#' baseGSEAs=egsea.base()[-c(2,5,6,9,12)], display.top = 5,
 #'           sort.by="avg.rank", num.threads = 2, report=FALSE)
 #' plotSummary(gsa)
 #' plotSummary(gsa, contrast=c(1,2), file.name = "summary.cmp")
@@ -1195,7 +1195,7 @@ egsea.combine <- function(){
 
 egsea.base <- function(){
     return(c("camera", "roast", "safe", "gage", "padog", "plage", "zscore", 
-            "gsva", "ssgsea", "globaltest", "ora")) # , "fry" 
+            "gsva", "ssgsea", "globaltest", "ora", "fry")) 
         # , "SPIA", "gsea", "samgs"
 }
 
@@ -1205,7 +1205,13 @@ egsea.base <- function(){
 
 
 #TODO: use BiocParallel instead of parallel
-#TODO: create S4 class and methods for plotting and show methods for topSets
+
+#TODO: add to topSets() anno = T/F whether to add annotation info, e.g., ID, etc 
+
+#TODO: showSet(gsa, gene.set, contrast = NULL or value, gs.label) display genes size, anno, etc.
+# if contrast = NULL, no analysis results. Otherwise, display analysis results and
+# return list of genes with fold changes
+#TODO: 
 
 
 # R CMD build --resave-data EGSEA 

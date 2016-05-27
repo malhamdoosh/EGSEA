@@ -15,3 +15,5 @@ install_bitbucket("malhamdoosh/egseadata", ref="Stable_Release")
 install_bitbucket("malhamdoosh/egsea", ref="Stable_Release")
 
 Note that devtools should be installed before you can run these commands.
+
+In order to get the development version of EGSEA, use ref = "Devel_Release". 

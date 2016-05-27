@@ -160,7 +160,7 @@ msigdb.gsets="none",
 # set report = TRUE to generate the EGSEA interactive report
 gsa = egsea.cnt(counts=cnt, group=group, design=design, contrasts=contrasts, 
          gs.annots=gs.annots, 
-         symbolsMap=genes, baseGSEAs=egsea.base()[-c(2,5,6,9)], 
+         symbolsMap=genes, baseGSEAs=egsea.base()[-c(2,5,6,9,12)], 
 display.top = 5,
           sort.by="avg.rank", 
 egsea.dir="./il13-egsea-cnt-report", 

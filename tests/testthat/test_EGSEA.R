@@ -14,7 +14,7 @@ expect_identical(egsea.sort(), sort.opts)
 # test egsea.base
 expect_identical(egsea.base(), c("camera", "roast", "safe", "gage", "padog", 
                 "plage", "zscore", "gsva", "ssgsea", 
-                    "globaltest", "ora"))
+                    "globaltest", "ora", "fry"))
 
 
 # test egsea.combine

@@ -26,7 +26,7 @@ msigdb.gsets="none",
          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
 gsa = egsea(voom.results=v, contrasts=contrasts,  gs.annots=gs.annots, 
          symbolsMap=v$genes, 
-baseGSEAs=egsea.base()[-c(2,5,6,9)], display.top = 5,
+baseGSEAs=egsea.base()[-c(2,5,6,9,12)], display.top = 5,
           sort.by="avg.rank", num.threads = 2, report=FALSE)
 show(gsa)
 }

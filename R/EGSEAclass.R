@@ -34,7 +34,7 @@ EGSEAResults <- setClass(
                     baseMethods = "character",
                     combineMethod = "character",
                     sort.by = "character",
-                    symbolsMap = "data.frame",
+                    symbolsMap = "ANY",
                     logFC = "matrix",
                     report = "logical",
                     report.dir = "character"),
@@ -44,8 +44,8 @@ EGSEAResults <- setClass(
                     sampleSize = 0,
                     gs.annots = list(),
                     baseMethods = c(), 
-                    combineMethod = "",
-                    sort.by = "",
+                    combineMethod = "fisher",
+                    sort.by = "p.adj",
                     symbolsMap = data.frame(),
                     logFC = matrix(),
                     report = TRUE,
@@ -68,4 +68,18 @@ setMethod(f = "addEGSEAResult",
                 }
                     
           )
-          
+     
+  setGeneric(name="addSymbolsMap",
+          def = function(object, symbolsMap){
+              standardGeneric("addSymbolsMap")
+          }
+  )
+  
+  setMethod(f = "addSymbolsMap",
+          signature="EGSEAResults",
+          definition = function(object, symbolsMap){
+              object@symbolsMap = symbolsMap
+              return(object)
+          }
+  
+  )

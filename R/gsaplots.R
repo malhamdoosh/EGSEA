@@ -242,8 +242,7 @@ generateSummaryPlots.comparison <- function(egsea.results, egsea.comparison,
 }
 
 generatePlotData.comparison <- function(egsea.results.two, egsea.comparison, 
-gs.annot,
-        sum.plot.axis){ 
+                 gs.annot,  sum.plot.axis){ 
     
     gsets = as.character(rownames(egsea.comparison))    
 #   print(length(egsea.results.all))
@@ -587,14 +586,14 @@ logFC ... ")
 match the featureIDs vector in the gs.annot list")          
         }
     }   
-    if (!is.null(symbolsMap) && !identical(as.character(symbolsMap[,1]), 
-gs.annot$featureIDs)){
+    if (nrow(symbolsMap) > 0 && !identical(as.character(symbolsMap[,1]), 
+                    gs.annot$featureIDs)){
         symbolsMap = symbolsMap[match(as.character(symbolsMap[,1]), 
-gs.annot$featureIDs) , ]
+                        gs.annot$featureIDs) , ]
         if (!identical(as.character(symbolsMap[,1]), 
-gs.annot$featureIDs))
+                    gs.annot$featureIDs))
             stop("All featureIDs in the gs.annot list should map to 
-a valid gene symbol")
+					a valid gene symbol")
     }
     
     contrast.names = colnames(fc)       
@@ -642,7 +641,7 @@ generateHeatMap <- function(gene.set, gs.annot, fc, symbolsMap, file.name,
         hm = fc[sel.genes, ]
         colnames(hm) = gsub("X", "", colnames(fc))
     }
-    if (is.null(symbolsMap))
+    if (nrow(symbolsMap) == 0)
         rownames(hm) = gs.annot$featureIDs[sel.genes] # genes in the 
 # gene set    
     else

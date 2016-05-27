@@ -9,7 +9,10 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
                 logFC.cutoff, sum.plot.cutoff, sum.plot.axis, 
                 vote.bin.width, print.base, verbose, num.threads, 
                 report){
-    stopifnot(length(setdiff(baseGSEAs, c(egsea.base(), "fry"))) == 0)
+    baseGSEAs = sapply(baseGSEAs, tolower)
+    baseGSEAs = unique(baseGSEAs)
+    combineMethod = tolower(combineMethod)  
+    stopifnot(length(baseGSEAs) > 0 && length(setdiff(baseGSEAs, egsea.base())) == 0)
     stopifnot(combineMethod %in% egsea.combine())
     stopifnot(sort.by %in% egsea.sort())
     if (length(baseGSEAs) <= 1){
@@ -27,9 +30,7 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
     }
     if (is.null(colnames(contrast))){
         colnames(contrast) = paste0("contrast", rep(1, ncol(contrast)))
-    }
-    baseGSEAs = sapply(baseGSEAs, tolower)
-    combineMethod = tolower(combineMethod)  
+    }   
     # create output directory for 'egsea' results
     if (report){
         if (! dir.exists(file.path(egsea.dir))){
@@ -61,13 +62,23 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
         gs.annots = list()
         gs.annots[[gs.annot$label]] = gs.annot
     }
+    if (is.null(symbolsMap)){
+        symbolsMap = data.frame()
+    }else if (nrow(symbolsMap) > 0 && ncol(symbolsMap) >= 2){
+        na.sym = is.na(symbolsMap[, 2])
+        if (sum(na.sym) > 0){
+            warning("Some \"NA\" Gene Symbols were replaced with Feature IDs")
+            symbolsMap[na.sym, 2] = symbolsMap[na.sym, 1]
+        }
+    }
     gsas = EGSEAResults(contrasts = colnames(contrast), 
             sampleSize = getNumberofSamples(voom.results, contrast), 
             gs.annots = gs.annots, baseMethods=baseGSEAs,
-            combineMethod = combineMethod, sort.by = sort.by,
+            combineMethod = combineMethod, sort.by = sort.by,   
             symbolsMap = symbolsMap,
             logFC = logFC, report = report, report.dir = egsea.dir
             )
+    
     skipped = c()
     for (gs.annot in gs.annots){
         gs.annot = getGsetAnnot(gs.annot = gs.annot, min.size=minSize)  
@@ -457,22 +468,27 @@ temp.results[[baseGSEA]][[i]][names(gs.annot$idx),]
 combinePvalues <- function(data, combineMethod, combineWeights = NULL){
     if (ncol(data) > 1){
         if (combineMethod == "average"){
-            pvalues = sapply(apply(data,  1, 
-                    function(x) ifelse(length(x[!is.na(x)] >= 4), 
-                                        meanp(x[!is.na(x)]),
-                                        mean(x)) ), 
-                    function(x) x$p)            
+            #print(head(data))
+            pvalues =sapply(1:nrow(data),  
+                            function(i) {
+                                x = data[i, ]                                
+                                return(ifelse(length(x[!is.na(x)]) >= 4, 
+                                        meanp(x[!is.na(x)])$p,
+                                        mean(x)
+                                      )) 
+                             }
+                           )    
         } else if (combineMethod == "fisher"){        
             data[data == 0] = 1*10^-22           
-            pvalues = sapply(apply(data,  1, function(x) sumlog(x[!is.na(x)])), 
+            pvalues = sapply(apply(data,  1, function(y) sumlog(y[!is.na(y)])), 
                     function(x) x$p)            
         } else if (combineMethod == "logitp"){        
             data[data == 0] = 1*10^-22
             data[data == 1] = 1 - 1*10^-5
-            pvalues = sapply(apply(data,  1, function(x) logitp(x[!is.na(x)])), 
+            pvalues = sapply(apply(data,  1, function(y) logitp(y[!is.na(y)])), 
                     function(x) x$p)            
         }else if (combineMethod == "sump"){
-            pvalues = sapply(apply(data,  1, function(x) sump(x[!is.na(x)])), 
+            pvalues = sapply(apply(data,  1, function(y) sump(y[!is.na(y)])), 
                     function(x) x$p)            
         }else if (combineMethod == "sumz"){        
             data[data == 0] = 1*10^-22
@@ -488,6 +504,8 @@ combinePvalues <- function(data, combineMethod, combineWeights = NULL){
     } else{
         pvalues = data[, 1]
     }
+    #print(class(pvalues))
+    #print(pvalues)
     adj.pvals = p.adjust(pvalues, method="BH")
     return(list(pvalues=pvalues, adj.pvals = adj.pvals))
 }

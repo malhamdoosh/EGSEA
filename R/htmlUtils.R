@@ -550,7 +550,7 @@ page=p)
     hwrite(paste0(hmakeTag("b","Fold changes calculated: " ),logFC.cal), 
 br=TRUE, page=p)    
     hwrite(paste0(hmakeTag("b","Gen IDs - Symbols mapping used: " ), 
-                    ifelse(!is.null(symbolsMap), "Yes", 
+                    ifelse(nrow(symbolsMap) > 0, "Yes", 
 "No")), br=TRUE, page=p)
     hwrite(paste0(hmakeTag("b","Organism: " ), gs.annots[[1]]$species), 
 br=TRUE, page=p)
