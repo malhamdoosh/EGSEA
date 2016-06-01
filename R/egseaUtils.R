@@ -434,7 +434,7 @@ temp.results[[baseGSEA]][[i]][names(gs.annot$idx),]
         }   
 #        print(head(egsea.results[[i]]))
         pvalues = egsea.results[[i]][, "p.adj"]
-        pvalues[pvalues == 0] = NA
+        pvalues[pvalues == 0] = 1*10^-22
         pvalues = -1 * log10(pvalues)
         pvalues[is.na(pvalues)] = max(pvalues, na.rm=TRUE) + 1  
         sig = pvalues * gs.avg.fcs
@@ -775,14 +775,14 @@ createComparison <- function(egsea.results, combineMethod="fisher", display.top=
     col.names = colnames(egsea.results[[1]])
     gset.names =  rownames(egsea.results[[1]])
     for (i in 1:length(col.names)){ # iterate over egsea.results columns
-        if (col.names[i] == "p.value")
+        if (col.names[i] == "p.adj")
             next
         temp= numeric(0)
         for (j in 1:length(egsea.results)){ # iterate over contrasts
             temp = cbind(temp, egsea.results[[j]][gset.names, i])
         }
         
-        if (col.names[i] == "p.adj"){         
+        if (col.names[i] == "p.value"){         
             temp = combinePvalues(temp, combineMethod)
             pvalues = temp$pvalues
             adj.pvals = temp$adj.pvals

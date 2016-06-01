@@ -176,7 +176,7 @@ generateSumPlots <- function(egsea.results, baseGSEAs, gs.annot, gsa.dir,
                 generateSummaryPlots(plot.data, file.name)
             else
                 generateSummaryPlots(plot.data, file.name, 
-                        Xlab = paste0("1 / ", sum.plot.axis))
+                        Xlab = paste0("-", sum.plot.axis))
         }
         file.name = paste0(summary.dir, sub(" - ", "-", 
                     contrast.names[i]), "-", gs.annot$label, "-methods")
@@ -200,7 +200,8 @@ gsa.dir,
     if (length(contrast.names) == 2){
         generateSummaryPlots.comparison(egsea.results, 
                 egsea.comparison, gs.annot, 
-                sum.plot.axis,file.prefix="", summary.dir)
+                sum.plot.axis, sum.plot.cutoff,
+                file.prefix="", summary.dir)
     } 
     else if (length(contrast.names) > 2){
         print("There are more than 2 contrasts!")
@@ -209,7 +210,7 @@ gsa.dir,
                 egsea.results.sub = egsea.results[c(i,j)]  
                 generateSummaryPlots.comparison(egsea.results.sub, 
                         egsea.comparison, gs.annot, 
-                        sum.plot.axis, file.prefix = 
+                        sum.plot.axis, sum.plot.cutoff, file.prefix = 
                         paste0('-', i,j), summary.dir)
             }
         }
@@ -217,13 +218,14 @@ gsa.dir,
 }
 
 generateSummaryPlots.comparison <- function(egsea.results, egsea.comparison, 
-                        gs.annot, sum.plot.axis, file.prefix, summary.dir){
+                        gs.annot, sum.plot.axis, sum.plot.cutoff,
+                        file.prefix, summary.dir){
     file.name = paste0(summary.dir, gs.annot$label, file.prefix, "-summary")
     if (!file.exists(paste0(file.name, ".dir.png"))){
         contrast.names = names(egsea.results)
         plot.data = generatePlotData.comparison(egsea.results, 
                 egsea.comparison, gs.annot, 
-                sum.plot.axis)
+                sum.plot.axis, sum.plot.cutoff)
         if (sum.plot.axis %in% c("p.value", "p.adj")){
             generateSummaryPlots(plot.data, file.name,
                     paste0("-log10(p-value) for ", 
@@ -232,9 +234,9 @@ generateSummaryPlots.comparison <- function(egsea.results, egsea.comparison,
                     contrast.names[2]))
         }else{
             generateSummaryPlots(plot.data, file.name,
-                    paste0("1 / ", sum.plot.axis, " for ", 
+                    paste0("-", sum.plot.axis, " for ", 
                         contrast.names[1]),
-                    paste0("1 / ", sum.plot.axis, " for ", 
+                    paste0("-", sum.plot.axis, " for ", 
                         contrast.names[2]))
         }
         
@@ -242,9 +244,12 @@ generateSummaryPlots.comparison <- function(egsea.results, egsea.comparison,
 }
 
 generatePlotData.comparison <- function(egsea.results.two, egsea.comparison, 
-                 gs.annot,  sum.plot.axis){ 
-    
-    gsets = as.character(rownames(egsea.comparison))    
+                 gs.annot,  sum.plot.axis, sum.plot.cutoff){ 
+    tmp = egsea.results.two[[1]][, sum.plot.axis]
+    gsets1 = as.character(rownames(egsea.comparison)) [tmp <= sum.plot.cutoff]  
+    tmp = egsea.results.two[[2]][, sum.plot.axis]
+    gsets2 = as.character(rownames(egsea.comparison)) [tmp <= sum.plot.cutoff]
+    gsets = intersect(gsets1, gsets2)  
 #   print(length(egsea.results.all))
 #   print(length(gsets))
 #   print(head(fc))
@@ -257,12 +262,12 @@ generatePlotData.comparison <- function(egsea.results.two, egsea.comparison,
         if ( sum.plot.axis %in% c("p.value", "p.adj")){
             pvalues = egsea.results[gsets, sum.plot.axis]       
     
-            pvalues[pvalues == 0] = NA
+            pvalues[pvalues == 0] = 1*10^-22
             pvalues = -1 * log10(pvalues)
             pvalues[is.na(pvalues)] = max(pvalues, na.rm=TRUE) + 1  
     
         }else{
-            pvalues = 1/egsea.results[gsets, sum.plot.axis] 
+            pvalues =  - egsea.results[gsets, sum.plot.axis] 
         }
         sig.combined = sig.combined + 
                 egsea.results[gsets, "Significance"]
@@ -285,18 +290,17 @@ generatePlotData.comparison <- function(egsea.results.two, egsea.comparison,
 }
 
 generatePlotData <- function(egsea.results, gs.annot,
-        sum.plot.cutoff,  sum.plot.axis){
-    
+        sum.plot.cutoff,  sum.plot.axis){    
     x.data = egsea.results[, sum.plot.axis]
     gsets = as.character(rownames(egsea.results))[x.data <= sum.plot.cutoff]
     x.data = x.data[x.data <= sum.plot.cutoff]
     if (sum.plot.axis %in% c("p.value", "p.adj")){
-        x.data[x.data == 0] = NA
+        x.data[x.data == 0] = 1*10^-22
         x.data = -1 * log10(x.data)
         x.data[is.na(x.data)] = max(x.data, na.rm=TRUE) + 1     
     }
     else{
-        x.data = 1 / x.data         
+       x.data = - x.data         
     }       
     
     rank = seq(1, length(gsets))
@@ -307,9 +311,9 @@ generatePlotData <- function(egsea.results, gs.annot,
 fixed=TRUE)[[1]][2]))
     
     plot.data = data.frame(id=gs.annot$anno[gsets, "ID"] , 
-            x.data=x.data, y.data=egsea.results[, "avg.logFC"], 
-            gsSize=gs.sizes, sig=egsea.results[, "Significance"], 
-            dir=egsea.results[, "Direction"], rank = rank)  
+            x.data=x.data, y.data=egsea.results[gsets, "avg.logFC"], 
+            gsSize=gs.sizes, sig=egsea.results[gsets, "Significance"], 
+            dir=egsea.results[gsets, "Direction"], rank = rank)  
     return(plot.data)
 }
 
@@ -341,16 +345,28 @@ generateSummaryPlots <- function(plot.data, file.name, Xlab="-log10(p-value)",
     tryCatch({
         plot.data.sig = plot.data[plot.data[, "rank"] <= 10, ]
         sig.cols = rep("black", nrow(plot.data.sig))
+        if (min(plot.data[, "x.data"], na.rm=TRUE) > 0){
+            xlimits = c(0.8 * min(plot.data[, "x.data"], na.rm=TRUE), 
+                max(plot.data[, "x.data"], na.rm=TRUE)*1.05)
+        }else{
+            xlimits = c(1.05 * min(plot.data[, "x.data"], na.rm=TRUE), 
+                    max(plot.data[, "x.data"], na.rm=TRUE)*0.8)
+        }
+        if (max(plot.data[, "y.data"], na.rm=TRUE) > 0){
+            ylimits = c(min(plot.data[, "y.data"], na.rm=TRUE), 
+                    max(plot.data[, "y.data"], na.rm=TRUE) * 1.05)
+        }else{
+            ylimits = c(min(plot.data[, "y.data"], na.rm=TRUE), 
+                    max(plot.data[, "y.data"], na.rm=TRUE) * 0.9)       
+        }
     #   print(plot.data.sig)
     #       print(dim(plot.data))   
         # plot rank-based coloured bubbles
         p = qplot(x.data, y.data, data=plot.data, size=gsSize,asp=1, 
                 colour=rank,
                 xlab = Xlab, ylab = Ylab,
-                xlim=c(0.8 * min(plot.data[, "x.data"], 
-na.rm=TRUE), max(plot.data[, "x.data"], na.rm=TRUE)*1.05), 
-                ylim=c(min(plot.data[, "y.data"], na.rm=TRUE), 
-max(plot.data[, "y.data"], na.rm=TRUE) * 1.05))
+                xlim=xlimits, 
+                ylim=ylimits)
         # customize bubbles colour 
         p = p + scale_colour_gradient(guide="colourbar", low="#56B1F7", 
 high="#000000",
@@ -387,10 +403,8 @@ plot.data[, "id"]), ]
         p = qplot(x.data, y.data, data=plot.data, size=sig,asp=1, 
                 colour=dir,
                 xlab = Xlab, ylab = Ylab,
-                xlim=c(0.8 * min(plot.data[, "x.data"], 
-na.rm=TRUE), max(plot.data[, "x.data"], na.rm=TRUE)*1.05),
-                ylim=c(min(plot.data[, "y.data"], na.rm=TRUE), 
-max(plot.data[, "y.data"], na.rm=TRUE) * 1.05))
+                xlim=xlimits,
+                ylim=ylimits)
         p = p + scale_colour_gradient(guide="colourbar", low="#56B1F7", 
 high="#E35F5F",
                 limits=c(-1,1), na.value="black", 

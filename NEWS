@@ -25,3 +25,7 @@ EGSEA 1.1.5 (2016-05-27)
 - Added: NA Gene Symbols are replaced with Feature IDs in the symbolsMap
 - Added: FRY to egsea.base()
 - Added: several sanity checks on the input parameters
+
+EGSEA 1.1.6 (2016-05-31)
+------------------------
+- Fixed: a minor bug in the calculation of the comparative analysis p-value.

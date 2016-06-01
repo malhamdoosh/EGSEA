@@ -1025,8 +1025,8 @@ setMethod(f = "plotMDS",
                         cat(paste0("Generating MDS plot for the collection \n",
                             object@gs.annots[[gs.label]]$name, " and for the contrast ",
                             contrast, "\n"))
-                    capture.output(generateMDSMethodsPlot(object@results[[gs.label]]
-                            [["test.results"]][[contrast]], 
+                    capture.output(generateMDSMethodsPlot(
+                            object@results[[gs.label]][["test.results"]][[contrast]], 
                             object@baseMethods, 
                             file.name, format))
                 }, 
@@ -1116,7 +1116,7 @@ setMethod(f = "plotSummary",
                             object@results[[gs.label]][["test.results"]][contrast], 
                             object@results[[gs.label]][["comparison"]][["test.results"]], 
                             object@gs.annots[[gs.label]], 
-                            x.axis)
+                            x.axis, x.cutoff)
                         if (x.axis %in% c("p.value", "p.adj")){
                             generateSummaryPlots(plot.data, file.name,
                                 paste0("-log10(p-value) for ", contrast[1]),
@@ -1124,8 +1124,8 @@ setMethod(f = "plotSummary",
                                 format = format)
                         }else{
                             generateSummaryPlots(plot.data, file.name,
-                                paste0("1 / ", x.axis, " for ", contrast[1]),
-                                paste0("1 / ", x.axis, " for ", contrast[2]),
+                                paste0("-", x.axis, " for ", contrast[1]),
+                                paste0("-", x.axis, " for ", contrast[2]),
                                 format = format)
                         }
                     }else if (length(contrast) == 1){
@@ -1143,14 +1143,14 @@ setMethod(f = "plotSummary",
                                     format = format)
                         else
                             generateSummaryPlots(plot.data, file.name, 
-                                    Xlab = paste0("1 / ", x.axis),
+                                    Xlab = paste0("-", x.axis),
                                     format = format)
                     }else{
                         stop("Wrong number of contrasts. Max is 2.")
                     }                 
                 }, 
                 error = function(e){
-                    cat(paste0("ERROR: plotMDS(...) encountered an error:\n", e ))
+                    cat(paste0("ERROR: plotSummary(...) encountered an error:\n", e ))
                 }
             )
             
@@ -1208,10 +1208,10 @@ egsea.base <- function(){
 
 #TODO: add to topSets() anno = T/F whether to add annotation info, e.g., ID, etc 
 
-#TODO: showSet(gsa, gene.set, contrast = NULL or value, gs.label) display genes size, anno, etc.
+#TODO: showSetByName(gsa, gene.set, gs.label, contrast = NULL or value) display genes size, anno, etc.
 # if contrast = NULL, no analysis results. Otherwise, display analysis results and
 # return list of genes with fold changes
-#TODO: 
+#TODO: showSetByID(gsa, id, gs.label, contrast = NULL)
 
 
 # R CMD build --resave-data EGSEA 
