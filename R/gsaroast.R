@@ -15,8 +15,7 @@ output = TRUE,
         else
             cat(".")
         roast.results[[i]] = mroast(y=voom.results, 
-                index=gs.annot$idx[as.numeric(gs.annot$anno[, 
-"NumGenes"]) < 2000], 
+                index=gs.annot$idx, 
                 design=voom.results$design, 
                 contrast=contrast[,i], nrot=999)
         # returns PropDown/PropUp ==> proportion of genes that are 
