@@ -12,7 +12,7 @@ runora <- function(voom.results, contrast, gs.annot,
     # phyper(100, 3000, 12000, 400)
     #
 
-    file.name = paste0(ranked.gs.dir, "/ora-ranked-", gs.annot$label, 
+    file.name = paste0(ranked.gs.dir, "/ora-ranked-", gs.annot@label, 
 "-gene-sets-", 
             sub(" - ", "-", colnames(contrast)), '.txt')    
     if (!is.null(voom.results$E)){
@@ -21,18 +21,18 @@ runora <- function(voom.results, contrast, gs.annot,
         vfit = eBayes(vfit)
         pvalue.cut=0.05
         logfc.cut=1     
-        universe = gs.annot$featureIDs
+        universe = gs.annot@featureIDs
     }
     else if (!is.null(voom.results$featureIDs)){
         universe = voom.results$featureIDs
     }
     else{
         # following topGO approach
-        if (gs.annot$species == "Homo sapiens")
+        if (gs.annot@species == "Homo sapiens")
             EG.GO = AnnotationDbi::toTable(org.Hs.egGO2ALLEGS)
-        else if (gs.annot$species == "Mus musculus")
+        else if (gs.annot@species == "Mus musculus")
             EG.GO = AnnotationDbi::toTable(org.Mm.egGO2ALLEGS)
-        else if (gs.annot$species == "Rattus norvegicus")
+        else if (gs.annot@species == "Rattus norvegicus")
             EG.GO = AnnotationDbi::toTable(org.Rn.egGO2ALLEGS)
         else
             stop("Unsupported species for ORA universe.")
@@ -67,7 +67,7 @@ runora <- function(voom.results, contrast, gs.annot,
         ora.results[[i]] = ora.stats
 #       print(head(ora.results[[i]]))
         ora.results[[i]] = 
-ora.results[[i]][order(ora.results[[i]][,"p.adj"]),]        
+ora.results[[i]][order(ora.results[[i]][,"p.value"]),]   # order by p.value     
         ora.results[[i]] = cbind(Rank=seq(1, nrow(ora.results[[i]])), 
 ora.results[[i]])
         if (!output)
@@ -81,12 +81,12 @@ gs.annot, "ORA", file.name[i])
 
 
 runora.contra <- function(deGenes, gs.annot, universe){
-    tmp = rep(NA, length(gs.annot$original))
+    tmp = rep(NA, length(gs.annot@original))
     ora.stats = data.frame(p.value=tmp, p.adj = tmp) # , NumGenes=tmp
     totalDE = length(deGenes)
     n = length(universe) - totalDE
-    for (j in 1:length(gs.annot$original)){
-        gset = gs.annot$original[[j]]
+    for (j in 1:length(gs.annot@original)){
+        gset = gs.annot@original[[j]]
         totalDEinS = length(intersect(gset, deGenes)) 
         totalSinUniverse = length(intersect(gset, universe))        
         ora.stats[j, "p.value"] = phyper(q = totalDEinS- 0.5, m= 
@@ -95,7 +95,7 @@ totalDE, n = n,
         #ora.stats[j, "NumGenes"] = totalDEinS
     }
     ora.stats[, "p.adj"] = p.adjust(ora.stats[, "p.value"], method = "BH")
-    row.names(ora.stats) = names(gs.annot$original)
+    row.names(ora.stats) = names(gs.annot@original)
     return ( ora.stats)
 }
 

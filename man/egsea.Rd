@@ -27,11 +27,11 @@ K is the number of genes included in the analysis. If logFC=NULL, the logFC
 values are 
 estimated using the  \code{\link[limma]{ebayes}} for each contrast.}
 
-\item{gs.annots}{list, indexed collections of gene sets. It is generated 
+\item{gs.annots}{list, list of objects of class GSCollectionIndex. It is generated 
 using one of these functions: 
- \code{\link{buildIdxEZID}}, \code{\link{buildMSigDBIdxEZID}}, 
-\code{\link{buildKEGGIdxEZID}},
-\code{\link{buildGeneSetDBIdxEZID}}, and \code{\link{buildCustomIdxEZID}}.}
+ \code{\link{buildIdx}}, \code{\link{buildMSigDBIdx}}, 
+\code{\link{buildKEGGIdx}},
+\code{\link{buildGeneSetDBIdx}}, and \code{\link{buildCustomIdx}}.}
 
 \item{symbolsMap}{dataframe, an K x 2 matrix stores the gene symbol of each 
 Entrez Gene ID. It 
@@ -141,7 +141,7 @@ library(EGSEAdata)
 data(il13.data)
 v = il13.data$voom
 contrasts = il13.data$contra
-gs.annots = buildIdxEZID(entrezIDs=rownames(v$E), species="human", 
+gs.annots = buildIdx(entrezIDs=rownames(v$E), species="human", 
 msigdb.gsets="none", 
          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
 # set report = TRUE to generate the EGSEA interactive report
@@ -163,8 +163,8 @@ analyses.
 \seealso{
 \code{\link{topSets}}, \code{\link{egsea.base}}, 
 \code{\link{egsea.sort}}, 
-\code{\link{buildIdxEZID}}, \code{\link{buildMSigDBIdxEZID}}, 
-\code{\link{buildKEGGIdxEZID}},
-\code{\link{buildGeneSetDBIdxEZID}}, and \code{\link{buildCustomIdxEZID}}
+\code{\link{buildIdx}}, \code{\link{buildMSigDBIdx}}, 
+\code{\link{buildKEGGIdx}},
+\code{\link{buildGeneSetDBIdx}}, and \code{\link{buildCustomIdx}}
 }
 

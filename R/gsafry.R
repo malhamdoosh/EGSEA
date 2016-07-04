@@ -5,7 +5,7 @@ runfry <- function(voom.results, contrast, gs.annot,  ranked.gs.dir="",
         num.workers=4, verbose = TRUE){     
     # run fry and write out ranked 'gene sets' for each 'contrast'    
     
-    file.name = paste0(ranked.gs.dir, "/fry-ranked-", gs.annot$label, 
+    file.name = paste0(ranked.gs.dir, "/fry-ranked-", gs.annot@label, 
             "-gene-sets-", 
             sub(" - ", "-", colnames(contrast)), '.txt')        
     fry.results = vector("list", ncol(contrast))  
@@ -15,7 +15,7 @@ runfry <- function(voom.results, contrast, gs.annot,  ranked.gs.dir="",
         else
             cat(".")
         capture.output(fry.results[[i]] <- fry(y=voom.results, 
-                index=gs.annot$idx, 
+                index=gs.annot@idx, 
                 design=voom.results$design, 
                 contrast=contrast[,i]))
         # returns PropDown/PropUp ==> proportion of genes that are 

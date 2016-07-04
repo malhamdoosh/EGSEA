@@ -5,7 +5,7 @@
 
 writeResultsToHTML <- function(contrast.name, gsa.results, gs.annot, method, 
 file.name){
-    title = paste0("Gene Set Enrichment Analysis on ", gs.annot$name, " 
+    title = paste0("Gene Set Enrichment Analysis on ", gs.annot@name, " 
 using ", method, " (", 
             contrast.name, ")")
     path = strsplit(file.name, "/")[[1]]    
@@ -19,8 +19,8 @@ using ", method, " (",
         gsa.results = as.data.frame(gsa.results)
         row.names(gsa.results) = rows
     }   
-    annot.frame = gs.annot$anno[match(rownames(gsa.results), 
-gs.annot$anno[,"GeneSet"]),]
+    annot.frame = gs.annot@anno[match(rownames(gsa.results), 
+gs.annot@anno[,"GeneSet"]),]
     if ("BroadUrl" %in% colnames(annot.frame)){
         annot.frame[, "BroadUrl"] = hmakeTag("a", "Go to Broad", 
 href=annot.frame[, "BroadUrl"]) 
@@ -36,8 +36,8 @@ colnames(annot.frame)]
     
     capture.output(HTMLsortedTable(table.data, title, title, file=file, path=path))
     
-    annot.frame = gs.annot$anno[match(rownames(gsa.results), 
-gs.annot$anno[,"GeneSet"]),]
+    annot.frame = gs.annot@anno[match(rownames(gsa.results), 
+gs.annot@anno[,"GeneSet"]),]
     table.data = data.frame(Rank=as.numeric(seq(1, nrow(gsa.results))), 
             annot.frame,
             gsa.results)
@@ -51,7 +51,7 @@ gs.annot$anno[,"GeneSet"]),]
 writeEGSEAResultsToHTML <- function(contrast.name, gsa.results, gs.annot, 
 file.name, comparison=FALSE){   
     
-    title = paste0("Gene Set Enrichment Analysis on ", gs.annot$name, " 
+    title = paste0("Gene Set Enrichment Analysis on ", gs.annot@name, " 
 using EGSEA (",
             contrast.name, ")") 
     path = strsplit(file.name, "/")[[1]]    
@@ -65,21 +65,21 @@ using EGSEA (",
         gsa.results = as.data.frame(gsa.results)
         row.names(gsa.results) = rows
     }   
-    ids = gs.annot$anno[match(rownames(gsa.results), gs.annot$anno[,2]), 
+    ids = gs.annot@anno[match(rownames(gsa.results), gs.annot@anno[,2]), 
 "ID"]
     if (!comparison){
-        heatmaps = paste0("../hm-top-gs-", gs.annot$label, "/", 
+        heatmaps = paste0("../hm-top-gs-", gs.annot@label, "/", 
                 sub(" - ", "-", contrast.name), "/", ids, 
 ".heatmap.pdf")
-        csvfiles = paste0("../hm-top-gs-", gs.annot$label, "/", 
+        csvfiles = paste0("../hm-top-gs-", gs.annot@label, "/", 
                 sub(" - ", "-", contrast.name), "/", ids, 
 ".heatmap.csv")
         
     }
     else{
-        heatmaps = paste0("../hm-top-gs-", gs.annot$label, "/", ids, 
+        heatmaps = paste0("../hm-top-gs-", gs.annot@label, "/", ids, 
 ".heatmap.multi.pdf")       
-        csvfiles = paste0("../hm-top-gs-", gs.annot$label, "/", ids, 
+        csvfiles = paste0("../hm-top-gs-", gs.annot@label, "/", ids, 
 ".heatmap.multi.csv")       
     }
     
@@ -87,12 +87,12 @@ using EGSEA (",
     csvfiles = hmakeTag("a", "Download values", href=csvfiles)
     heatmaps = paste(heatmaps, csvfiles)
     
-    if (length(grep("^kegg", gs.annot$label)) == 0){
+    if (length(grep("^kegg", gs.annot@label)) == 0){
         table.data = data.frame(Rank=as.numeric(seq(1, 
 nrow(gsa.results))), 
                 Heatmaps=heatmaps, 
-                gs.annot$anno[match(rownames(gsa.results), 
-gs.annot$anno[,"GeneSet"]),],
+                gs.annot@anno[match(rownames(gsa.results), 
+gs.annot@anno[,"GeneSet"]),],
                 gsa.results)
         
         write.table(table.data[, -c(which(colnames(table.data) == 
@@ -105,11 +105,11 @@ gs.annot$anno[,"GeneSet"]),],
     }
     else{
         if (!comparison){
-            pathways = paste0("../pv-top-gs-", gs.annot$label, "/", 
+            pathways = paste0("../pv-top-gs-", gs.annot@label, "/", 
                     sub(" - ", "-", contrast.name), "/", 
 ids, ".pathview.png")           
         } else{
-            pathways = paste0("../pv-top-gs-", gs.annot$label, "/",
+            pathways = paste0("../pv-top-gs-", gs.annot@label, "/",
                     ids, ".pathview.multi.png")
         }
         pathways = hmakeTag("a", "Show Pathway", href=pathways)
@@ -118,8 +118,8 @@ ids, ".pathview.png")
 nrow(gsa.results))),
                 Heatmaps=heatmaps,
                 Pathways=pathways,
-                gs.annot$anno[match(rownames(gsa.results), 
-gs.annot$anno[,"GeneSet"]),],
+                gs.annot@anno[match(rownames(gsa.results), 
+gs.annot@anno[,"GeneSet"]),],
                 gsa.results)
         write.table(table.data[, -c(which(colnames(table.data) == 
 "Heatmaps"), which(colnames(table.data) == "Pathways"))],
@@ -194,10 +194,10 @@ generateSummaryPage.comparison <- function(contrast.names, gs.annot, file.name){
     file = gsub(".txt", ".html", file)
     path = paste0(paste(path[1:length(path) -1], collapse = "/"), "/")
     
-    title = paste0("Gene Set Enrichment Analysis on ", gs.annot$name, " 
+    title = paste0("Gene Set Enrichment Analysis on ", gs.annot@name, " 
 using EGSEA (Comparison Analysis)")
     if (length(contrast.names) == 2 ){
-        img.files = paste0("./", gs.annot$label, c("-summary.rank", 
+        img.files = paste0("./", gs.annot@label, c("-summary.rank", 
 "-summary.dir"),".png")
         plot.titles = c("Summary plot based on gene set rank and size", 
         "Summary plot based on regulation direction and significance")
@@ -221,7 +221,7 @@ style="text-decoration: none",
 style="text-decoration: none",
                         href=paste0("#", 'anch', i,j))
                 img.files = c(img.files, paste0("./", 
-gs.annot$label, 
+gs.annot@label, 
                                 paste0('-', 
 i,j), c("-summary.rank", "-summary.dir"),
                                 ".png"))
@@ -271,22 +271,18 @@ href=pdf.files)
 
 generateAllGOgraphsPage.comparison <- function(contrast.names, gs.annot, 
 file.name){
-    title = paste0("Gene Set Enrichment Analysis on ", gs.annot$name, " 
-using EGSEA (Comparison Analysis)") 
-    img.files = character(0)
-    plot.titles = character(0)
-    for (contrast.name in contrast.names){
-        img.files = c(img.files, paste0("./", sub(" - ", "-", 
-contrast.name), "-", gs.annot$label, "-top-", 
-            c("BP", "MF", "CC"), ".png"))
-        plot.titles = c(plot.titles, paste0(c("Top GO Biological 
-Process (", "Top GO Molecular Functions (", 
-        "Top GO Cellular Components ("), contrast.name, ")."))
-    }
+    title = paste0("Gene Set Enrichment Analysis on ", gs.annot@name, " 
+using EGSEA (Comparison Analysis)")   
+  
+    img.files = paste0("./comparison-", gs.annot@label, "-top-", 
+        c("BP", "MF", "CC"), ".png")
+    plot.titles =c("Top GO Biological Processes ", "Top GO Molecular Functions", 
+        "Top GO Cellular Components ")
+    
     pdf.files = sub(".png", ".pdf", img.files)
     
     images = hmakeTag("a", hmakeTag("img", src=img.files, width=600), 
-href=pdf.files)
+        href=pdf.files)
     pdfs = hmakeTag("a", "Download pdf file", href=pdf.files)
         
     content = paste(images, plot.titles, pdfs, sep="<br/>")
@@ -307,7 +303,7 @@ href=pdf.files)
 }
 
 generateAllGOgraphsPage <- function(contrast.name, gs.annot, file.name){
-    title = paste0("Gene Set Enrichment Analysis on ", gs.annot$name, " 
+    title = paste0("Gene Set Enrichment Analysis on ", gs.annot@name, " 
 using EGSEA (",
             contrast.name, ")") 
     
@@ -325,7 +321,7 @@ Functions.",
             "Top GO Cellular Components.")
     names(cat.names) = tmp
     for (cat in tmp){
-        f= paste0(sub(" - ", "-", contrast.name), "-", gs.annot$label, 
+        f= paste0(sub(" - ", "-", contrast.name), "-", gs.annot@label, 
 "-top-", 
                 cat, ".png")
         if (file.exists(paste0(path, f))){
@@ -357,16 +353,16 @@ width=600), href=pdf.files)
 }
 
 generateSummaryPage <- function(contrast.name, gs.annot, file.name){
-    title = paste0("Gene Set Enrichment Analysis on ", gs.annot$name, " 
+    title = paste0("Gene Set Enrichment Analysis on ", gs.annot@name, " 
 using EGSEA (",
             contrast.name, ")") 
     img.files = paste0("./", sub(" - ", "-", contrast.name), "-", 
-gs.annot$label, "-summary.rank.png")
+gs.annot@label, "-summary.rank.png")
     img.files = c(img.files, paste0("./", sub(" - ", "-", contrast.name), 
-"-", gs.annot$label, "-summary.dir.png"))
+"-", gs.annot@label, "-summary.dir.png"))
     path = strsplit(file.name, "/")[[1]]    
     path = paste0(paste(path[1:length(path) -1], collapse = "/"), "/")
-    mds.file = paste0(sub(" - ", "-", contrast.name), "-", gs.annot$label, 
+    mds.file = paste0(sub(" - ", "-", contrast.name), "-", gs.annot@label, 
 "-methods.png")
     if (file.exists(paste0(path, mds.file)))
         img.files = c(img.files, paste0("./", mds.file))
@@ -400,12 +396,12 @@ href=pdf.files)
 
 generateAllHeatmapsPage <- function(contrast.name, gsa.results, gs.annot, 
 file.name, comparison=FALSE){
-    title = paste0("Gene Set Enrichment Analysis on ", gs.annot$name, " 
+    title = paste0("Gene Set Enrichment Analysis on ", gs.annot@name, " 
 using EGSEA (",
             contrast.name, ")") 
-    ids = gs.annot$anno[match(rownames(gsa.results), gs.annot$anno[,2]), 
+    ids = gs.annot@anno[match(rownames(gsa.results), gs.annot@anno[,2]), 
 "ID"]
-    names = gs.annot$anno[match(rownames(gsa.results), gs.annot$anno[,2]), 
+    names = gs.annot@anno[match(rownames(gsa.results), gs.annot@anno[,2]), 
 "GeneSet"]
     if(!comparison){
         heatmaps.img = paste0("./", sub(" - ", "-", contrast.name), 
@@ -447,23 +443,23 @@ sep="<br />")
 
 generateAllPathwaysPage <- function(contrast.name, gsa.results, gs.annot, 
 file.name, comparison=FALSE){
-    title = paste0("Gene Set Enrichment Analysis on ", gs.annot$name, " 
+    title = paste0("Gene Set Enrichment Analysis on ", gs.annot@name, " 
 using EGSEA (",
             contrast.name, ")") 
-    ids = gs.annot$anno[match(rownames(gsa.results), gs.annot$anno[,2]), 
+    ids = gs.annot@anno[match(rownames(gsa.results), gs.annot@anno[,2]), 
 "ID"]
-    names = gs.annot$anno[match(rownames(gsa.results), gs.annot$anno[,2]), 
+    names = gs.annot@anno[match(rownames(gsa.results), gs.annot@anno[,2]), 
 "GeneSet"]
     if (!comparison){
         pathways.img = paste0("./", sub(" - ", "-", contrast.name), 
 "/", ids, ".pathview.png")
-        csvfiles = paste0("../hm-top-gs-",gs.annot$label, "/", sub(" - 
+        csvfiles = paste0("../hm-top-gs-",gs.annot@label, "/", sub(" - 
 ", "-", contrast.name), "/", ids, ".heatmap.csv")
         pathways = paste0("./", sub(" - ", "-", contrast.name), "/", 
 ids, ".pathview.png")
     } else{
         pathways.img = paste0("./", ids, ".pathview.multi.png")
-        csvfiles = paste0("../hm-top-gs-",gs.annot$label, "/", ids, 
+        csvfiles = paste0("../hm-top-gs-",gs.annot@label, "/", ids, 
 ".heatmap.multi.csv")
         pathways = paste0("./", ids, ".pathview.multi.png")
     }   
@@ -549,7 +545,7 @@ combineMethod), br=TRUE, page=p)
 page=p)
     hwrite(paste0(hmakeTag("b","Fold changes calculated: " ),logFC.cal), 
 br=TRUE, page=p)    
-    hwrite(paste0(hmakeTag("b","Gen IDs - Symbols mapping used: " ), 
+    hwrite(paste0(hmakeTag("b","Gene IDs - Symbols mapping used: " ), 
                     ifelse(nrow(symbolsMap) > 0, "Yes", 
 "No")), br=TRUE, page=p)
     hwrite(paste0(hmakeTag("b","Organism: " ), gs.annots[[1]]$species), 
@@ -583,11 +579,11 @@ href=file.name))
 hmakeTag("a", "Pathways" , href=file.name))
         }
         
-        go.idx = which(gs.labels == "c5")
+        go.idx = which(gs.labels %in% c("c5", "gsdbgo"))
         if (length(go.idx) !=0 ){
             file.name = paste0(go.dir, 
                     sub(" - ", "-", colnames(contrast)[i]), 
-'-allGOgraphs.html')    
+                    "-", gs.labels[go.idx], '-allGOgraphs.html')    
             temp[go.idx] = paste0(temp[go.idx], ", ", hmakeTag("a", 
 "GO Graphs" , href=file.name))
         }
@@ -631,11 +627,11 @@ href=file.name))
 hmakeTag("a", "Pathways" , href=file.name))
         }
         
-        go.idx = which(gs.labels == "c5")
+        go.idx = which(gs.labels %in% c("c5", "gsdbgo"))
         if (length(go.idx) !=0 ){
-            file.name = paste0(go.dir, 'allGOgraphs.html')  
+            file.name = paste0(go.dir, gs.labels[go.idx], '-allGOgraphs.html')  
             temp[go.idx] = paste0(temp[go.idx], ", ", hmakeTag("a", 
-"GO Graphs" , href=file.name))
+                "GO Graphs" , href=file.name))
         }
         
         file.name = paste0(summary.dir, gs.labels, "-summary.html")

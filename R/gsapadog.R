@@ -5,7 +5,7 @@ output = TRUE,
         num.workers=4, verbose = TRUE){     
 
     # run padog and write out ranked 'gene sets' for each 'contrast'    
-    file.name = paste0(ranked.gs.dir, "/padog-ranked-", gs.annot$label, 
+    file.name = paste0(ranked.gs.dir, "/padog-ranked-", gs.annot@label, 
 "-gene-sets-", 
             sub(" - ", "-", colnames(contrast)), '.txt')        
     padog.results = vector("list", ncol(contrast))  
@@ -15,10 +15,10 @@ output = TRUE,
     sam.idx = 1:ncol(data.log)
     
     gsets = list()
-    for (j in 1:length(gs.annot$idx)){
-        gsets[[j]] = as.character(gs.annot$idx[[j]])
+    for (j in 1:length(gs.annot@idx)){
+        gsets[[j]] = as.character(gs.annot@idx[[j]])
     }
-    names(gsets) = names(gs.annot$idx)
+    names(gsets) = names(gs.annot@idx)
     set.seed(05081986)
     
     for(i in 1:ncol(contrast)){
@@ -67,7 +67,8 @@ paired=FALSE,
                 gslist=gsets, NI=100, verbose=FALSE)
         
         padog.results[[i]] = 
-padog.results[[i]][order(padog.results[[i]][,"Ppadog"]),]   
+padog.results[[i]][order(padog.results[[i]][,"Ppadog"], 
+                -padog.results[[i]][,"padog0"]),]   
         padog.results[[i]] = cbind(Rank=seq(1, 
 nrow(padog.results[[i]])), padog.results[[i]])
         if (!output)

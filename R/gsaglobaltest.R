@@ -7,7 +7,7 @@ output = TRUE,
 
     # run globaltest and write out ranked 'gene sets' for each 'contrast'   
     file.name = paste0(ranked.gs.dir, "/globaltest-ranked-", 
-gs.annot$label, "-gene-sets-", 
+gs.annot@label, "-gene-sets-", 
             sub(" - ", "-", colnames(contrast)), '.txt')        
     globaltest.results = vector("list", ncol(contrast)) 
     data.log = voom.results$E
@@ -57,10 +57,11 @@ length(cnt.sam.indx)))
         colnames(data.log.sel) = group
         
         globaltest.results[[i]] = result(gt(factor(group), 
-data.log.sel, subsets=gs.annot$idx, permutations=10000))
+data.log.sel, subsets=gs.annot@idx, permutations=10000))
         
         globaltest.results[[i]] = 
-globaltest.results[[i]][order(globaltest.results[[i]][,"p-value"]),]
+globaltest.results[[i]][order(globaltest.results[[i]][,"p-value"],
+                -globaltest.results[[i]][,"Statistic"]),]
         globaltest.results[[i]] = cbind(Rank=seq(1, 
 nrow(globaltest.results[[i]])), globaltest.results[[i]])
         if (!output)

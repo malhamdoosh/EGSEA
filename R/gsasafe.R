@@ -6,7 +6,7 @@ runsafe <- function(voom.results, contrast, gs.annot,  ranked.gs.dir="", output
         num.workers=4, verbose = TRUE){     
 
     # run safe and write out ranked 'gene sets' for each 'contrast' 
-    file.name = paste0(ranked.gs.dir, "/safe-ranked-", gs.annot$label, 
+    file.name = paste0(ranked.gs.dir, "/safe-ranked-", gs.annot@label, 
 "-gene-sets-", 
             sub(" - ", "-", colnames(contrast)), '.txt')        
     safe.results = vector("list", ncol(contrast))   
@@ -16,10 +16,10 @@ runsafe <- function(voom.results, contrast, gs.annot,  ranked.gs.dir="", output
     sam.idx = 1:ncol(data.log)
     
     gsets = list()
-    for (j in 1:length(gs.annot$idx)){
-        gsets[[j]] = as.character(gs.annot$idx[[j]])
+    for (j in 1:length(gs.annot@idx)){
+        gsets[[j]] = as.character(gs.annot@idx[[j]])
     }
-    names(gsets) = names(gs.annot$idx)  
+    names(gsets) = names(gs.annot@idx)  
     capture.output(C.mat <- getCmatrix(keyword.list=gsets, present.genes=rownames(data.log)))
     set.seed(05081986)
 #   print(C.mat)
@@ -83,7 +83,8 @@ as.numeric(safe.results[[i]][, "Adj.p.value"])
         safe.results[[i]] = cbind(Rank=seq(1, nrow(safe.results[[i]])), 
 safe.results[[i]])
         #safe.results[[i]] = 
-safe.results[[i]][order(safe.results[[i]][,"P.value"]),]    
+safe.results[[i]][order(safe.results[[i]][,"P.value"],
+                -safe.results[[i]][,"Statistic"]),]    
         if (!output)
             next
         writeResultsToHTML(colnames(contrast)[i], safe.results[[i]], 

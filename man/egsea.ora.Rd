@@ -27,11 +27,11 @@ and pathway maps is not indicative to the gene regulation direction.}
 
 \item{title}{character, a short description of the experimental contrast.}
 
-\item{gs.annots}{list, indexed collections of gene sets. It is generated 
+\item{gs.annots}{list, list of objects of class GSCollectionIndex. It is generated 
 using one of these functions: 
- \code{\link{buildIdxEZID}}, \code{\link{buildMSigDBIdxEZID}}, 
-\code{\link{buildKEGGIdxEZID}},
-\code{\link{buildGeneSetDBIdxEZID}}, and \code{\link{buildCustomIdxEZID}}.}
+ \code{\link{buildIdx}}, \code{\link{buildMSigDBIdx}}, 
+\code{\link{buildKEGGIdx}},
+\code{\link{buildGeneSetDBIdx}}, and \code{\link{buildCustomIdx}}.}
 
 \item{symbolsMap}{dataframe, an K x 2 matrix stores the gene symbol of each 
 Entrez Gene ID. It 
@@ -122,7 +122,7 @@ top.Table = topTable(vfit, coef=1, number=Inf, p.value=0.05, lfc=1)
 deGenes = as.character(top.Table$FeatureID)
 logFC =  top.Table$logFC
 names(logFC) = deGenes
-gs.annots = buildIdxEZID(entrezIDs=deGenes, species="human", 
+gs.annots = buildIdx(entrezIDs=deGenes, species="human", 
 msigdb.gsets="none",
          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
 # set report = TRUE to generate the EGSEA interactive report
@@ -144,8 +144,8 @@ analyses.
 }
 \seealso{
 \code{\link{topSets}},
-\code{\link{buildIdxEZID}}, \code{\link{buildMSigDBIdxEZID}}, 
-\code{\link{buildKEGGIdxEZID}},
-\code{\link{buildGeneSetDBIdxEZID}}, and \code{\link{buildCustomIdxEZID}}
+\code{\link{buildIdx}}, \code{\link{buildMSigDBIdx}}, 
+\code{\link{buildKEGGIdx}},
+\code{\link{buildGeneSetDBIdx}}, and \code{\link{buildCustomIdx}}
 }
 

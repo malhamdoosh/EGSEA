@@ -7,6 +7,8 @@
 BiocStyle::latex()
 @
 
+\usepackage{url}
+\usepackage{subcaption}
 
 \begin{document}
 \bioctitle[EGSEA]{Ensemble of Gene Set Enrichment Analyses}
@@ -22,32 +24,32 @@ Ritchie\footnote{mritchie@wehi.edu.au}}
 
 \section{Introduction}
 The \Biocpkg{EGSEA} package implements the Ensemble of Gene Set Enrichment
-Analysis (EGSEA) algorithm that utilizes the analysis results of eleven
+Analysis (EGSEA) algorithm that utilizes the analysis results of twelve
 prominent GSE algorithms in the literature to calculate collective significance
 scores for each gene set. These methods include: \Rfunction{ora}
 \cite{Tavazoie1999}, \Biocpkg{globaltest} \cite{Goeman2004}, \Rfunction{plage}
 \cite{Tomfohr2005}, \Biocpkg{safe} \cite{Barry2005}, \Rfunction{zscore} \cite{Lee2008},
 \Biocpkg{gage} \cite{Luo2009}, \Rfunction{ssgsea} \cite{Barbie2009},
-\Rfunction{roast} \cite{Wu2010}, \Biocpkg{PADOG} \cite{Tarca2012},
-\Rfunction{camera} \cite{Wu2012} and \Biocpkg{GSVA} \cite{Hanzelmann2013}. The
+\Rfunction{roast}, \Rfunction{fry} \cite{Wu2010}, \Biocpkg{PADOG}
+\cite{Tarca2012}, \Rfunction{camera} \cite{Wu2012} and \Biocpkg{GSVA} \cite{Hanzelmann2013}. The
 \Rfunction{ora}, \Rfunction{gage}, \Rfunction{camera} and \Rfunction{gsva}
-methods depend on a competitive null hypothesis while the remaining seven
-methods are based on a self-contained hypothesis. Conveniently, \Biocpkg{EGSEA}
-is not limited to these eleven GSE methods and new GSE tests can be easily
+methods depend on a competitive null hypothesis while the remaining eight
+methods are based on a self-contained null hypothesis. Conveniently,
+\Biocpkg{EGSEA} is not limited to these twelve GSE methods and new GSE tests can be easily
 integrated into the framework. The plage, zscore and ssgsea algorithms are
-implemented in the \Biocpkg{GSVA} package and \Rfunction{camera} and
+implemented in the \Biocpkg{GSVA} package and \Rfunction{camera}, \Rfunction{fry} and
 \Rfunction{roast} are implemented in the \Biocpkg{limma} package.
 \Biocpkg{EGSEA} was implemented with parallel computation enabled using the
 \CRANpkg{parallel} package. There are two levels of parallelism in EGSEA:(i)
 parallelism at the method-level and (ii) parallelism at the experimental
 contrast level. A wrapper function was written for each individual GSE method
-to utilize existing R packages and create a universal interface for all
-methods. The ora method was implemented using the \Rfunction{phyper} function
-from the \CRANpkg{stats} package, which estimates the hypergeometric
+to utilize existing R and Bioconductor packages and create a universal interface
+for all methods. The \textit{ora} method was implemented using the
+\Rfunction{phyper} function from the \CRANpkg{stats} package, which estimates the hypergeometric
 distribution for a $2 \times 2$ contingency table.
 
 \par RNA-seq reads are first aligned to the reference genome and mapped reads
-are assigned to annotated genomic features to obtain a summarized \textit{count
+are assigned to annotated genomic features to obtain a summarized \textbf{count
 matrix}. The \Biocpkg{EGSEA} package was developed so that it can accept a count
 matrix or a \Robject{voom} object. Most of the GSE methods were intrinsically designed to
 work with microarray expression values and not with RNA-seq counts, hence the
@@ -70,15 +72,15 @@ GeneSetDB databases.
 \section{Citation}
 \label{sec:citation}
 \begin{itemize}
-  \item Monther Alhamdoosh, Milica Ng, Nicholas J. Wilson, Julie M.
-Sheridan, Huy Huynh, Michael J. Wilson and Matthew E. Ritchie. Combining multiple tools outperforms individual
-methods in gene set enrichment analyses. 
+  \item Alhamdoosh, M., Ng, M., Wilson, N. J., Sheridan, J. M., Huynh, H.,
+  Wilson, M. J., Ritchie, M. E. (2016). Combining multiple tools outperforms
+  individual methods in gene set enrichment analyses. bioRxiv.
 \end{itemize}
 
 
 \section{Installation instructions}
 The \Biocpkg{EGSEA} package was developed so that it harmonizes with the
-existing R packages in the CRAN repository or the Bioconductor project. 
+existing R packages in the CRAN repository and the Bioconductor project. 
 
 \subsection{System prerequistes}
 \Biocpkg{EGSEA} does not require any software package or library to be installed before it
@@ -94,44 +96,57 @@ particular framed HTML pages and dynamically sortable tables. It is used in
 \Biocpkg{EGSEA} to generate the stats tables. To install it, type in the R
 console 
 
-\par install.packages("HTMLUtils")
+\par \Rcode{install.packages("HTMLUtils")}
 
 \item \CRANpkg{hwriter} has easy-to-use and versatile functions to output R
 objects in HTML format. It is used in this package to create the HTML pages of
 the EGSEA report.
 To install it, 
 
-\par install.packages("hwriter")
+\par \Rcode{install.packages("hwriter")}
 
 \item \CRANpkg{ggplot2} is an implementation of the grammar of graphics in R. It
 is used in this package to create the summary plots. To install it, type  
 
-\par install.packages("ggplot2")
+\par \Rcode{install.packages("ggplot2")}
 
 \item \CRANpkg{gplots} has various R programming tools for plotting data. It is
 used in \Biocpkg{EGSEA} to create heatmaps. To install it, run
 
-\par install.packages("gplots")
+\par \Rcode{install.packages("gplots")}
 
 \item \CRANpkg{stringi} allows for fast, correct, consistent, portable, as well
 as convenient character string/text processing in every locale and any native
 encoding. It is used in generating the HTML pages. To install this package, type
 
-\par install.packages("stringi")
+\par \Rcode{install.packages("stringi")}
+
+\item \CRANpkg{metap}  provides a number of methods for
+meta-analysis of significance values. To install this package, type
+
+\par \Rcode{install.packages("metap")}
 
 \item \CRANpkg{parallel} handles running much larger chunks of computations in
 parallel. It is used to carry out gene set tests on parallel. It is usually
 installed with R. 
 
+\item \CRANpkg{devtools} is needed to install packages from Bitbucket. 
+It is available at CRAN. For Windows this seems to depend on
+having Rtools for Windows installed. You can download and install this from:
+\url{http://cran.r-project.org/bin/windows/Rtools/}. To install
+\CRANpkg{devtools}, run in R console 
+
+\par \Rcode{install.packages("devtools")}
+ 
 \end{itemize}
 
 \subsubsection{Bioconductor packages}
 The Bioconductor packages that need to be installed in order for
-\Biocpkg{EGSEA} to function properly are:
+\Biocpkg{EGSEA} to work properly are:
 \Biocpkg{PADOG}, \Biocpkg{GSVA}, \Biocpkg{AnnotationDbi}, \Biocpkg{topGO},
 \Biocpkg{pathview}, \Biocpkg{gage}, \Biocpkg{globaltest}, \Biocpkg{limma},
 \Biocpkg{edgeR}, \Biocpkg{safe}, \Biocpkg{org.Hs.eg.db}, \Biocpkg{org.Mm.eg.db},
-\Biocpkg{org.Rn.eg.db}. Thesea packages can be installed from Biocondcutor using
+\Biocpkg{org.Rn.eg.db}. They can be installed from Biocondcutor using
 the following commands in R console
 
 <<echo=TRUE,  eval=FALSE,tidy=TRUE,tidy.opts=list(blank=FALSE, width.cutoff=60)>>=
@@ -142,26 +157,23 @@ biocLite(c("PADOG", "GSVA", "AnnotationDbi", "topGO", "pathview", "gage",
 @
 
 
-\subsubsection{Essential data package}
+\subsubsection{EGSEAdata: essential data package}
 The gene set collections that are used by \Biocpkg{EGSEA} were preprocessed
 and converted into R data objects to be used by the EGSEA functions. The data
-objects are stored in an R package, named \Rpackage{EGSEAdata}. It contains the
-gene set collections that are used by \Biocpkg{EGSEA} to perform gene set
-testing. \Rpackage{EGSEAdata} can be installed from Bitbucket. 
+objects are stored in an R package, named \Biocpkg{EGSEAdata}. It contains the
+gene set collections that are needed by \Biocpkg{EGSEA} to perform gene set
+testing. \Biocpkg{EGSEAdata} is available at Bioconductor and can be also
+installed from Bitbucket.
 
-\par To install packages
-from Bitbucket, \CRANpkg{devtools} should be installed. \CRANpkg{devtools}
-Package devtools is available at CRAN. For Windows this seems to depend on
-having Rtools for Windows installed. You can download and install this from:
-http://cran.r-project.org/bin/windows/Rtools/ 
-
-\par To install \CRANpkg{devtools}, run
-
+\par \Biocpkg{EGSEAdata} can be installed from Bioconductor by running in R
+console the following commands 
 <<echo=TRUE,  eval=FALSE,tidy=TRUE>>=
-install.packages("devtools")
-@ 
+source("http://bioconductor.org/biocLite.R")
+biocLite("EGSEAdata")
+@
 
-\par To install \Rpackage{EGSEAdata}, run in R console the following commands
+It can be also installed from Bitbucket from inside R console using the
+\Rpackage{devtools} package as follows
 
 <<echo=TRUE,  eval=FALSE,tidy=TRUE>>= 
 library(devtools) 
@@ -169,23 +181,41 @@ install_bitbucket("malhamdoosh/egseadata", ref="Stable_Release")
 @ 
 
 \subsection{Installation}
+\Biocpkg{EGSEA} can be installed from the Bioconductor project or the Bitbucket
+repository. We aim to only push the successfully tested versions to
+Bioconductor. Therefore, the Bitbucket version can have additional features that
+are not yet available in Bioconductor. 
 
 \subsubsection{Bioconductor}
-In R console, type
+To install the release version of \Biocpkg{EGSEA} from Bioconductor, type in R
+console
 
 <<echo=TRUE,  eval=FALSE,tidy=TRUE>>=
 source("http://bioconductor.org/biocLite.R")
 biocLite("EGSEA")
 @
 
+To install the development version of \Biocpkg{EGSEA} from Bioconductor, run the
+following commands in R console
+
+<<echo=TRUE,  eval=FALSE,tidy=TRUE>>=
+library(BiocInstaller)
+useDevel()
+biocLite("EGSEA")
+@
+
 \subsubsection{Bitbucket}
 
-To install EGSEA from bitbucket, type in the R console 
+To install the development version of \Biocpkg{EGSEA} from Bitbucket, type in the R
+console
 
 <<echo=TRUE,  eval=FALSE,tidy=TRUE>>=
 library(devtools)
 install_bitbucket("malhamdoosh/egsea", ref="Devel_Release")
 @
+
+The stable release version of \Biocpkg{EGSEA} can be from Bitbucket by setting
+\Rcode{ref = "Stabel\_Release"} in the previous commands.
 
 \section{Quick start}
 \subsection{EGSEA gene set collections}
@@ -204,45 +234,48 @@ gene sets was downloaded from the GeneSetDB \cite{Araki2012}
 than 20,000 gene sets have been collated along with annotation information for
 each set (where available).
 
-\par  The \Biocpkg{EGSEA} package has four main functions that utilizes the gene
-set collections of \Rpackage{EGSEAdata}. They map the dataset Entrez gene IDs
-into the available gene sets of each collection and create indexes for
-each gene set collection. They also compile annotation information for each gene
-set to be integrated with the final EGSEA report. These functions are:
+\par  The \Biocpkg{EGSEA} package has four indexing functions that utilize the
+gene set collections of \Biocpkg{EGSEAdata}. They map the Entrez gene
+IDs of the input dataset into the
+gene sets of each collection and create an index for each collection. These
+fucntions also extract annotation information from \Biocpkg{EGSEAdata} for each
+gene set to be displayed within the EGSEA HTML report. These functions are as
+follow
 \begin{itemize}
-  \item \Rfunction{buildKEGGIdxEZID} indexes the KEGG pathway gene sets and
-  loads gene set annotation. Type ?buildKEGGIdxEZID in the console to see how to
-  use this function.
+  \item \Rfunction{buildKEGGIdx} builds an index for the KEGG pathways
+  collection and loads gene set annotation. Type ?buildKEGGIdx in the console to
+  see how to use this function.
   
-  \item \Rfunction{buildMSigDBIdxEZID} indexes the MSigDB gene sets and loads
-  gene set annotation. Type ?buildMSigDBIdxEZID in the console to see how to
-  use this function.
+  \item \Rfunction{buildMSigDBIdx} builds indexes for the MSigDB gene set
+  collections and loads gene set annotation. Type ?buildMSigDBIdx in the console
+  to see how to use this function.
   
-  \item \Rfunction{buildGeneSetDBIdxEZID} indexes the GeneSetDB gene sets and
-  loads gene set annotation. Type ?buildGeneSetDBIdxEZID in the console to see how to
-  use this function.
+  \item \Rfunction{buildGeneSetDBIdx} builds indexes for the GeneSetDB
+  collections and loads gene set annotation. Type ?buildGeneSetDBIdx
+  in the console to see how to use this function.
   
-  \item \Rfunction{buildIdxEZID} indexes the MSigDB and KEGG gene sets and loads
-  gene set annotation. Type ?buildIdxEZID in the console to see how to
-  use this function.
+  \item \Rfunction{buildIdx} is one-step method to build indexes for
+  collections selected from the KEGG, MSigDB and GeneSetDB databases.
+  Type ?buildIdx in the console to see how to use this function.
   
 \end{itemize}
 
-\par The above functions require a vector of Entrez Gene IDs and the species
-name. To use the output of these functions with the \Biocpkg{EGSEA} functions,
-the order of gene ids in the \textit{entrezIDs} parameter should match that of the row names of
-the count matrix or the \Robject{voom} object. 
+\par These four functions take a vector of Entrez Gene IDs and the species
+name and return an object (or list of objects) of class
+\Rclass{GSCollectionIndex}.
 
-\subsection{A simple example}
+\textbf{Note:} To use the \Rclass{GSCollectionIndex} objects with the other
+\Biocpkg{EGSEA} functions, the order of input ids vector should match that of the row names of the count matrix or the \Robject{voom} object.
+
+\subsection{EGSEA on a human dataset}
 The \Biocpkg{EGSEA} package basically performs gene set enrichment analysis on
 a \Robject{voom} object generated by the \Rfunction{voom} function from the
-\Biocpkg{limma} package. It was primarily developed to extend the limma-voom
-RNA-seq analysis pipeline.
+\Biocpkg{limma} package. Actually, it was primarily developed to extend the
+limma-voom RNA-seq analysis pipeline. To quickly start with \Biocpkg{EGSEA}
+analysis, an example on analyzing a human IL-13 dataset is presented here. 
 
-\par To quickly start with \Biocpkg{EGSEA} analysis, an example on analyzing a
-human IL-13 dataset is presented here. This experiment aims to identify the
-biological pathways and diseases associated with the cytokine Interleukin 13
-(IL-13) using gene expression measured in peripheral blood mononuclear cells
+\par This experiment aims to identify the biological pathways and diseases
+associated with the cytokine Interleukin 13 (IL-13) using gene expression measured in peripheral blood mononuclear cells
 (PBMCs) obtained from 3 healthy donors. The expression profiles of \textit{in
 vitro} IL-13 stimulation were generated using RNA-seq technology for $3$ PBMC
 samples at $24$ hours. The transcriptional profiles of PBMCs without IL-13
@@ -255,17 +288,18 @@ obtained via RNA-seq from total RNA using a HiSeq 2000 Illumina sequencer.
 TopHat was used to map the reads to the human reference genome (GRCh37.p10).
 HTSeq was then used to summarize reads into a gene-level count matrix. The TMM
 method from the \Biocpkg{edgeR} package was used to normalize the RNA-seq
-counts.
+counts. Data are available from the GEO database \url{www.ncbi.nlm.nih.gov/geo/}
+as series GSE79027.
 
 \par To perform EGSEA analysis on this dataset, the \Biocpkg{EGSEA} package is
-first loaded:
+first loaded follow
 
 <<echo=TRUE,  eval=TRUE,tidy=TRUE>>=
 library(EGSEA)
 @
 
-Then, the \Robject{voom} data object of this experiment from \Rpackage{EGSEAdata} is
-loaded to perform the EGSEA analysis:  
+Then, the \Robject{voom} data object of this experiment is
+loaded from \Biocpkg{EGSEAdata} as follows  
 
 <<echo=TRUE,  eval=TRUE,tidy=TRUE>>=
 library(EGSEAdata)
@@ -276,55 +310,395 @@ v$design
 contrasts = il13.data$contra
 contrasts
 @
+A detailed explanation on how a \Robject{voom} can be created from a raw
+RNA-seq count matrix can be found in this workflow article \cite{Law2016}.
 
-Before the EGSEA function is called gene set collection(s) needs to be
-preprocessed and indexed using EGSEA indexing functions that were presented
-earlier. For example, to use the KEGG pathway collections without the Metabolism
-pathways, type 
+\par Before the EGSEA pipeline is invoked, gene set collections need to be
+pre-processed and indexed using the EGSEA indexing functions as it was mentioned
+earlier. Here, indexes for the KEGG pathways and the c5 collection
+from the MSigDB are created as follows
 
 <<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE, width.cutoff=60)>>= 
-# prepare gene set collections
-gs.annots = buildIdxEZID(entrezIDs=rownames(v$E), species="human", msigdb.gsets="c5", 
+gs.annots = buildIdx(entrezIDs=rownames(v$E), species="human", msigdb.gsets="c5", 
  			kegg.exclude = c("Metabolism"))
 names(gs.annots)
 @
 
-Finally, the EGSEA analysis can be invoked using the \Rfunction{egsea} function
-as follows
+The \Robject{gs.annots} is a list of two objects of class
+\Rclass{GSCollectionIndex} that are labelled with "kegg" and "c5".
+
+A quick summary of the collection indexes can be displayed using the
+\Rfunction{summary} function as follows
+
+<<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE, width.cutoff=60)>>=
+summary(gs.annots$kegg)
+summary(gs.annots$c5)
+@
+This shows the name, label and number of gene sets in the KEGG collection. Next,
+we select the base methods of the EGSEA analysis
+
+<<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE, width.cutoff=60)>>=
+baseMethods = egsea.base()[-c(2, 12)]
+baseMethods
+@
+
+Another important parameter for the EGSEA analysis is the \Rcode{sort.by}
+argument which determines how the gene sets are ordered. The possible values of
+this argument can be seen as follows
+<<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE, width.cutoff=60)>>=
+egsea.sort()
+@
+
+Finally, the EGSEA analysis can be performed using the \Rfunction{egsea}
+function as follows
 
 <<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE, width.cutoff=60)>>=
 # perform the EGSEA analysis
+# set report = TRUE to generate HTML report.
 # set display.top = 20 to display more gene sets. It takes longer time to run.
 gsa = egsea(voom.results=v, contrasts=contrasts,  gs.annots=gs.annots, 
- 			symbolsMap=v$genes, baseGSEAs=egsea.base()[-c(2, 12)], display.top = 3,
- 			 sort.by="avg.rank", egsea.dir="./il13-egsea-report", num.threads = 4)
-show(gsa)
-summary(gsa)
-topSets(gsa, contrast=1, gs.label="kegg", number = 10)
-topSets(gsa, contrast=1, gs.label="kegg", sort.by="ora", number = 10, names.only=FALSE)
-topSets(gsa, contrast="comparison", gs.label="kegg", number = 10)
+ 			symbolsMap=v$genes, baseGSEAs=baseMethods,
+            egsea.dir="./il13-egsea-report",
+ 			 sort.by="avg.rank", num.threads = 4, report=FALSE)
 @
 
-\par The \Rfunction{egsea} returns a list of elements, one for each gene set
-collection and one for the comparative analysis. Each element is also a list of
-two elements:
-the \Robject{top.gene.sets}, which stores the top \textit{display.top} gene sets for
-each contrast and the \Robject{test.results}, which stores the stores the EGSEA
-test results for all gene sets along with the ensemble and individual rankings.
-
-\par The EGSEA report of this experiment can be launched from
-\url{./il13-egsea-report/index.html}.
-%normalizePath("./il13-egsea-report")
-
-\par Finally, the EGSEA analysis can be run with all the gene set collections
-that are avilable in the \Rpackage{EGSEAdata} package as follows
+The function \Rfunction{egsea} returns an object of class \Rclass{EGSEAResults},
+which is described next in Section \ref{sec:s4_classes}. To generate an HTML report of
+the EGSEA analysis results, you need to set \Rcode{report=TRUE}. Then, the EGSEA
+report can be launched by opening \url{./il13-egsea-report/index.html}. A quick
+summary of the top ten significant gene sets from each collection and for each
+contrast including the comparative analysis, if there are more than one
+contrast, can be displayed using the \Rfunction{summary} function as follows 
 
 <<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE, width.cutoff=60)>>=
-gs.annots = buildIdxEZID(entrezIDs=rownames(v$E), species="human")
-gsetdb.annots = buildGeneSetDBIdxEZID(entrezIDs=rownames(v$E), species="human")
-gs.annots = c(gs.annots, gsetdb.annots)
+summary(gsa)
+@
+
+\par To run the EGSEA analysis with all the gene set collections
+that are avilable in the \Biocpkg{EGSEAdata} package, use the
+\Rfunction{buildIdx} function to create the gene set indexes as follows
+
+<<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE, width.cutoff=60)>>=
+gs.annots = buildIdx(entrezIDs=rownames(v$E), species="human", gsdb.gsets="all")
 names(gs.annots)
 @
+
+\section{S4 classes and methods}
+\label{sec:s4_classes}
+
+\begin{figure}[!h]
+\center
+\includegraphics[width=0.8\paperwidth]{egsea_classes-crop.pdf}
+\caption{The S4 classes and methods of \Biocpkg{EGSEA}.}
+\label{fig:egsea_classes}
+\end{figure}
+
+\Rpackage{EGSEA} implements two S4 classes to perform its functionalities
+efficiently. The \Rclass{GSCollectionIndex} stores an indexed gene set
+collection, which can be used to perform an EGSEA analysis, and the
+\Rclass{EGSEAResults} stores the results of an EGSEA analysis. Each class has
+several slots and S4 methods to enable the user explore EGSEA results
+efficiently and effectively (Figure \ref{fig:egsea_classes}). 
+
+The \Rclass{GSCollectionIndex} class has seven slots and four S4 methods
+that are defined as follows
+\begin{itemize}
+  \item \Rclass{GSCollectionIndex} slots:
+  \begin{itemize}
+    \item \Robject{original} is a list of character vectors, each stores the
+    Entrez Gene IDs of a gene set.
+    \item \Robject{idx} is a list of character vectors, each stores only the
+    indexes of the mapped genes of a set. 
+    \item \Robject{anno} is a data frame that stores additional annotation for
+    each gene set. 
+    \item \Robject{featureIDs} is a character vector of the Entrez Gene IDs that
+    were used to index the gene sets. 
+    \item \Robject{species} is a character that stores the species name. It
+    accepts 
+    \item \Robject{name} is a character that stores a short description of the
+    gene set collection. 
+    \item \Robject{label} is a character that stores a label for the collection
+    to identify it from other collections when multiple collections are used for
+    an EGSEA analysis. 
+  \end{itemize}
+  \item \Rclass{GSCollectionIndex} S4 methods: 
+  \begin{itemize}
+      \item \Rfunction{show} displays the content of the gene set collection. 
+      \item \Rfunction{summary} displays a brief summary of the gene set
+      collection.
+      \item \Rfunction{getSetByName} returns a list of the details of gene sets
+      given their names.
+      \item \Rfunction{getSetByID} returns a list of the details of gene sets
+      given their IDs.
+   \end{itemize}
+\end{itemize}
+
+The \Rclass{EGSEAResults} class has eleven slots and ten S4 methods
+that are defined as follows
+\begin{itemize}
+  \item \Rclass{EGSEAResults} slots: 
+  \begin{itemize}
+      \item \Robject{results} is a list that stores the EGSEA analysis results
+      in a hierarchical format (Figure \ref{fig:egsea_results}). The
+      \textit{comparison} element only exists when more than one contrast are
+      analyzed. The \textit{ind.results} only exists if the
+      EGSEA function argument \Rcode{print.base = TRUE}.  
+      \item \Robject{contrasts} is a character vector of contrast names. 
+      \item \Robject{sampleSize} is a numeric value of the number of samples. 
+      \item \Robject{gs.annots} is a list of objects of class 
+      \Rclass{GSCollectionIndex} that stores the indexed gene set collections
+      that were used in the EGSEA analysis.
+      \item \Robject{baseMethods} is a character vector of the base GSE methods
+      that were used in the EGSEA analysis. 
+      \item \Robject{combineMethod} is a character value of the name of p-value
+      combinging method. 
+      \item \Robject{sort.by} is a character value of the sorting EGSEA score. 
+      \item \Robject{symbolsMap} is a data frame of two columns that stores the
+      mapping of the Entrez Gene IDs to their gene symbols. 
+      \item \Robject{logFC} is a matrix of the calculated (or provided) logFC
+      values where columns correspond to contrasts and rows correspond to genes.
+      \item \Robject{report} is a logical value indicates whether an HTML report
+      was generated or not.
+      \item \Robject{report.dir} is a character value of the HTML report
+      directory (if it was generated). 
+   \end{itemize}
+   \item \Rclass{EGSEAResults} S4 methods:
+   \begin{itemize}
+      \item \Rfunction{show} displays the parameters of the EGSEAResults object.
+      \item \Rfunction{summary} displays a brief summary of the EGSEA analysis
+      results.
+      \item \Rfunction{topSets} extracts a table of the top-ranked gene sets
+      from an EGSEA analysis.
+      \item \Rfunction{plotSummary} generates a Summary plot of an EGSEA
+      analysis for a given gene set collection and a selected contrast. 
+      \item \Rfunction{plotMethods} generates a multi-dimensional scaling (MDS) plot
+      for the gene set rankings of the base methods of an EGSEA analysis.
+      \item \Rfunction{plotHeatmap} generates a heatmap of fold changes for a
+      selected gene set.  
+      \item \Rfunction{plotPathway} generates a visual map for a selected KEGG
+      pathway. 
+      \item \Rfunction{showSetByName} displays the details of gene sets
+      given their names and their collection.
+      \item \Rfunction{showSetByID} displays the details of gene sets
+      given their IDs and their collection.
+   \end{itemize}
+\end{itemize}
+
+\begin{figure}[!h]
+\center
+\includegraphics[width=0.8\paperwidth]{egsea_results-crop.pdf}
+\caption{The structure of the slot \Rcode{results} of the
+class \Rclass{EGSEAResults}.}
+\label{fig:egsea_results}
+\end{figure}
+
+Next, we show how these different methods can be used to query the EGSEA
+results. To obtain a quick overview of the parameters of IL-13 EGSEA analysis    
+
+<<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE,width.cutoff=60)>>= 
+show(gsa)
+@
+
+The EGSEA analysis results can be queried in different ways. For example, the
+top 10 gene sets of the KEGG collection for the contrast X24IL13-X24 can be
+retrieved as follows
+
+<<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE,width.cutoff=60)>>=
+topSets(gsa, contrast=1, gs.label="kegg", number = 10)
+@
+Here the gene sets are ordered based on the value of the argument
+\Rcode{sort.by} when the EGSEA analysis was invoked, i.e., the \textit{avg.rank} in this example.
+However, the top gene sets based on a selected EGSEA score, e.g. ORA ranking,
+can be retreieved as follows
+
+<<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE,width.cutoff=60)>>=
+t = topSets(gsa, contrast=1, gs.label="c5", sort.by="ora", number = 10, names.only=FALSE)
+t
+@
+
+This can be useful to identify over-represented GO terms since GO gene sets in
+the c5 collection are based on ontologies which do not necessarily comprise
+co-regulated genes. More information on the first gene set can be retrieved
+as follows
+
+<<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE,width.cutoff=60)>>=
+showSetByName(gsa, "c5", rownames(t)[1])
+@
+
+The \textit{NumGenes} shows the number of your dataset genes that were mapped to
+this gene set out of the total number of genes in the set. This ratio mainly
+depends on the filtering criteria that are used for constructing the count
+matrix. 
+
+Similarly, the top gene sets of the comparative analysis can
+be retrieved as follows
+
+<<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE,width.cutoff=60)>>=
+t = topSets(gsa, contrast="comparison", gs.label="kegg", number = 10)
+t
+@
+
+More information on the first gene set of the comparative analysis can be
+retrieved as follows
+
+<<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE,width.cutoff=60)>>=
+
+showSetByName(gsa, "kegg",  rownames(t)[1])
+
+@
+
+Next, the visualization capabilities of EGSEA are explored. The results can be
+visualized at the experiment-level using the MDS plot, Summary or GO Graph
+plots, or at the set-level using heatmaps and pathway maps. 
+
+The performance of the EGSEA base methods on a selected contrast can be
+visualized usign an MDS plot that shows how different methods rank a gene set
+collection (Figure \ref{fig:summary_methods}). For example, the performance of
+the various methods on the contrast X24IL13-X24 and the KEGG collection can be
+plotted as follows
+
+<<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE,width.cutoff=60)>>= 
+plotMethods(gsa, gs.label = "kegg", contrast=1, file.name="X24IL13-X24-kegg-methods")
+@
+
+\begin{figure}[!h]
+\center
+\includegraphics[width=0.6\paperwidth]{X24IL13-X24-kegg-methods.pdf}
+\caption{The performance of multiple GSE methods on the contrast X24IL13-X24.}
+\label{fig:summary_methods}
+\end{figure}
+
+The overall EGSEA significance of all gene sets in a given collection and a
+selected contrast can be visualized using the summary plots (Figure
+\ref{fig:kegg_summary}) as follows 
+
+<<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE,width.cutoff=60)>>= 
+plotSummary(gsa, gs.label="kegg", contrast = 1, file.name="X24IL13-X24-kegg-summary")
+@
+
+\begin{figure}
+\begin{subfigure}{.5\textwidth}
+\centering
+\includegraphics[width=\linewidth]{{X24IL13-X24-kegg-summary.dir}.pdf}
+\caption{\label{fig:kegg_summary_dir} Directional summary plot}
+\end{subfigure}
+\begin{subfigure}{.5\textwidth}
+\centering
+\includegraphics[width=\linewidth]{{X24IL13-X24-kegg-summary.rank}.pdf}
+\caption{\label{fig:kegg_summary_rank} Ranking summary plot }
+\end{subfigure}
+\caption{Summary plots for the contrast X24IL13-X24 on the KEGG pathways
+collection.}
+\label{fig:kegg_summary}
+\end{figure}
+
+Gene set IDs are used to highlight significant sets on the Summary plot. To
+obtain additional information on these gene sets, the function
+\Rfunction{showSetByID} can be used as follows
+
+<<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE,width.cutoff=60)>>= 
+showSetByID(gsa, gs.label="kegg", c("hsa04060", "hsa04640"))
+@
+
+Gene Ontology (GO) graphs can be generated for the three categories of GO terms:
+Biological Process (BP), Molecular Function (MF) and Cellular Componenet (CC).
+There are two GO term collections in the package \Biocpkg{EGSEAdata}: c5 from
+MSigDB and gsdbgo from GeneSetDB. To generate the GO graphs for c5 collection on
+the contrast X24IL13-X24 
+<<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE,width.cutoff=60)>>= 
+plotGOGraph(gsa, gs.label="c5", file.name="X24IL13-X24-c5-top-", sort.by="avg.rank")
+@
+This command generates three graphs, one for each GO category and, by default,
+displays the top 5 significant terms in each category. For example, Figure
+\ref{fig:go_terms} shows the BP graph. 
+
+\begin{figure}[!h]
+\center
+\includegraphics[width=0.8\paperwidth]{X24IL13-X24-c5-top-BP.pdf}
+\caption{The top significant Biological Processes (BP) from the c5 collection.}
+\label{fig:go_terms}
+\end{figure}
+
+Heatmaps of the gene fold changes can be gereated for a selected gene set as
+follows
+<<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE,width.cutoff=60)>>= 
+plotHeatmap(gsa, "Asthma", gs.label="kegg", contrast=1,
+        file.name="asthma_hm")
+@
+
+\begin{figure}[!h]
+\center
+\includegraphics[width=0.6\paperwidth]{asthma_hm.pdf}
+\caption{Asthma heatmap for the contrast X24IL13-X24}
+\label{fig:heatmaps}
+\end{figure}
+
+Figure \ref{fig:heatmaps} shows the Asthma gene set heatmap. For the KEGG
+collection, a pathway map that shows the gene interactiosn can be generated as
+follows 
+
+<<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE,width.cutoff=60)>>= 
+plotPathway(gsa, "Asthma", gs.label="kegg", file.name="asthma_pathway")
+@
+
+\begin{figure}[!h]
+\center
+\includegraphics[width=0.8\paperwidth]{asthma_pathway.png}
+\caption{Asthma pathway map for the contrast X24IL13-X24}
+\label{fig:pathways_single}
+\end{figure}
+
+Figure \ref{fig:pathways_single} shows the Asthma pathway map with nodes
+coloured based on the gene fold changes in the contrast X24IL13-X24.
+
+Similar reporting capabilities are also provided for the comparative analysis
+results of EGSEA. A summary plot that compares two contrasts can be generated as
+follows
+
+<<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE,width.cutoff=60)>>= 
+plotSummary(gsa, gs.label="kegg", contrast=c(1,2), file.name="kegg-summary-cmp")
+@
+
+\begin{figure}[!h]
+\center
+\includegraphics[width=0.6\paperwidth]{{kegg-summary-cmp.dir}.pdf}
+\caption{Summary plot for the comparative analysis}
+\label{fig:kegg_summary_multi}
+\end{figure}
+
+Figure \ref{fig:kegg_summary_multi} shows a comparative summary plot between the
+two contrasts of the IL-13 dataset. It clearly highlights the effectiveness of
+the IL-13 antagonist in neuteralizing most of the IL-13 stimulated pathways. To
+closely see how this happens, a comparative heatmap can be generated as follows 
+
+<<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE,width.cutoff=60)>>= 
+plotHeatmap(gsa, "Asthma", gs.label="kegg", contrast="comparison",
+        file.name="asthma_hm_cmp")
+@
+
+\begin{figure}[!h]
+\center
+\includegraphics[width=0.6\paperwidth]{asthma_hm_cmp.pdf}
+\caption{Asthma heatmap for the comparative analysis}
+\label{fig:heatmaps_multi}
+\end{figure}
+
+The heatmap clearly shows that all the genes that were stimulated by IL-13 were
+reveresed when the antagonist was introduced (Figure \ref{fig:heatmaps_multi}).
+Finally, a comparative pathway map can be used to quickly see which genes of the
+Asthma pathway are affected by IL-13 stimulation (Figure
+\ref{fig:pathways_multi}) and can be generated as follows
+
+<<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE,width.cutoff=60)>>= 
+plotPathway(gsa, "Asthma", gs.label="kegg", contrast=0,  file.name="asthma_pathway_cmp")
+@
+
+\begin{figure}[!h]
+\center
+\includegraphics[width=0.8\paperwidth]{asthma_pathway_cmp.png}
+\caption{Asthma pathway map for the comparative analysis}
+\label{fig:pathways_multi}
+\end{figure}
 
 \section{Ensemble of Gene Set Enrichment Analysis}
 Given an RNA-seq dataset $D$ of samples from $N$ experimental conditions, $K$
@@ -349,8 +723,8 @@ statistical significance scores $p_i^m$, where $m=1, \cdots, M$ and $i=1,
 experimental comparison, as follows:
 
 \begin{itemize}
-\item The $p$-value score is the average $p$-value assigned to $\gamma_i$ and is
-calculated using six different methods. 
+\item The $p$-value score is the combined $p$-value assigned to $\gamma_i$ and
+is calculated using six different methods. 
 
 \item The minimum $p$-value score is the smallest $p$-value calculated for $\gamma_i$
 
@@ -373,78 +747,44 @@ useful for ranking results. The significance score is scaled into $[0, 100]$
 range for each gene set collection. To learn more about the calculation of each
 EGSEA score, the original paper of this work is available at Section 2.
 
+
 \section{EGSEA report}
 
-\begin{figure}[!h]
-\includegraphics[width=0.7\paperwidth]{{./il13-egsea-report/hm-top-gs-kegg/hsa05310.heatmap.multi}.pdf}
-\caption{Asthma heatmap for the comparative analysis}
-\label{fig:heatmaps_multi}
+\begin{figure}[!t]
+\center
+\includegraphics[width=0.85\paperwidth]{egsea_report-crop.pdf}
+\caption{The main page of the EGSEA HTML report.}
+\label{fig:egsea_report}
 \end{figure}
 
-\begin{figure}[!h]
-\includegraphics[width=0.8\paperwidth]{{./il13-egsea-report/pv-top-gs-kegg/X24IL13-X24/hsa05310.pathview}.png}
-\caption{Asthma pathway map for the contrast X24IL13-X24}
-\label{fig:pathways_single}
-\end{figure}
-
-\begin{figure}[!h]
-\includegraphics[width=0.8\paperwidth]{{./il13-egsea-report/go-graphs/X24IL13-X24-c5-top-BP}.pdf}
-\caption{The top significant Biological Processes (BP) from GO terms.}
-\label{fig:go_terms}
-\end{figure}
 
 Since the number of annotated gene set collections in public databases
 continuously increases and there is a growing trend towards generating dynamic
 analytical tools, our software tool was developed to enable users to
 interactively navigate through the analysis results by generating an HTML
-\textit{EGSEA Report}. The report presents the results in different ways. For
+\textit{EGSEA Report} (Figure \ref{fig:egsea_report}). The report presents the results in different ways. For
 example, the \textit{Stats table} displays the top $n$ gene sets (where $n$ is
 selected by the user) for each experimental comparison and includes all
 calculated statistics. Hyperlinks are enabled wherever possible, to access
 additional information on the gene sets such as annotation information. 
 The gene expression fold changes can be visualized using heat maps for
-individual gene sets (Fig. 1) or projected onto pathway
-maps where available (e.g. KEGG gene sets) (Fig. 2). The
-most significant Gene Ontology (GO) terms for each comparison can be viewed in
-a GO graph that shows their relationships (Fig. 3).
+individual gene sets (Figure \ref{fig:heatmaps} and
+\ref{fig:heatmaps_multi}) or projected onto pathway maps where available (e.g.
+KEGG gene sets) (Figure \ref{fig:pathways_single} and \ref{fig:pathways_multi}).
+The most significant Gene Ontology (GO) terms for each comparison can be viewed
+in a GO graph that shows their relationships (Figure \ref{fig:go_terms}).
 
 
 \par Additionally, EGSEA creates summary plots for each gene set collection to
-visualize the overall statistical significance of gene sets (Fig. 4). Two types
-of summary plots are generated: (i) a plot that emphasizes the gene regulation direction and the significance score of a
-gene set and (ii) a plot that emphasizes the set cardinality and its rank.
+visualize the overall statistical significance of gene sets (Figure
+\ref{fig:kegg_summary} and \ref{fig:kegg_summary_multi}). Two types of summary plots are generated: (i)
+a plot that emphasizes the gene regulation direction and the significance score of a gene set and (ii) a plot that emphasizes the set cardinality and its rank.
 EGSEA also generates a multidimensional scaling (MDS) plot that shows how
-various GSE methods rank a collection of gene sets (Fig. 5). This plot gives
-insights into the similarity of different methods on a given dataset. Finally,
+various GSE methods rank a collection of gene sets (Figure \ref{fig:summary_methods}). This plot
+gives insights into the similarity of different methods on a given dataset. Finally,
 the reporting capabilities of EGSEA can be used to extend any existing or newly
 developed GSE method by simply using only that method.
 
-\begin{figure}[!h]
-\includegraphics[width=0.7\paperwidth]{{./il13-egsea-report/summary/X24IL13-X24-kegg-summary.dir}.pdf}
-\caption{Summary plot for the contrast X24IL13-X24}
-\label{fig:summary_dir_single}
-\end{figure}
-
-\begin{figure}[!h]
-\includegraphics[width=0.7\paperwidth]{{./il13-egsea-report/summary/X24IL13-X24-kegg-methods}.pdf}
-\caption{The performance of multiple GSE methods on the contrast X24IL13-X24.}
-\label{fig:summary_methods}
-\end{figure}
-
-Similar reporting capabilities are also provided for the comparative analysis
-results of EGSEA (Fig. 6 and Fig. 7).
-
-\begin{figure}[!h]
-\includegraphics[width=0.8\paperwidth]{{./il13-egsea-report/pv-top-gs-kegg/hsa05310.pathview.multi}.png}
-\caption{Asthma pathway map for the comparative analysis}
-\label{fig:pathways_multi}
-\end{figure}
-
-\begin{figure}[!h]
-\includegraphics[width=0.7\paperwidth]{{./il13-egsea-report/summary/kegg-summary.dir}.pdf}
-\caption{Summary plot for the comparative analysis}
-\label{fig:summary_dir_multi}
-\end{figure}
 
 \subsection{Comparative analysis}
 Unlike most GSE methods that calculate a gene set enrichment score for a given
@@ -473,7 +813,7 @@ using \Rfunction{featureCounts}  with default settings. The raw counts are
 also normalized using the TMM method. Data are available from the GEO database
 as series GSE63310. 
 
-\par To perform EGSEA analysis on this dataset, the following commands are
+\par To perform EGSEA analysis on this dataset, the following commands can be
 invoked in the R console
 <<echo=TRUE,  eval=FALSE,tidy=TRUE,tidy.opts=list(blank=FALSE, width.cutoff=60)>>=
 # load the mammary dataset
@@ -486,7 +826,7 @@ v$design
 contrasts = mam.data$contra
 contrasts
 # build the gene set collections 
-gs.annots = buildIdxEZID(entrezIDs=rownames(v$E), species="mouse",
+gs.annots = buildIdx(entrezIDs=rownames(v$E), species="mouse",
         msigdb.gsets = "c2",
         kegg.exclude = "all")
 names(gs.annots)
@@ -496,15 +836,19 @@ colnames(symbolsMap) = c("FeatureID", "Symbols")
 symbolsMap[, "Symbols"] = as.character(symbolsMap[, "Symbols"])
 # replace NA Symbols with IDs
 na.sym = is.na(symbolsMap[, "Symbols"])
+na.sym
 symbolsMap[na.sym, "Symbols"] = symbolsMap[na.sym, "FeatureID"]
 # perform the EGSEA analysis
 # set report = TRUE to generate the EGSEA interactive report
+baseMethods = c("camera", "safe", "gage", "padog", "zscore",
+        "gsva", "globaltest", "ora")
 gsa = egsea(voom.results=v, contrasts=contrasts, gs.annots=gs.annots, 
-        symbolsMap=symbolsMap, baseGSEAs=egsea.base()[-c(2,5,6,9,12)], 
-        display.top= 20, sort.by="med.rank", 
+        symbolsMap=symbolsMap, baseGSEAs=baseMethods, 
+        sort.by="med.rank", 
         num.threads=4, report=FALSE)	
 # show top 20 comparative gene sets in C2 collection
-topSets(gsa, contrast="comparison", gs.label="c2", number = 20)
+summary(gsa)
+topSets(gsa, gs.label="c2", contrast="comparison", number = 20)
 @
 
 \section{EGSEA on a count matrix}
@@ -528,13 +872,13 @@ design = il13.data.cnt$design
 contrasts = il13.data.cnt$contra
 genes = il13.data.cnt$genes
 # build the gene set collections
-gs.annots = buildIdxEZID(entrezIDs=rownames(cnt), species="human", msigdb.gsets="none",
+gs.annots = buildIdx(entrezIDs=rownames(cnt), species="human", msigdb.gsets="none",
  			 kegg.exclude = c("Metabolism"))
 # perform the EGSEA analysis
 # set report = TRUE to generate the EGSEA interactive report
 gsa = egsea.cnt(counts=cnt, group=group, design=design, contrasts=contrasts,  
-        gs.annots=gs.annots, symbolsMap=genes, baseGSEAs=egsea.base()[-c(2,12)], display.top = 5,
- 	    sort.by="avg.rank", egsea.dir="./il13-egsea-cnt-report", num.threads = 4, report=FALSE)
+        gs.annots=gs.annots, symbolsMap=genes, baseGSEAs=egsea.base()[-c(2,12)], 
+ 	    sort.by="avg.rank", num.threads = 4, report=FALSE)
 @
 
 \section{EGSEA on a list of genes}
@@ -565,7 +909,7 @@ deGenes = as.character(top.Table$FeatureID)
 logFC = top.Table$logFC
 names(logFC) = deGenes
 # build the gene set collection index 
-gs.annots = buildIdxEZID(entrezIDs=deGenes, species="human", msigdb.gsets="none",
+gs.annots = buildIdx(entrezIDs=deGenes, species="human", msigdb.gsets="none",
  			kegg.exclude = c("Metabolism"))
 # perform the ORA analysis 
 # set report = TRUE to generate the EGSEA interactive report
@@ -580,7 +924,7 @@ gsa = egsea.ora(entrezIDs=deGenes, universe= as.character(voom.results$genes[,1]
 Scientists usually have their own lists of gene sets and are interested in
 finding which sets are significant in the investigated dataset. Additional
 collections of gene sets can be easily added and tested using the EGSEA
-algorithm. The \Rfunction{buildCustomIdxEZID} function indexes newly created
+algorithm. The \Rfunction{buildCustomIdx} function indexes newly created
 gene sets and attach gene set annotation if provided. To illustrate the use of
 this function, assume a list of gene sets is available where each gene set is
 represented by a character vector of Entrez Gene IDs. In this example, 50 gene
@@ -597,12 +941,12 @@ data(kegg.pathways)
 gsets = kegg.pathways$human$kg.sets[1:50]
 gsets[1]
 # build custom gene set collection using these 50 pathways
-gs.annots = buildCustomIdxEZID(entrezIDs=rownames(v$E), gsets= gsets, species="human")
-names(gs.annots)
-colnames(gs.annots$anno)
+gs.annot = buildCustomIdx(entrezIDs=rownames(v$E), gsets= gsets, species="human")
+class(gs.annot)
+show(gs.annot)
 @
 
-The \Rfunction{buildCustomIdxEZID} creates an annotation data frame for the gene
+The \Rfunction{buildCustomIdx} creates an annotation data frame for the gene
 set collection if the \textit{anno} parameter is not provided. Once the gene set
 collection is indexed, it can be used with any of the \Biocpkg{EGSEA} functions:
 \Rfunction{egsea}, \Rfunction{egsea.cnt} or \Rfunction{egsea.ora}.
@@ -611,8 +955,14 @@ collection is indexed, it can be used with any of the \Biocpkg{EGSEA} functions:
 \section{Add new GSE method}
 If you have an interesting gene set test method that you would like to add to
 the EGSEA framework, please contact us and we will be happy to add your method
-to the next release of \Biocpkg{EGSEA}.
+to the next release of \Biocpkg{EGSEA}. We do not allow users to add new methods
+by themselves because this procedure is a straightforward and is a
+method-dependent. 
 
+\section{Packages used}
+<<echo=TRUE, eval=TRUE, tidy=TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60)>>=
+sessionInfo()
+@
 
 \addcontentsline{toc}{section}{References}
 \bibliography{references}

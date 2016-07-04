@@ -12,9 +12,12 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
     baseGSEAs = sapply(baseGSEAs, tolower)
     baseGSEAs = unique(baseGSEAs)
     combineMethod = tolower(combineMethod)  
+    sort.by = tolower(sort.by)
+    if (sort.by == "significance")
+        sort.by = "Significance"
     stopifnot(length(baseGSEAs) > 0 && length(setdiff(baseGSEAs, egsea.base())) == 0)
     stopifnot(combineMethod %in% egsea.combine())
-    stopifnot(sort.by %in% egsea.sort())
+    stopifnot(sort.by %in% c(egsea.sort()[1:8], baseGSEAs))
     if (length(baseGSEAs) <= 1){
         print("The ensemble mode was disabled.")
         if (sort.by %in% c("vote.rank", "avg.rank", "med.rank", 
@@ -57,10 +60,10 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
 			to the column names of the contrast matrix.")
     }
     
-    if (!is.null(gs.annots$name)){
+    if (class(gs.annots) == "GSCollectionIndex"){
         gs.annot = gs.annots
         gs.annots = list()
-        gs.annots[[gs.annot$label]] = gs.annot
+        gs.annots[[gs.annot@label]] = gs.annot
     }
     if (is.null(symbolsMap)){
         symbolsMap = data.frame()
@@ -81,17 +84,17 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
     
     skipped = c()
     for (gs.annot in gs.annots){
-        gs.annot = getGsetAnnot(gs.annot = gs.annot, min.size=minSize)  
-        if (length(gs.annot$idx) == 0){
-            print(paste0("No gene sets in ", gs.annot$label, " meets the 
+        gs.annot = selectGeneSets(gs.annot, min.size=minSize)  
+        if (length(gs.annot@idx) == 0){
+            print(paste0("No gene sets in ", gs.annot@label, " meets the 
 minimum size criterion."))
-            skipped = c(skipped, gs.annot$label)
+            skipped = c(skipped, gs.annot@label)
             next
         }
         # run egsea and write out ranked gene sets for all contrasts
         print(paste0("EGSEA is running on the provided data and ",
-                        gs.annot$label, " gene sets"))
-        results.file = paste0(egsea.dir, "/", gs.annot$label,"-" , 
+                        gs.annot@label, " gene sets"))
+        results.file = paste0(egsea.dir, "/", gs.annot@label,"-" , 
 combineMethod , "-egsea-results.rda")
         if (file.exists(results.file)){     
             load(results.file)
@@ -132,66 +135,68 @@ file or change the egsea.dir value.\n")
         
         # Generate heatmaps, pathways, GO graphs and summary plots
         if (report){
-            if (length(grep("^kegg", gs.annot$label)) == 1){            
+            if (length(grep("^kegg", gs.annot@label)) == 1){            
                 plotPathways(gene.sets = gsets.top, fc=logFC, 
-gs.annot=gs.annot, 
+                        gs.annot=gs.annot, 
                         gsa.dir=egsea.dir, kegg.dir=kegg.dir, verbose = 
-verbose)            
-                file.name.pv = paste0(egsea.dir, "/pv-top-gs-", gs.annot$label, 
-"/", 
+                        verbose)            
+                file.name.pv = paste0(egsea.dir, "/pv-top-gs-", gs.annot@label, 
+                        "/", 
                         sub(" - ", "-", colnames(contrast)),"-allPathways.html")
             }
             
-            if (gs.annot$label == "c5" && "GOID" %in% colnames(gs.annot$anno)){
+            if ((gs.annot@label == "c5" || gs.annot@label == "gsdbgo") && 
+                    "GOID" %in% colnames(gs.annot@anno)){
                 plotGOGraphs(egsea.results=egsea.results,
                         gs.annot=gs.annot, gsa.dir=egsea.dir, sort.by=sort.by)
                 file.name.go = paste0(egsea.dir, "/go-graphs/", 
-                        sub(" - ", "-", colnames(contrast)),"-allGOgraphs.html")
+                        sub(" - ", "-", colnames(contrast)),"-", gs.annot@label,
+                        "-allGOgraphs.html")
             }
             
             plotHeatMapsLogFC(gene.sets = gsets.top, fc=logFC, 
-gs.annot=gs.annot, 
+                    gs.annot=gs.annot, 
                     symbolsMap=symbolsMap,
                     gsa.dir=egsea.dir)
             
             generateSumPlots(egsea.results = egsea.results, baseGSEAs = baseGSEAs, 
                     gs.annot = gs.annot, gsa.dir = egsea.dir,
                     sum.plot.cutoff = sum.plot.cutoff, sum.plot.axis = 
-sum.plot.axis)
+                    sum.plot.axis)
             
             # Select the annotations of the top gene sets and generate HTLM 
 # reports 
-            file.name = paste0(ranked.gs.dir, "/ranked-", gs.annot$label, 
-"-gene-sets-", 
-                    sub(" - ", "-", colnames(contrast)), '.txt')    
-            file.name.hm = paste0(egsea.dir, "/hm-top-gs-", gs.annot$label, 
-"/", 
-                    sub(" - ", "-", colnames(contrast)),"-allHeatmaps.html")    
+            file.name = paste0(ranked.gs.dir, "/ranked-", gs.annot@label, 
+                "-gene-sets-", 
+                sub(" - ", "-", colnames(contrast)), '.txt')    
+            file.name.hm = paste0(egsea.dir, "/hm-top-gs-", gs.annot@label, 
+                "/", 
+                sub(" - ", "-", colnames(contrast)),"-allHeatmaps.html")    
             file.name.sum = paste0(egsea.dir, "/summary/",  sub(" - ", "-", 
-colnames(contrast)),
-                    "-", gs.annot$label, "-summary.html")   
+                colnames(contrast)),
+                "-", gs.annot@label, "-summary.html")   
             
-            # Create a HTML page for each contrast 
+            # Create an HTML page for each contrast 
             for (i in 1:length(egsea.results)){         
                 temp = egsea.results[[i]][1:ifelse(nrow(egsea.results[[i]]) > 
-display.top, 
-                                display.top, nrow(egsea.results[[i]])), ]
+                    display.top, 
+                    display.top, nrow(egsea.results[[i]])), ]
                 writeEGSEAResultsToHTML(colnames(contrast)[i], temp, gs.annot, 
-file.name[i])
+                    file.name[i])
                 generateAllHeatmapsPage(colnames(contrast)[i], temp, gs.annot, 
-file.name.hm[i])
-                if (length(grep("^kegg", gs.annot$label)) == 1){
+                    file.name.hm[i])
+                if (length(grep("^kegg", gs.annot@label)) == 1){
                     generateAllPathwaysPage(colnames(contrast)[i], temp, 
-gs.annot, file.name.pv[i])
+                        gs.annot, file.name.pv[i])
                 }
-                if (gs.annot$label == "c5"  && "GOID" %in% 
-colnames(gs.annot$anno) ){
+                if ((gs.annot@label == "c5" || gs.annot@label == "gsdbgo") 
+                        && "GOID" %in% colnames(gs.annot@anno) ){
                     generateAllGOgraphsPage(colnames(contrast)[i], gs.annot, 
-file.name.go[i])
+                        file.name.go[i])
                 }
                 
                 generateSummaryPage(colnames(contrast)[i], gs.annot, 
-file.name.sum[i])
+                    file.name.sum[i])
             }
         }
         
@@ -205,26 +210,25 @@ file.name.sum[i])
             gsa$comparison[["test.results"]] = egsea.comparison
             egsea.comparison.all = egsea.comparison            
             egsea.comparison = egsea.comparison[1:ifelse(nrow(egsea.comparison) 
-> display.top, 
-                            display.top, nrow(egsea.comparison)), ]
+                > display.top, 
+                display.top, nrow(egsea.comparison)), ]
             gsa$comparison[["top.gene.sets"]] = rownames(egsea.comparison)
             if (report){
                 generateSumPlots.comparison(egsea.results = egsea.results, 
-                        egsea.comparison = egsea.comparison.all, 
-                        gs.annot = gs.annot, gsa.dir = egsea.dir,       
- 
-                        sum.plot.cutoff=sum.plot.cutoff, 
-sum.plot.axis=sum.plot.axis)    
+                    egsea.comparison = egsea.comparison.all, 
+                    gs.annot = gs.annot, gsa.dir = egsea.dir, 
+                    sum.plot.cutoff=sum.plot.cutoff, 
+                    sum.plot.axis=sum.plot.axis)    
                 plotHeatMapsLogFC.comparison(gene.sets = 
-rownames(egsea.comparison), fc=logFC, gs.annot=gs.annot, symbolsMap=symbolsMap,
-                        gsa.dir=egsea.dir)
-                file.name = paste0(ranked.gs.dir, "/ranked-", gs.annot$label, 
-"-gene-sets-compare.txt")   
-                file.name.hm = paste0(egsea.dir, "/hm-top-gs-", gs.annot$label, 
-"/allHeatmaps.html")                
-                file.name.sum = paste0(egsea.dir, "/summary/",gs.annot$label, 
-"-summary.html")
-                
+                    rownames(egsea.comparison), 
+                    fc=logFC, gs.annot=gs.annot, symbolsMap=symbolsMap,
+                    gsa.dir=egsea.dir)
+                file.name = paste0(ranked.gs.dir, "/ranked-", gs.annot@label, 
+                    "-gene-sets-compare.txt")   
+                file.name.hm = paste0(egsea.dir, "/hm-top-gs-", gs.annot@label, 
+                    "/allHeatmaps.html")                
+                file.name.sum = paste0(egsea.dir, "/summary/",gs.annot@label, 
+                    "-summary.html")                
                 
                 writeEGSEAResultsToHTML("Comparison Analysis", egsea.comparison
                         , gs.annot, file.name, comparison=TRUE)
@@ -232,33 +236,35 @@ rownames(egsea.comparison), fc=logFC, gs.annot=gs.annot, symbolsMap=symbolsMap,
                 generateAllHeatmapsPage("Comparison Analysis", egsea.comparison
                         , gs.annot, file.name.hm, comparison=TRUE)
                 
-                if (length(grep("^kegg", gs.annot$label)) == 1){
+                if (length(grep("^kegg", gs.annot@label)) == 1){
                     plotPathways.comparison(gene.sets = 
-rownames(egsea.comparison), fc=logFC, 
-                            gs.annot=gs.annot, 
-                            gsa.dir=egsea.dir, kegg.dir=kegg.dir, verbose = 
-verbose)    
+                        rownames(egsea.comparison), fc=logFC, 
+                        gs.annot=gs.annot, 
+                        gsa.dir=egsea.dir, kegg.dir=kegg.dir, verbose = 
+                        verbose)    
                     file.name.pv = paste0(egsea.dir, "/pv-top-gs-", 
-gs.annot$label,"/allPathways.html") 
+                        gs.annot@label,"/allPathways.html") 
                     generateAllPathwaysPage("Comparison Analysis", 
-egsea.comparison
-                            , gs.annot, file.name.pv, comparison=TRUE)
+                        egsea.comparison, 
+                        gs.annot, file.name.pv, comparison=TRUE)
                 }   
-                if (gs.annot$label == "c5"  && "GOID" %in% 
-colnames(gs.annot$anno)){
+                if ((gs.annot@label == "c5" || gs.annot@label == "gsdbgo")  && 
+                        "GOID" %in% colnames(gs.annot@anno)){
+                    plotGOGraphs.comparison(egsea.results=egsea.comparison.all,
+                            gs.annot=gs.annot, gsa.dir=egsea.dir, sort.by=sort.by)
                     file.name.go = paste0(egsea.dir, 
-"/go-graphs/allGOgraphs.html")  
+                        "/go-graphs/", gs.annot@label ,"-allGOgraphs.html")  
                     generateAllGOgraphsPage.comparison(colnames(contrast), 
-gs.annot, file.name.go) 
+                        gs.annot, file.name.go) 
                 }
                 
                 generateSummaryPage.comparison(colnames(contrast), gs.annot, 
-file.name.sum)      
+                    file.name.sum)      
             }
             
         }   
-        gsas = addEGSEAResult(gsas, gs.annot$label, gsa)
-        #gsas[[gs.annot$label]] = gsa
+        gsas = addEGSEAResult(gsas, gs.annot@label, gsa)
+        #gsas[[gs.annot@label]] = gsa
     }    
     if (report){
         gs.annots = gs.annots[! names(gs.annots) %in% skipped]
@@ -276,16 +282,16 @@ file.name.sum)
 
 egsea.selectTopGeneSets <- function(egsea.results, fdr, gs.annot, 
 top.gs.dir=NULL, report=TRUE){
-    file.name = paste0(top.gs.dir, "/top-", gs.annot$label, "-gene-sets-", 
+    file.name = paste0(top.gs.dir, "/top-", gs.annot@label, "-gene-sets-", 
             sub(" - ", "-", names(egsea.results)), '.txt')
     contrast.names = names(egsea.results)
     gene.sets.fdr.detail = list()
     
     for(i in 1:length(egsea.results)){      
         #num.gene.sets.fdr = sum(egsea.results[[i]]$FDR < fdr[i])
-        num.gene.sets.fdr = ifelse(length(gs.annot$idx) > fdr, 
-fdr,length(gs.annot$idx))
-        top.print = ifelse(length(gs.annot$idx) >= 10, 10,length(gs.annot$idx))
+        num.gene.sets.fdr = ifelse(length(gs.annot@idx) > fdr, 
+fdr,length(gs.annot@idx))
+        top.print = ifelse(length(gs.annot@idx) >= 10, 10,length(gs.annot@idx))
         if (top.print > num.gene.sets.fdr)
             top.print = num.gene.sets.fdr
         if (num.gene.sets.fdr > 0){
@@ -295,23 +301,23 @@ fdr,length(gs.annot$idx))
             if (report){
                 print(paste0("The top gene sets for contrast ", 
                                 contrast.names[i], " are:"))
-                if (length(grep("^kegg", gs.annot$label)) == 0){
-                    top.table = cbind(gs.annot$anno[
-                    match(rownames(egsea.results.top), gs.annot$anno[,2])
+                if (length(grep("^kegg", gs.annot@label)) == 0){
+                    top.table = cbind(gs.annot@anno[
+                    match(rownames(egsea.results.top), gs.annot@anno[,2])
                                     ,-6],
                             egsea.results.top)
                     print(top.table[1:top.print, c("ID", "p.adj")])
                 }else{
-                    top.table = cbind(gs.annot$anno[
+                    top.table = cbind(gs.annot@anno[
                                     match(rownames(egsea.results.top), 
-    gs.annot$anno[,2])
+    gs.annot@anno[,2])
                                     ,-2],
                             egsea.results.top)
                     print(top.table[1:top.print, c("Type", "p.adj")])
                 }
             
                 print(paste0("Writing out the top-ranked gene sets for each contrast .. 
-                                        ", toupper(gs.annot$label), " gene sets"))
+                                        ", toupper(gs.annot@label), " gene sets"))
                 write.table(top.table, file=file.name[i], sep="\t", quote=FALSE, 
 row.names=FALSE)        
             }
@@ -406,7 +412,7 @@ more information.")
 #            if (baseGSEA == "gage")
 #                print(head(temp.results[[baseGSEA]][[i]]))
             egsea.results.details[[i]][[baseGSEA]] = 
-temp.results[[baseGSEA]][[i]][names(gs.annot$idx),]         
+temp.results[[baseGSEA]][[i]][names(gs.annot@idx),]         
         }
     }   
   
@@ -423,7 +429,7 @@ temp.results[[baseGSEA]][[i]][names(gs.annot$idx),]
         gsets = as.character(rownames(egsea.results[[i]]))
         fc = logFC[, i]
         for (j in 1:length(gsets)){             
-            sel.genes = gs.annot$idx[[gsets[j]]]
+            sel.genes = gs.annot@idx[[gsets[j]]]
             gset.fc = fc[sel.genes]
             temp = abs(gset.fc)
             temp = temp[temp >= logFC.cutoff]

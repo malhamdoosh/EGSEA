@@ -8,7 +8,7 @@ ranked.gs.dir="", output = TRUE,
     # run gsva and write out ranked 'gene sets' for each 'contrast'
     
     file.name = paste0(ranked.gs.dir, "/", method,"-ranked-", 
-gs.annot$label, "-gene-sets-", 
+gs.annot@label, "-gene-sets-", 
             sub(" - ", "-", colnames(contrast)), '.txt')        
     gsva.results = vector("list", ncol(contrast))   
     data.log = voom.results$E
@@ -16,10 +16,10 @@ gs.annot$label, "-gene-sets-",
     rownames(data.log) = as.character(seq(1, nrow(data.log)))       
     
     gsets = list()
-    for (j in 1:length(gs.annot$idx)){
-        gsets[[j]] = as.character(gs.annot$idx[[j]])
+    for (j in 1:length(gs.annot@idx)){
+        gsets[[j]] = as.character(gs.annot@idx[[j]])
     }
-    names(gsets) = names(gs.annot$idx)
+    names(gsets) = names(gs.annot@idx)
     
     args.all = list()
     for(i in 1:ncol(contrast)){
@@ -102,6 +102,8 @@ min.sz=3,
     gs.fit = eBayes(gs.fit)
     gsva.results =  topTable(gs.fit, coef=1, , number=Inf, sort.by="p", 
 adjust.method="BH") 
+    gsva.results = gsva.results[order(gsva.results[, "P.Value"], 
+                    -gsva.results[, "B"]),]
     gsva.results = cbind(Rank=seq(1, nrow(gsva.results)), gsva.results)
     
     

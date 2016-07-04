@@ -5,7 +5,7 @@ rungage <- function(voom.results, contrast, gs.annot, ranked.gs.dir="", output
         num.workers=4, verbose = TRUE){     
     # run GAGE and write out ranked 'gene sets' for each 'contrast'
 
-    file.name = paste0(ranked.gs.dir, "/gage-ranked-", gs.annot$label, 
+    file.name = paste0(ranked.gs.dir, "/gage-ranked-", gs.annot@label, 
 "-gene-sets-", 
             sub(" - ", "-", colnames(contrast)), '.txt')        
     
@@ -16,10 +16,10 @@ rungage <- function(voom.results, contrast, gs.annot, ranked.gs.dir="", output
     sam.idx = 1:ncol(data.log)
     
     gsets = list()
-    for (j in 1:length(gs.annot$idx)){
-        gsets[[j]] = as.character(gs.annot$idx[[j]])
+    for (j in 1:length(gs.annot@idx)){
+        gsets[[j]] = as.character(gs.annot@idx[[j]])
     }
-    names(gsets) = names(gs.annot$idx)
+    names(gsets) = names(gs.annot@idx)
     set.seed(05081986)
     #print(contrast)
     #print(design)

@@ -4,150 +4,196 @@
 ###############################################################################
 # Plot GO graphs using topGO package
 
-plotGOGraphs <- function(egsea.results, gene.ezids, gs.annot, gsa.dir, sort.by){
-    print("GO graphs are being generated for top-ranked GO terms based on 
-p-values ... ")
-
-    
-    gl = rep(0, length(gs.annot$featureIDs))
-    names(gl) = gs.annot$featureIDs
+plotGOGraphs <- function(egsea.results, gs.annot, gsa.dir, sort.by){
+    cat("GO graphs are being generated for top-ranked GO terms based on 
+			p-values ... \n")        
     go.dir = paste0(gsa.dir, "/go-graphs/") 
-    dir.create(file.path(go.dir), showWarnings = FALSE)
+    if (!dir.exists(go.dir))
+        dir.create(file.path(go.dir), showWarnings = FALSE)
     contrast.names = names(egsea.results)
     file.name = paste0(go.dir, sub(" - ", "-", contrast.names), "-", 
-gs.annot$label, "-top-")
+        gs.annot@label, "-top-")
     if (file.exists(paste0(file.name[length(file.name)], "CC.png")))
         return()
-    if (tolower(gs.annot$species) %in% c("human", "homo sapiens")){
-        mappingDB = "org.Hs.eg.db"
-    }else if (tolower(gs.annot$species) %in% c("mouse", "mus musculus")){
-        mappingDB = "org.Mm.eg.db"
-    }
-#   print(mappingDB)
-    capture.output(topGOdataBP <- new("topGOdata",ontology = "BP", allGenes = gl,
-            geneSel = topDiffGenes, nodeSize = 10, annot = 
-annFUN.org, mapping=mappingDB))
-capture.output(topGOdataMF <- new("topGOdata",ontology = "MF", allGenes = gl,
-            geneSel = topDiffGenes, nodeSize = 10, annot = 
-annFUN.org, mapping=mappingDB))
-capture.output(topGOdataCC <- new("topGOdata",ontology = "CC", allGenes = gl,
-            geneSel = topDiffGenes, nodeSize = 10, annot = 
-annFUN.org, mapping=mappingDB))
-#   print(topGOdataBP)
-#   print(summary(topGOdataBP))
-    
-    go.subsets = list() 
-    go.ids = as.character(gs.annot$anno[match(rownames(egsea.results[[1]]), 
-                    gs.annot$anno[, "GeneSet"]), "GOID"])
-
-    go.subsets[["BP"]] = go.ids[go.ids %in% topGOdataBP@graph@nodes]
-    go.subsets[["MF"]] = go.ids[go.ids %in% topGOdataMF@graph@nodes]
-    go.subsets[["CC"]] = go.ids[go.ids %in% topGOdataCC@graph@nodes]    
-#   print(go.subsets)
+    topGOdata = loadTopGOdata(gs.annot, go.dir)    
+    noSig = 5 
     for (i in 1:length(contrast.names)){            
         print(contrast.names[i])
-        scores = egsea.results[[i]][, sort.by]
-        max.score = 1.001
-        noSig = 5
-        if (max(scores) > 1)
-            scores = (scores - min(scores)) / (max(scores) - 
-min(scores)) 
-        scores = scores + 0.001
-        names(scores) = 
-as.character(gs.annot$anno[match(rownames(egsea.results[[i]]), 
-                                gs.annot$anno[, 
-"GeneSet"]), "GOID"])       
-
-        tryCatch({
-            scores.sub = rep(max.score, 
-length(topGOdataBP@graph@nodes))
-            names(scores.sub) = topGOdataBP@graph@nodes
-            scores.sub[go.subsets[["BP"]]] = 
-scores[go.subsets[["BP"]]]
-    #       print(head(pvalues.sub))
-    #       print(length(pvalues.sub))
-#           print(paste0(file.name[i], "BP.pdf"))
-            pdf(paste0(file.name[i], "BP.pdf"))     
-            showSigOfNodes(topGOdataBP, scores.sub, 
-firstSigNodes=noSig, 
-                    useInfo='all', sigForAll=FALSE) # or 
-# use printGraph to write out plot to file
-            dev.off()
-            png(paste0(file.name[i], "BP.png"), width=800, 
-height=800)
-            showSigOfNodes(topGOdataBP, scores.sub, 
-firstSigNodes=noSig, 
-                    useInfo='all', sigForAll=FALSE) # or 
-# use printGraph to write out plot to file
-            dev.off()
-        }, error=function(err){
-            print(paste("MY_ERROR:  ",err))
-            dev.off()
-             file.remove(paste0(file.name[i], "BP.pdf"))
-             file.remove(paste0(file.name[i], "BP.png"))
-            }
-        )
-#       stop("here")
-        
-        tryCatch({
-            scores.sub = rep(max.score, 
-length(topGOdataMF@graph@nodes))
-            names(scores.sub) = topGOdataMF@graph@nodes
-            scores.sub[go.subsets[["MF"]]] = 
-scores[go.subsets[["MF"]]]
-            pdf(paste0(file.name[i], "MF.pdf"))
-            showSigOfNodes(topGOdataMF, scores.sub, 
-firstSigNodes=noSig, 
-                    sigForAll=FALSE, useInfo='all') # or 
-# use printGraph to write out plot to file
-            dev.off()
-            png(paste0(file.name[i], "MF.png"), width=800, 
-height=800)
-            showSigOfNodes(topGOdataMF, scores.sub, 
-firstSigNodes=noSig, 
-                    sigForAll=FALSE, useInfo='all') # or 
-# use printGraph to write out plot to file
-            dev.off()
-        }, error=function(err){
-            print(paste("MY_ERROR:  ",err))
-            dev.off()
-            file.remove(paste0(file.name[i], "MF.pdf"))
-            file.remove(paste0(file.name[i], "MF.png"))
-        }
-        )       
-        
-        tryCatch({
-            scores.sub = rep(max.score, 
-length(topGOdataCC@graph@nodes))
-            names(scores.sub) = topGOdataCC@graph@nodes
-            scores.sub[go.subsets[["CC"]]] = 
-scores[go.subsets[["CC"]]]
-#                   print(head(sort(pvalues.sub), 20))
-#                   print(pvalues.sub["GO:0005581"])
-#                   print(pvalues["GO:0005581"])
-            pdf(paste0(file.name[i], "CC.pdf"))
-            showSigOfNodes(topGOdataCC, scores.sub, 
-firstSigNodes=noSig, 
-                    sigForAll=FALSE, useInfo='all') # or 
-# use printGraph to write out plot to file
-            dev.off()
-            png(paste0(file.name[i], "CC.png"), width=800, 
-height=800)
-            showSigOfNodes(topGOdataCC, scores.sub, 
-firstSigNodes=noSig, 
-                    sigForAll=FALSE, useInfo='all') # or 
-# use printGraph to write out plot to file
-            dev.off()
-        }, error=function(err){
-            print(paste("MY_ERROR:  ",err))
-            dev.off()
-            file.remove(paste0(file.name[i], "CC.pdf"))
-            file.remove(paste0(file.name[i], "CC.png"))
-        }
-        )
+        generateGOGraphs(egsea.results[[i]], gs.annot, sort.by,
+                file.name[i], topGOdata, noSig)
         
     }
     
+}
+
+plotGOGraphs.comparison <- function(egsea.results, gs.annot, gsa.dir, sort.by){
+    cat("GO graphs are being generated for top-ranked COMPARISON\n 
+		GO terms based on p-values ... \n")        
+    go.dir = paste0(gsa.dir, "/go-graphs/") 
+    if (!dir.exists(go.dir))
+        dir.create(file.path(go.dir), showWarnings = FALSE)   
+    file.name = paste0(go.dir, "comparison-", 
+            gs.annot@label, "-top-")
+    if (file.exists(paste0(file.name, "CC.png")))
+        return()
+    topGOdata = loadTopGOdata(gs.annot, go.dir)    
+    noSig = 5
+    generateGOGraphs(egsea.results, gs.annot, sort.by,
+                file.name, topGOdata, noSig)        
+   
+}
+
+loadTopGOdata <- function(gs.annot, go.dir=NULL){
+    if (!is.null(go.dir) && file.exists(paste0(go.dir, "topGOdata.rda"))){
+        load(paste0(go.dir, "topGOdata.rda"))
+        return(topGOdata)
+    }else{    
+        if (tolower(gs.annot@species) %in% c("human", "homo sapiens")){
+            mappingDB = "org.Hs.eg.db"
+        }else if (tolower(gs.annot@species) %in% c("mouse", "mus musculus")){
+            mappingDB = "org.Mm.eg.db"
+        }else if (tolower(gs.annot@species) %in% c("rat", "rattus norvegicus")){
+            mappingDB = "org.Rn.eg.db"
+        }
+        
+        gl = rep(0, length(gs.annot@featureIDs))
+        names(gl) = gs.annot@featureIDs
+        capture.output(topGOdataBP <- new("topGOdata",ontology = "BP", allGenes = gl,
+                        geneSel = topDiffGenes, nodeSize = 10, annot = 
+                                annFUN.org, mapping=mappingDB))
+        capture.output(topGOdataMF <- new("topGOdata",ontology = "MF", allGenes = gl,
+                        geneSel = topDiffGenes, nodeSize = 10, annot = 
+                                annFUN.org, mapping=mappingDB))
+        capture.output(topGOdataCC <- new("topGOdata",ontology = "CC", allGenes = gl,
+                        geneSel = topDiffGenes, nodeSize = 10, annot = 
+                                annFUN.org, mapping=mappingDB)) 
+        topGOdata = list(BP=topGOdataBP, MF=topGOdataMF, CC=topGOdataCC)
+        if (!is.null(go.dir))
+            save(topGOdata, file=paste0(go.dir, "topGOdata.rda"))
+        return(topGOdata)
+    }
+}
+
+#file.name : prefix
+generateGOGraphs <- function(egsea.results, gs.annot, sort.by,
+        file.name, topGOdata = NULL, noSig = 5, format = NULL){
+    if (is.null(topGOdata)){
+        topGOdata = loadTopGOdata(gs.annot)
+    }
+    go.subsets = list() 
+    go.ids = as.character(gs.annot@anno[
+                    match(rownames(egsea.results), 
+                            gs.annot@anno[, "GeneSet"]), "GOID"])        
+    go.subsets[["BP"]] = go.ids[go.ids %in% topGOdata[["BP"]]@graph@nodes]
+    go.subsets[["MF"]] = go.ids[go.ids %in% topGOdata[["MF"]]@graph@nodes]
+    go.subsets[["CC"]] = go.ids[go.ids %in% topGOdata[["CC"]]@graph@nodes]   
+    
+    scores = egsea.results[, sort.by]
+    max.score = 1.001
+    
+    if (max(scores) > 1)
+        scores = (scores - min(scores)) / (max(scores) - 
+                    min(scores)) 
+    scores = scores + 0.001
+    names(scores) = as.character(
+            gs.annot@anno[match(rownames(
+                                    egsea.results), 
+                            gs.annot@anno[, "GeneSet"]), 
+                    "GOID"])       
+    # Generate the BP graph
+    tryCatch({
+            scores.sub = rep(max.score, 
+                    length(topGOdata[["BP"]]@graph@nodes))
+            names(scores.sub) = topGOdata[["BP"]]@graph@nodes
+            scores.sub[go.subsets[["BP"]]] = 
+                    scores[go.subsets[["BP"]]]
+            if (is.null(format) || tolower(format) == "pdf"){
+                pdf(paste0(file.name, "BP.pdf"))     
+                showSigOfNodes(topGOdata[["BP"]], scores.sub, 
+                        firstSigNodes=noSig, 
+                        useInfo='all', sigForAll=FALSE) # or 
+                # use printGraph to write out plot to file
+                dev.off()
+            }
+            if (is.null(format) || tolower(format) == "png"){
+                png(paste0(file.name, "BP.png"), width=800, 
+                        height=800)
+                showSigOfNodes(topGOdata[["BP"]], scores.sub, 
+                        firstSigNodes=noSig, 
+                        useInfo='all', sigForAll=FALSE) # or 
+                # use printGraph to write out plot to file
+                dev.off()
+            }
+        }, error=function(err){
+            print(paste("MY_ERROR:  ",err))
+            dev.off()
+            file.remove(paste0(file.name, "BP.pdf"))
+            file.remove(paste0(file.name, "BP.png"))
+        }
+    )
+#       stop("here")
+    # write the MF graph
+    tryCatch({
+            scores.sub = rep(max.score, 
+                    length(topGOdata[["MF"]]@graph@nodes))
+            names(scores.sub) = topGOdata[["MF"]]@graph@nodes
+            scores.sub[go.subsets[["MF"]]] = 
+                    scores[go.subsets[["MF"]]]
+            if (is.null(format) || tolower(format) == "pdf"){
+                pdf(paste0(file.name, "MF.pdf"))
+                showSigOfNodes(topGOdata[["MF"]], scores.sub, 
+                        firstSigNodes=noSig, 
+                        sigForAll=FALSE, useInfo='all') # or 
+    # use printGraph to write out plot to file
+                dev.off()
+            }
+            if (is.null(format) || tolower(format) == "png"){
+                png(paste0(file.name, "MF.png"), width=800, 
+                        height=800)
+                showSigOfNodes(topGOdata[["MF"]], scores.sub, 
+                        firstSigNodes=noSig, 
+                        sigForAll=FALSE, useInfo='all') # or 
+    # use printGraph to write out plot to file
+                dev.off()
+            }
+        }, error=function(err){
+            print(paste("MY_ERROR:  ",err))
+            dev.off()
+            file.remove(paste0(file.name, "MF.pdf"))
+            file.remove(paste0(file.name, "MF.png"))
+        }
+    )       
+    # write the CC graph
+    tryCatch({
+            scores.sub = rep(max.score, 
+                    length(topGOdata[["CC"]]@graph@nodes))
+            names(scores.sub) = topGOdata[["CC"]]@graph@nodes
+            scores.sub[go.subsets[["CC"]]] = 
+                    scores[go.subsets[["CC"]]]
+            if (is.null(format) || tolower(format) == "pdf"){
+                pdf(paste0(file.name, "CC.pdf"))
+                showSigOfNodes(topGOdata[["CC"]], scores.sub, 
+                        firstSigNodes=noSig, 
+                        sigForAll=FALSE, useInfo='all') # or 
+                # use printGraph to write out plot to file
+                dev.off()
+            }
+            if (is.null(format) || tolower(format) == "png"){
+                png(paste0(file.name, "CC.png"), width=800, 
+                        height=800)
+                showSigOfNodes(topGOdata[["CC"]], scores.sub, 
+                        firstSigNodes=noSig, 
+                        sigForAll=FALSE, useInfo='all') # or 
+                # use printGraph to write out plot to file
+                dev.off()
+            }
+        }, error=function(err){
+            print(paste("MY_ERROR:  ",err))
+            dev.off()
+            file.remove(paste0(file.name, "CC.pdf"))
+            file.remove(paste0(file.name, "CC.png"))
+        }
+    )
 }
 
 topDiffGenes <- function (allScore) {
@@ -167,7 +213,7 @@ generateSumPlots <- function(egsea.results, baseGSEAs, gs.annot, gsa.dir,
     
     for(i in 1:length(egsea.results)){      
         file.name = paste0(summary.dir, sub(" - ", "-", 
-        contrast.names[i]), "-", gs.annot$label, "-summary")        
+        contrast.names[i]), "-", gs.annot@label, "-summary")        
 
         if (!file.exists(paste0(file.name, ".dir.png"))){
             plot.data = generatePlotData(egsea.results[[i]], 
@@ -179,7 +225,7 @@ generateSumPlots <- function(egsea.results, baseGSEAs, gs.annot, gsa.dir,
                         Xlab = paste0("-", sum.plot.axis))
         }
         file.name = paste0(summary.dir, sub(" - ", "-", 
-                    contrast.names[i]), "-", gs.annot$label, "-methods")
+                    contrast.names[i]), "-", gs.annot@label, "-methods")
         if (length(baseGSEAs) > 1 && !file.exists(paste0(file.name, 
                 ".png")))
             generateMDSMethodsPlot(egsea.results[[i]], baseGSEAs, 
@@ -220,7 +266,7 @@ gsa.dir,
 generateSummaryPlots.comparison <- function(egsea.results, egsea.comparison, 
                         gs.annot, sum.plot.axis, sum.plot.cutoff,
                         file.prefix, summary.dir){
-    file.name = paste0(summary.dir, gs.annot$label, file.prefix, "-summary")
+    file.name = paste0(summary.dir, gs.annot@label, file.prefix, "-summary")
     if (!file.exists(paste0(file.name, ".dir.png"))){
         contrast.names = names(egsea.results)
         plot.data = generatePlotData.comparison(egsea.results, 
@@ -276,12 +322,12 @@ generatePlotData.comparison <- function(egsea.results.two, egsea.comparison,
     }
     gs.dirs = rowMeans(gs.dirs.all, na.rm=TRUE)
     gs.sizes = as.numeric(sapply(
-                    as.character(gs.annot$anno[gsets, "NumGenes"]), 
+                    as.character(gs.annot@anno[gsets, "NumGenes"]), 
             function(x) strsplit(x, split="/", fixed=TRUE)[[1]][2]))
     sig.combined = sig.combined / n
     rank = seq(1, length(gs.dirs))
     
-    plot.data = data.frame(id=gs.annot$anno[gsets, "ID"] , 
+    plot.data = data.frame(id=gs.annot@anno[gsets, "ID"] , 
             x.data=pvalues.all[,1], y.data=pvalues.all[,2], 
             gsSize=gs.sizes, sig=sig.combined, dir=gs.dirs, rank = 
             rank)   
@@ -305,12 +351,12 @@ generatePlotData <- function(egsea.results, gs.annot,
     
     rank = seq(1, length(gsets))
 
-    gs.sizes = as.numeric(sapply(as.character(gs.annot$anno[gsets, 
+    gs.sizes = as.numeric(sapply(as.character(gs.annot@anno[gsets, 
 "NumGenes"]), 
                     function(x) strsplit(x, split="/", 
 fixed=TRUE)[[1]][2]))
     
-    plot.data = data.frame(id=gs.annot$anno[gsets, "ID"] , 
+    plot.data = data.frame(id=gs.annot@anno[gsets, "ID"] , 
             x.data=x.data, y.data=egsea.results[gsets, "avg.logFC"], 
             gsSize=gs.sizes, sig=egsea.results[gsets, "Significance"], 
             dir=egsea.results[gsets, "Direction"], rank = rank)  
@@ -374,7 +420,8 @@ high="#000000",
         # customize bubble size
         p = p + scale_size("Cardinality", range=c(2,20))       
         if (is.null(format) || tolower(format) == "pdf"){
-            pdf(paste0(file.name, ".rank.pdf"), width = 10, height = 7) 
+            pdf(paste0(file.name, ".rank.pdf"), width = 10, height = 7,
+                    useDingbats = FALSE) 
         
             # label the bubbles of the top 10 gene sets
             print(p + geom_text(size=5, mapping=aes(x=x.data, y=y.data, 
@@ -411,7 +458,8 @@ high="#E35F5F",
 name="Regulation Direction") # low="#5FE377"
         p = p + scale_size("Significance", range=c(2,20))   
         if (is.null(format) || tolower(format) == "pdf"){
-            pdf(paste0(file.name, ".dir.pdf"), width = 10, height = 7)  
+            pdf(paste0(file.name, ".dir.pdf"), width = 10, height = 7,
+                    useDingbats = FALSE)  
             
             print(p + geom_text(size=5, mapping=aes(x=x.data, y=y.data, 
                             label=id), 
@@ -454,17 +502,16 @@ verbose=FALSE){
 
     for(i in 1:ncol(fc)){       
         print(paste0("    ", contrast.names[i]))
-        pv.dir = paste0(gsa.dir, "/pv-top-gs-", gs.annot$label, "/", 
+        pv.dir = paste0(gsa.dir, "/pv-top-gs-", gs.annot@label, "/", 
                 sub(" - ", "-", contrast.names[i]))     
     
         dir.create(file.path(pv.dir), showWarnings = FALSE, recursive = 
             TRUE)
         setwd(pv.dir)
         for (gene.set in gene.sets[[i]]){
-            id = as.character(gs.annot$anno[match(gene.set, 
-                    gs.annot$anno[, "GeneSet"]), "ID"])       
-            if (file.exists(paste0(pv.dir, "/", id, 
-                ".pathview.png"))){                
+            id = as.character(gs.annot@anno[match(gene.set, 
+                    gs.annot@anno[, "GeneSet"]), "ID"])       
+            if (file.exists(paste0(id,".pathview.png"))){                
                 next
             }
             generatePathway(gene.set, gs.annot, fc[,i], kegg.dir, verbose)    
@@ -476,12 +523,12 @@ verbose=FALSE){
 
 generatePathway <- function(gene.set, gs.annot, fc, kegg.dir="./", 
         verbose=FALSE, file.name = NULL){
-    id = as.character(gs.annot$anno[match(gene.set, 
-                            gs.annot$anno[, "GeneSet"]), "ID"]) 
+    id = as.character(gs.annot@anno[match(gene.set, 
+                            gs.annot@anno[, "GeneSet"]), "ID"]) 
     if (verbose)                
         pathview(gene.data=fc, pathway.id = id,  
                 species = 
-                        species.fullToShort[[tolower(gs.annot$species)]], 
+                        species.fullToShort[[tolower(gs.annot@species)]], 
                 kegg.dir=kegg.dir, kegg.native=TRUE, 
                 res=600,        
                 limit=list(gene=c(-2,2), cpd=1), 
@@ -492,7 +539,7 @@ generatePathway <- function(gene.set, gs.annot, fc, kegg.dir="./",
         suppressMessages(
                 pathview(gene.data=fc, pathway.id = id,  
                 species = 
-                        species.fullToShort[[tolower(gs.annot$species)]], 
+                        species.fullToShort[[tolower(gs.annot@species)]], 
                 kegg.dir=kegg.dir, 
                 kegg.native=TRUE, res=600,          
                 limit=list(gene=c(-2,2), 
@@ -520,11 +567,11 @@ verbose=FALSE){
         kegg.dir = paste0(gsa.dir, "/kegg-dir/")
     dir.create(file.path(kegg.dir))
     kegg.dir = normalizePath(kegg.dir)
-    pv.dir = paste0(gsa.dir, "/pv-top-gs-", gs.annot$label, "/")    
+    pv.dir = paste0(gsa.dir, "/pv-top-gs-", gs.annot@label, "/")    
     setwd(pv.dir)
     for (gene.set in gene.sets){
-        id = gs.annot$anno[match(gene.set, gs.annot$anno[, "GeneSet"]), "ID"]
-        if (file.exists(paste0(pv.dir, "/", id, ".pathview.multi.png"))){ 
+        id = gs.annot@anno[match(gene.set, gs.annot@anno[, "GeneSet"]), "ID"]
+        if (file.exists(paste0(id, ".pathview.multi.png"))){ 
             next
         }
         generateComparisonPathway(gene.set, gs.annot, fc, kegg.dir, verbose)
@@ -534,11 +581,11 @@ verbose=FALSE){
 
 generateComparisonPathway <- function(gene.set, gs.annot, fc, kegg.dir="./", 
         verbose=FALSE, file.name = NULL){
-    id = as.character(gs.annot$anno[match(gene.set, 
-                    gs.annot$anno[, "GeneSet"]), "ID"]) 
+    id = as.character(gs.annot@anno[match(gene.set, 
+                    gs.annot@anno[, "GeneSet"]), "ID"]) 
     if (!verbose)
         suppressMessages(pathview(gene.data=fc, pathway.id = id,  
-                species = gs.annot$species, kegg.dir=kegg.dir, 
+                species = gs.annot@species, kegg.dir=kegg.dir, 
                 kegg.native=TRUE, res=600, 
                 limit=list(gene=c(-2,2), cpd=1), bins=list(gene=20, 
                         cpd=10), 
@@ -547,7 +594,7 @@ generateComparisonPathway <- function(gene.set, gs.annot, fc, kegg.dir="./",
                 low = list(gene = "blue", cpd = "green")))
     else
         pathview(gene.data=fc, pathway.id = id,  
-                species = gs.annot$species, kegg.dir=kegg.dir, 
+                species = gs.annot@species, kegg.dir=kegg.dir, 
                 kegg.native=TRUE, res=600, 
                 limit=list(gene=c(-2,2), cpd=1), bins=list(gene=20, 
                         cpd=10), 
@@ -568,9 +615,9 @@ generateComparisonPathway <- function(gene.set, gs.annot, fc, kegg.dir="./",
 
 plotHeatMapsLogFC.comparison <- function(gene.sets, fc, gs.annot,  symbolsMap, 
 gsa.dir){   
-    hm.dir = paste0(gsa.dir, "/hm-top-gs-", gs.annot$label, "/")        
+    hm.dir = paste0(gsa.dir, "/hm-top-gs-", gs.annot@label, "/")        
     for (gene.set in gene.sets){
-        id = gs.annot$anno[match(gene.set, gs.annot$anno[, "GeneSet"]), 
+        id = gs.annot@anno[match(gene.set, gs.annot@anno[, "GeneSet"]), 
 "ID"]
         file.name = paste0(hm.dir, "/", id, ".heatmap.multi.png")   
         #print(id)
@@ -591,21 +638,21 @@ plotHeatMapsLogFC = function(gene.sets, fc, gs.annot,  symbolsMap, gsa.dir){
     # create output directory for heatmaps
     print("Heat maps are being generated for top-ranked gene sets based on 
 logFC ... ")
-    if (!identical(rownames(fc), gs.annot$featureIDs)){     
-        fc = fc[match(rownames(fc), gs.annot$featureIDs) , ]    
-        if (!identical(rownames(fc), gs.annot$featureIDs)){
+    if (!identical(rownames(fc), gs.annot@featureIDs)){     
+        fc = fc[match(rownames(fc), gs.annot@featureIDs) , ]    
+        if (!identical(rownames(fc), gs.annot@featureIDs)){
             print(rownames(fc)[1:10])       
-            print(gs.annot$featureIDs[1:10])
+            print(gs.annot@featureIDs[1:10])
             stop("The row names of the fold change matrix should 
 match the featureIDs vector in the gs.annot list")          
         }
     }   
     if (nrow(symbolsMap) > 0 && !identical(as.character(symbolsMap[,1]), 
-                    gs.annot$featureIDs)){
+                    gs.annot@featureIDs)){
         symbolsMap = symbolsMap[match(as.character(symbolsMap[,1]), 
-                        gs.annot$featureIDs) , ]
+                        gs.annot@featureIDs) , ]
         if (!identical(as.character(symbolsMap[,1]), 
-                    gs.annot$featureIDs))
+                    gs.annot@featureIDs))
             stop("All featureIDs in the gs.annot list should map to 
 					a valid gene symbol")
     }
@@ -613,14 +660,14 @@ match the featureIDs vector in the gs.annot list")
     contrast.names = colnames(fc)       
     
     for(i in 1:ncol(fc)){       
-        hm.dir = paste0(gsa.dir, "/hm-top-gs-", gs.annot$label, "/", 
+        hm.dir = paste0(gsa.dir, "/hm-top-gs-", gs.annot@label, "/", 
                 sub(" - ", "-", contrast.names[i]))     
     
         dir.create(file.path(hm.dir), showWarnings = FALSE, recursive = 
 TRUE)       
         
         for (gene.set in gene.sets[[i]]){
-            id = gs.annot$anno[match(gene.set, gs.annot$anno[, 
+            id = gs.annot@anno[match(gene.set, gs.annot@anno[, 
 "GeneSet"]), "ID"]
 #           print(gene.set)
             file.name = paste0(hm.dir, "/", id, ".heatmap.png") 
@@ -639,12 +686,12 @@ symbolsMap, sub(".png", "", file.name))
 
 generateHeatMap <- function(gene.set, gs.annot, fc, symbolsMap, file.name,
         format=NULL, print.csv=TRUE){    
-    if (length(gs.annot$idx[[gene.set]]) < 2){
+    if (length(gs.annot@idx[[gene.set]]) < 2){
         warning(paste0("heatmap for ", gene.set, " is skipped. It has 
 			only one gene."))
         return()
     }
-    c = gs.annot$idx
+    c = gs.annot@idx
     sel = which(names(c) == gene.set)
     sel.genes = c[[sel]]    
     if (!is.matrix(fc) || ncol(fc) == 1){
@@ -656,10 +703,10 @@ generateHeatMap <- function(gene.set, gs.annot, fc, symbolsMap, file.name,
         colnames(hm) = gsub("X", "", colnames(fc))
     }
     if (nrow(symbolsMap) == 0)
-        rownames(hm) = gs.annot$featureIDs[sel.genes] # genes in the 
+        rownames(hm) = gs.annot@featureIDs[sel.genes] # genes in the 
 # gene set    
     else
-        rownames(hm) = symbolsMap[match(gs.annot$featureIDs[sel.genes], 
+        rownames(hm) = symbolsMap[match(gs.annot@featureIDs[sel.genes], 
                                     symbolsMap[,1]), 2]
     
     
@@ -729,7 +776,7 @@ generateHeatMap <- function(gene.set, gs.annot, fc, symbolsMap, file.name,
 #       else
 #           gsets = gene.sets[[cont]]
 #       cont.not.null = append(cont.not.null, TRUE)
-#       gs.idx = append(gs.idx, match(gsets, gs.annot$anno[,2]))    
+#       gs.idx = append(gs.idx, match(gsets, gs.annot@anno[,2]))    
     
 #       labels = append(labels, rep(cont, length(gsets)))
 #   }
@@ -738,8 +785,8 @@ generateHeatMap <- function(gene.set, gs.annot, fc, symbolsMap, file.name,
 #       return()
 #   }
 #       
-#   sizes = as.numeric(gs.annot$anno[gs.idx, "NumGenes"]) 
-#   gs.ids = gs.annot$anno[gs.idx, "ID"]
+#   sizes = as.numeric(gs.annot@anno[gs.idx, "NumGenes"]) 
+#   gs.ids = gs.annot@anno[gs.idx, "ID"]
 #   
 #   no.classes = length(levels(factor(labels)))
 #   if (no.classes > 4){
@@ -756,7 +803,7 @@ generateHeatMap <- function(gene.set, gs.annot, fc, symbolsMap, file.name,
 # xlab="Number of Genes",
 #           names.arg=FALSE, horiz=TRUE,
 #           main=paste0("Size of top-ranked gene sets in ", 
-# gs.annot$label))
+# gs.annot@label))
 #   
 #   if (length(gs.idx) < 30){
 #       cex = 0.85
@@ -789,7 +836,7 @@ generateHeatMap <- function(gene.set, gs.annot, fc, symbolsMap, file.name,
 #       else
 #           gsets = gene.sets[[cont]]
 #       cont.not.null = append(cont.not.null, TRUE)
-#       gs.idx = append(gs.idx, match(gsets, gs.annot$anno[,2]))    
+#       gs.idx = append(gs.idx, match(gsets, gs.annot@anno[,2]))    
     
 #       labels = append(labels, rep(cont, length(gsets)))
 #       dirs = append(dirs, test.results[[cont]][gsets, "Direction"])
@@ -802,7 +849,7 @@ generateHeatMap <- function(gene.set, gs.annot, fc, symbolsMap, file.name,
 #   dirs = gsub("Up", +1, dirs)
 #   dirs = gsub("Down", -1, dirs)
 #   dirVal = as.numeric(dirs) # -1, +1
-#   gs.ids = gs.annot$anno[gs.idx, "ID"]
+#   gs.ids = gs.annot@anno[gs.idx, "ID"]
 #   
 #   no.classes = length(levels(factor(labels)))
 #   if (no.classes > 4){
@@ -857,14 +904,14 @@ generateHeatMap <- function(gene.set, gs.annot, fc, symbolsMap, file.name,
 #           names.arg=rep(NA, ncol(dirs)), beside=FALSE,
 #           main=paste0("Regulation direction of top-ranked gene 
 # sets in ", 
-#                   gs.annot$label), add=FALSE)
+#                   gs.annot@label), add=FALSE)
 #   rp = barplot(dirs[2, ], col=cols[2],
 #           ylim=c(-1.3, 1.3), xlab="Gene Sets", ylab="Regulation 
 # Direction",
 #           names.arg=rep(NA, ncol(dirs)), beside=FALSE,
 #           main=paste0("Regulation direction of top-ranked gene 
 # sets in ", 
-#                   gs.annot$label), add=TRUE)
+#                   gs.annot@label), add=TRUE)
 #       
 #   if (length(gs.idx) < 30){
 #       cex = 0.85

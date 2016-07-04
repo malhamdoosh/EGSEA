@@ -29,3 +29,16 @@ EGSEA 1.1.5 (2016-05-27)
 EGSEA 1.1.6 (2016-05-31)
 ------------------------
 - Fixed: a minor bug in the calculation of the comparative analysis p-value.
+
+EGSEA 1.1.7 (2016-06-30)
+------------------------
+- Improved: the documentation of the methods in the vignette 
+- Improved: the interpretation of the results in the vignette 
+- Improved: the ranking when ties occur
+- Added: useDingbats = FALSE to pdf() when generating summary plots
+- Added: S4 class named GSCollectionIndex to store indexed gene set collections
+- Added: showSetByName() and showSetByID() to EGSEAResults and GSCollectionIndex
+- Added: plotGOGraph() to EGSEAResults
+- Updated: the GO graphs page of the comparative analysis
+- Added: GO graphs to the GO collection of the GeneSetDB
+- Fixed: minor bugs

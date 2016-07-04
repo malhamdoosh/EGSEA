@@ -5,7 +5,7 @@ output = TRUE,
         num.workers=4, verbose = TRUE){     
     # run ROAST and write out ranked 'gene sets' for each 'contrast'    
 
-    file.name = paste0(ranked.gs.dir, "/roast-ranked-", gs.annot$label, 
+    file.name = paste0(ranked.gs.dir, "/roast-ranked-", gs.annot@label, 
 "-gene-sets-", 
             sub(" - ", "-", colnames(contrast)), '.txt')        
     roast.results = vector("list", ncol(contrast))  
@@ -15,7 +15,7 @@ output = TRUE,
         else
             cat(".")
         roast.results[[i]] = mroast(y=voom.results, 
-                index=gs.annot$idx, 
+                index=gs.annot@idx, 
                 design=voom.results$design, 
                 contrast=contrast[,i], nrot=999)
         # returns PropDown/PropUp ==> proportion of genes that are 
