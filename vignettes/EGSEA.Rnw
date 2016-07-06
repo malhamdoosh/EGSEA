@@ -64,9 +64,9 @@ each of the selected methods independently and an FDR value is assigned to each
 gene set. Lastly, the ensemble functions are invoked to calculate collective
 significance scores for each gene set.
 
-\par The \Biocpkg{EGSEA} package also allows for performing over-representation analysis
-on the EGSEA gene set collections that were adopted from MSigDB, KEGG and
-GeneSetDB databases. 
+\par The \Biocpkg{EGSEA} package also allows for performing
+the over-representation analysis on the EGSEA gene set collections that were
+adopted from MSigDB, KEGG and GeneSetDB databases. 
 
 
 \section{Citation}
@@ -195,7 +195,7 @@ source("http://bioconductor.org/biocLite.R")
 biocLite("EGSEA")
 @
 
-To install the development version of \Biocpkg{EGSEA} from Bioconductor, run the
+To install the developmental version of \Biocpkg{EGSEA} from Bioconductor, run the
 following commands in R console
 
 <<echo=TRUE,  eval=FALSE,tidy=TRUE>>=
@@ -206,7 +206,7 @@ biocLite("EGSEA")
 
 \subsubsection{Bitbucket}
 
-To install the development version of \Biocpkg{EGSEA} from Bitbucket, type in the R
+To install the developmental version of \Biocpkg{EGSEA} from Bitbucket, type in the R
 console
 
 <<echo=TRUE,  eval=FALSE,tidy=TRUE>>=
@@ -214,8 +214,8 @@ library(devtools)
 install_bitbucket("malhamdoosh/egsea", ref="Devel_Release")
 @
 
-The stable release version of \Biocpkg{EGSEA} can be from Bitbucket by setting
-\Rcode{ref = "Stabel\_Release"} in the previous commands.
+The stable release version of \Biocpkg{EGSEA} can be obtained from Bitbucket by
+setting \Rcode{ref = "Stabel\_Release"} in the previous commands.
 
 \section{Quick start}
 \subsection{EGSEA gene set collections}
@@ -231,7 +231,7 @@ identifiers must be first converted into Entrez IDs. KEGG pathways
 \textit{gage} package. To extend the capabilities of EGSEA, a third database of
 gene sets was downloaded from the GeneSetDB \cite{Araki2012}
 \url{http://genesetdb.auckland.ac.nz/sourcedb.html} project. In total, more
-than 20,000 gene sets have been collated along with annotation information for
+than 25,000 gene sets have been collated along with annotation information for
 each set (where available).
 
 \par  The \Biocpkg{EGSEA} package has four indexing functions that utilize the
@@ -294,7 +294,7 @@ as series GSE79027.
 \par To perform EGSEA analysis on this dataset, the \Biocpkg{EGSEA} package is
 first loaded follow
 
-<<echo=TRUE,  eval=TRUE,tidy=TRUE>>=
+<<echo=TRUE,  eval=TRUE,tidy=TRUE, message=F, warning=F>>=
 library(EGSEA)
 @
 
@@ -952,7 +952,7 @@ collection is indexed, it can be used with any of the \Biocpkg{EGSEA} functions:
 \Rfunction{egsea}, \Rfunction{egsea.cnt} or \Rfunction{egsea.ora}.
 
 
-\section{Add new GSE method}
+\section{Adding new GSE method}
 If you have an interesting gene set test method that you would like to add to
 the EGSEA framework, please contact us and we will be happy to add your method
 to the next release of \Biocpkg{EGSEA}. We do not allow users to add new methods
