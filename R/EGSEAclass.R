@@ -67,7 +67,9 @@ EGSEAResults <- setClass(
 #' @rdname EGSEAResults-methods
 #' 
 #' @examples
+#' library(EGSEAdata)
 #' data(il13.gsa)
+#' gsa = il13.gsa
 #' class(gsa)
 #' print(gsa$baseMethods)
 
@@ -139,7 +141,9 @@ setGeneric(name="addSymbolsMap",
 #' @rdname EGSEAResults-methods
 #' 
 #' @examples
+#' library(EGSEAdata)
 #' data(il13.gsa)
+#' gsa = il13.gsa
 #' class(gsa)
 #' topSets(gsa,  gs.label="kegg",contrast=1, number = 10)
 #' topSets(gsa,  gs.label=1, contrast=1, sort.by="ora", number = 10, 
@@ -219,7 +223,9 @@ setGeneric(name="addSymbolsMap",
 #' @rdname EGSEAResults-methods
 #'  
 #' @examples
+#' library(EGSEAdata)
 #' data(il13.gsa)
+#' gsa = il13.gsa
 #' class(gsa)
 #' show(gsa)
   
@@ -274,7 +280,9 @@ setMethod(f = "show",
 #' @rdname EGSEAResults-methods
 #' 
 #' @examples
+#' library(EGSEAdata)
 #' data(il13.gsa)
+#' gsa = il13.gsa
 #' class(gsa)
 #' summary(gsa)
   
@@ -350,7 +358,9 @@ setMethod(f = "show",
 #' @rdname EGSEAResults-methods
 #' 
 #' @examples
+#' library(EGSEAdata)
 #' data(il13.gsa)
+#' gsa = il13.gsa
 #' class(gsa)
 #' plotHeatmap(gsa, gs.label="kegg", "Asthma")
 #' plotHeatmap(gsa, gs.label="kegg", "Asthma", contrast = "comparison", 
@@ -424,7 +434,9 @@ setMethod(f = "show",
 #' @rdname EGSEAResults-methods
 #' 
 #' @examples
+#' library(EGSEAdata)
 #' data(il13.gsa)
+#' gsa = il13.gsa
 #' class(gsa)
 #' plotPathway(gsa, gs.label="kegg", "Asthma")
 #' plotPathway(gsa, gs.label="kegg", "Asthma", contrast="comparison", 
@@ -498,7 +510,9 @@ setMethod(f = "show",
 #' @rdname EGSEAResults-methods
 #'  
 #' @examples
+#' library(EGSEAdata)
 #' data(il13.gsa)
+#' gsa = il13.gsa
 #' class(gsa)
 #' plotMethods(gsa)
   
@@ -575,7 +589,9 @@ setGeneric(name="plotMethods",
 #' @rdname EGSEAResults-methods
 #' 
 #' @examples
+#' library(EGSEAdata)
 #' data(il13.gsa)
+#' gsa = il13.gsa
 #' class(gsa)
 #' plotSummary(gsa)
 #' plotSummary(gsa, contrast=c(1,2), file.name = "summary.cmp")
@@ -684,7 +700,9 @@ setGeneric(name="plotMethods",
 #' @rdname EGSEAResults-methods
 #' 
 #' @examples
+#' library(EGSEAdata)
 #' data(il13.gsa)
+#' gsa = il13.gsa
 #' class(gsa)
 #' plotGOGraph(gsa, sort.by="avg.rank")
   
@@ -759,7 +777,9 @@ setGeneric(name="plotMethods",
 #' @rdname EGSEAResults-methods
 #' 
 #' @examples
+#' library(EGSEAdata)
 #' data(il13.gsa)
+#' gsa = il13.gsa
 #' class(gsa)
 #' showSetByName(gsa, "kegg", "Asthma")
   
@@ -805,7 +825,9 @@ setMethod(f = "showSetByName",
 #' @rdname EGSEAResults-methods
 #'  
 #' @examples
+#' library(EGSEAdata)
 #' data(il13.gsa)
+#' gsa = il13.gsa
 #' class(gsa)
 #' showSetByID(gsa, "kegg", "hsa04060")
   

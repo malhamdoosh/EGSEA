@@ -30,16 +30,6 @@
 #' and addition functions to help perform GSE analysis
 NULL
 
-#' EGSEA analysis results on the human IL-13 dataset  
-#' 
-#' EGSEA analysis was performed on the il13.data from the EGSEAdata package using
-#' the KEGG pathways, c2 and c5 gene set collections.    
-#' @name gsa
-#' @docType data
-#' @format An object of class EGSEAResults 
-#' @source The dataset of this analysis is available in the EGSEAdata package.
-NULL
-
 #' @title Ensemble of Gene Set Enrichment Analyses Function
 #' 
 #' @description This is the main function to carry out gene set enrichment 

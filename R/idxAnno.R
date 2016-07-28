@@ -247,12 +247,12 @@ buildMSigDBIdx <- function(entrezIDs, geneSets="all",
     print("Loading MSigDB Gene Sets ... ")
     # SymbolIdentifier(), EntrezIdentifier()
     gsc.all = NULL
-    msigdb.file = paste0(rdata.dir, "/msigdb_v5.rda")
+    msigdb.file = paste0(rdata.dir, "/msigdb.rda")
     if (!is.null(rdata.dir) && file.exists(msigdb.file))
         load(msigdb.file)
     else
-        data("msigdb_v5", package="EGSEAdata")
-    gsc.all = gsc.all5              
+        data("msigdb", package="EGSEAdata")
+    gsc.all = msigdb              
     if (is.null(gsc.all))
         stop("Failed to load the MSigDB gene set collection data")
     gsc.all = gsc.all[names(gsc.all) == "GENESET"]          
@@ -269,23 +269,20 @@ buildMSigDBIdx <- function(entrezIDs, geneSets="all",
         gsc.small = gsc.all[types == geneSet] 
         if (species == "Mus musculus"){
             if (geneSet %in% c("h", "c2", "c3", "c4", "c5", 
-                        "c6","c7")){
-                ver = ifelse (geneSet == "c5", "4", "5")    
-            
+                        "c6","c7")){                
+                geneSet = ifelse(geneSet == "h", "H", geneSet)
                 msigdb.file = paste0(rdata.dir, 
-                "/msigdb.mouse_", geneSet,"_v", ver, "5.rdata")
+                "/Mm.", geneSet, ".rdata")
                 if (!is.null(rdata.dir) && 
                         file.exists(msigdb.file))
                     load(msigdb.file)
                 else
-                    data(list=paste0("msigdb.mouse_", 
-                        geneSet,"_v", ver), package="EGSEAdata")
-                geneSet = ifelse(geneSet == "h", "H", geneSet)
+                    data(list=paste0("Mm.", geneSet), package="EGSEAdata")                
                 gs.annot@original =get(paste0("Mm.", geneSet))
             }
             else{
                 warning(paste0("Unsupported gene set for Mus 
-					musculus ... ", geneSet))
+					Musculus ... ", geneSet))
                 next
             }
         }
@@ -432,17 +429,20 @@ min.size=1, rdata.dir=NULL){
                     "gsdbpath" , "gsdbreg"))
     print("Loading GeneSetDB Gene Sets ... ")
     species = normalizeSpecies(species) 
-    gsdb.file = paste0(rdata.dir, '/genesetdb.', 
+    gsdb.file = paste0(rdata.dir, '/gsetdb.', 
         species.fullToShort[[tolower(species)]], ".rdata")
     if (!is.null(rdata.dir) && file.exists(gsdb.file))
         load(gsdb.file)
     else
-        data(list=paste0('genesetdb.', 
+        data(list=paste0('gsetdb.', 
             species.fullToShort[[tolower(species)]]), 
             package="EGSEAdata")
+    gsetdb.all = get(paste0('gsetdb.', 
+                species.fullToShort[[tolower(species)]]))
     if (is.null(gsetdb.all)){
         stop("Failed to load the GeneSetDB collection data")
     }
+    
     gs.annot = buildCustomIdx(entrezIDs = entrezIDs, gsets = 
         gsetdb.all$original,
         anno = gsetdb.all$anno, label = "gsDB", 

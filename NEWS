@@ -42,3 +42,10 @@ EGSEA 1.1.7 (2016-06-30)
 - Updated: the GO graphs page of the comparative analysis
 - Added: GO graphs to the GO collection of the GeneSetDB
 - Fixed: minor bugs
+
+EGSEA 1.1.7 (2016-07-12)
+------------------------
+- Removed: EGSEAResults of IL13 from EGSEA and moved it to EGSEAdata
+- Updated: EGSEAdata object names in idxAnno
+
+

@@ -185,47 +185,69 @@ Print the details of a given gene set ID
 \item{\code{report.dir}}{character, the directory of the EGSEA HTML report}
 }}
 \examples{
+library(EGSEAdata)
 data(il13.gsa)
+gsa = il13.gsa
 class(gsa)
 print(gsa$baseMethods)
+library(EGSEAdata)
 data(il13.gsa)
+gsa = il13.gsa
 class(gsa)
 topSets(gsa,  gs.label="kegg",contrast=1, number = 10)
 topSets(gsa,  gs.label=1, contrast=1, sort.by="ora", number = 10, 
 names.only=FALSE)
 topSets(gsa,  gs.label="kegg",contrast=0, number = 10)
 
+library(EGSEAdata)
 data(il13.gsa)
+gsa = il13.gsa
 class(gsa)
 show(gsa)
+library(EGSEAdata)
 data(il13.gsa)
+gsa = il13.gsa
 class(gsa)
 summary(gsa)
+library(EGSEAdata)
 data(il13.gsa)
+gsa = il13.gsa
 class(gsa)
 plotHeatmap(gsa, gs.label="kegg", "Asthma")
 plotHeatmap(gsa, gs.label="kegg", "Asthma", contrast = "comparison", 
 file.name = "asthma.hm.cmp")
+library(EGSEAdata)
 data(il13.gsa)
+gsa = il13.gsa
 class(gsa)
 plotPathway(gsa, gs.label="kegg", "Asthma")
 plotPathway(gsa, gs.label="kegg", "Asthma", contrast="comparison", 
 file.name = "asthma.map.cmp")
+library(EGSEAdata)
 data(il13.gsa)
+gsa = il13.gsa
 class(gsa)
 plotMethods(gsa)
+library(EGSEAdata)
 data(il13.gsa)
+gsa = il13.gsa
 class(gsa)
 plotSummary(gsa)
 plotSummary(gsa, contrast=c(1,2), file.name = "summary.cmp")
 
+library(EGSEAdata)
 data(il13.gsa)
+gsa = il13.gsa
 class(gsa)
 plotGOGraph(gsa, sort.by="avg.rank")
+library(EGSEAdata)
 data(il13.gsa)
+gsa = il13.gsa
 class(gsa)
 showSetByName(gsa, "kegg", "Asthma")
+library(EGSEAdata)
 data(il13.gsa)
+gsa = il13.gsa
 class(gsa)
 showSetByID(gsa, "kegg", "hsa04060")
 }
