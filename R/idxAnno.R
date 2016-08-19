@@ -270,15 +270,15 @@ buildMSigDBIdx <- function(entrezIDs, geneSets="all",
         if (species == "Mus musculus"){
             if (geneSet %in% c("h", "c2", "c3", "c4", "c5", 
                         "c6","c7")){                
-                geneSet = ifelse(geneSet == "h", "H", geneSet)
+                geneSet1 = ifelse(geneSet == "h", "H", geneSet)
                 msigdb.file = paste0(rdata.dir, 
-                "/Mm.", geneSet, ".rdata")
+                "/Mm.", geneSet1, ".rdata")
                 if (!is.null(rdata.dir) && 
                         file.exists(msigdb.file))
                     load(msigdb.file)
                 else
-                    data(list=paste0("Mm.", geneSet), package="EGSEAdata")                
-                gs.annot@original =get(paste0("Mm.", geneSet))
+                    data(list=paste0("Mm.", geneSet1), package="EGSEAdata")                
+                gs.annot@original =get(paste0("Mm.", geneSet1))
             }
             else{
                 warning(paste0("Unsupported gene set for Mus 

@@ -43,9 +43,14 @@ EGSEA 1.1.7 (2016-06-30)
 - Added: GO graphs to the GO collection of the GeneSetDB
 - Fixed: minor bugs
 
-EGSEA 1.1.7 (2016-07-12)
+EGSEA 1.1.8 (2016-07-12)
 ------------------------
 - Removed: EGSEAResults of IL13 from EGSEA and moved it to EGSEAdata
 - Updated: EGSEAdata object names in idxAnno
+
+EGSEA 1.1.9 (2016-08-19)
+------------------------
+- Fixed: a bug in buildIdx of mouse H gene set 
+
 
 
