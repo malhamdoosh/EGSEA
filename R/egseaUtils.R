@@ -8,7 +8,7 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
                 kegg.dir, logFC, symbolsMap, minSize, display.top, 
                 logFC.cutoff, sum.plot.cutoff, sum.plot.axis, 
                 vote.bin.width, print.base, verbose, num.threads, 
-                report){
+                report, keep.limma, keep.set.scores){
     baseGSEAs = sapply(baseGSEAs, tolower)
     baseGSEAs = unique(baseGSEAs)
     combineMethod = tolower(combineMethod)  
@@ -26,6 +26,8 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
             warning("The sort.by argument was set to \"p.value\"")
         }
     }
+    keep.set.scores = (keep.set.scores && length(intersect(baseGSEAs, 
+                    c("ssgsea")))) # , "gsva", "plage", "zscore"
     print("EGSEA analysis has started")
     # check arguments are valid
     if (!is.matrix(contrast)){
@@ -36,6 +38,10 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
     }   
     # create output directory for 'egsea' results
     if (report){
+        if (is.null(egsea.dir)){
+            timestamp = as.integer(as.numeric(Sys.time()))
+            egsea.dir = paste0("./egsea_results_", timestamp)
+        }
         if (! dir.exists(file.path(egsea.dir))){
             dir.create(file.path(egsea.dir), showWarnings = FALSE)
             egsea.dir = normalizePath(egsea.dir)
@@ -50,21 +56,43 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
         ranked.gs.dir = NULL
     }
         
-    logFC.calculated = "No"
-    if (is.null(logFC)){
-        #row names should be Entrez Gene IDs in order to plot KEGG pathways
-        logFC = getlogFCFromLMFit(voom.results, contrast)       
-        logFC.calculated = "Yes"
-    }else if (!is.matrix(logFC) || !identical(colnames(logFC), colnames(contrast))){
-        stop("logFC should be a matrix object with column names equal 
-			to the column names of the contrast matrix.")
-    }
-    
     if (class(gs.annots) == "GSCollectionIndex"){
         gs.annot = gs.annots
         gs.annots = list()
         gs.annots[[gs.annot@label]] = gs.annot
     }
+    
+    logFC.calculated = "No"
+    if (is.null(logFC)){
+        #row names should be Entrez Gene IDs in order to plot KEGG pathways
+        tmp = getlogFCFromLMFit(voom.results, contrast)
+        logFC = tmp$logFC
+        limma.results = tmp$limma.results
+        limma.tops = tmp$limma.tops
+        logFC.calculated = "Yes"
+    }else if (!is.matrix(logFC) || !identical(colnames(logFC), colnames(contrast))){
+        stop(paste0("logFC should be a matrix object with column names equal", 
+			"to the column names of the contrast matrix."))
+    }else if (class(voom.results) == "EList"){
+        tmp = getlogFCFromLMFit(voom.results, contrast)
+        limma.results = tmp$limma.results
+        limma.tops = tmp$limma.tops
+    }else{
+        limma.results = new("MArrayLM")
+        limma.tops = list()
+    }
+    
+    featureIDs = as.character(gs.annots[[1]]@featureIDs)
+    if (!identical(rownames(logFC), featureIDs)){     
+        logFC = logFC[match(featureIDs, rownames(logFC)) , ]    
+        if (!identical(rownames(logFC), featureIDs)){
+            print(rownames(logFC)[1:10])       
+            print(featureIDs[1:10])
+            stop("The row names of the fold change matrix should 
+                            match the featureIDs vector in the gs.annot list")          
+        }
+    }
+    
     if (is.null(symbolsMap)){
         symbolsMap = data.frame()
     }else if (nrow(symbolsMap) > 0 && ncol(symbolsMap) >= 2){
@@ -76,13 +104,17 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
     }
     gsas = EGSEAResults(contrasts = colnames(contrast), 
             sampleSize = getNumberofSamples(voom.results, contrast), 
-            gs.annots = gs.annots, baseMethods=baseGSEAs,
+            gs.annots = gs.annots, baseMethods=baseGSEAs, 
+            baseInfo = getBaseInfo(baseGSEAs),
             combineMethod = combineMethod, sort.by = sort.by,   
             symbolsMap = symbolsMap,
             logFC = logFC, report = report, report.dir = egsea.dir
             )
+    if (keep.limma && length(limma.results) > 0)
+        gsas@limmaResults = limma.results
     
     skipped = c()
+    
     for (gs.annot in gs.annots){
         gs.annot = selectGeneSets(gs.annot, min.size=minSize)  
         if (length(gs.annot@idx) == 0){
@@ -100,8 +132,8 @@ combineMethod , "-egsea-results.rda")
             load(results.file)
             cat(paste0("The EGSEA results have been loaded from \n", 
 results.file, "\n"))
-            cat("If you want to re-run the EGSEA test,\n please remove this 
-file or change the egsea.dir value.\n")
+            cat(paste0("If you want to re-run the EGSEA test, please remove this\n", 
+                        "file or change the egsea.dir value.\n"))
         }else{
             results <- runegsea(voom.results = voom.results, 
                     contrast=contrast, baseGSEAs=baseGSEAs,
@@ -132,6 +164,11 @@ file or change the egsea.dir value.\n")
         gsa = list("top.gene.sets"=gsets.top, "test.results"=egsea.results)
         if (print.base)
             gsa[["base.results"]] = results[["base.results"]]        
+        if (keep.set.scores){
+            set.methods = intersect(baseGSEAs, 
+                    c("ssgsea")) # , "gsva", "plage", "zscore"
+            gsa[["set.scores"]] = calculateSetScores(voom.results, gs.annot, set.methods)
+        }
         
         # Generate heatmaps, pathways, GO graphs and summary plots
         if (report){
@@ -155,6 +192,7 @@ file or change the egsea.dir value.\n")
             }
             
             plotHeatMapsLogFC(gene.sets = gsets.top, fc=logFC, 
+                    limma.tops = limma.tops,
                     gs.annot=gs.annot, 
                     symbolsMap=symbolsMap,
                     gsa.dir=egsea.dir)
@@ -221,7 +259,9 @@ file or change the egsea.dir value.\n")
                     sum.plot.axis=sum.plot.axis)    
                 plotHeatMapsLogFC.comparison(gene.sets = 
                     rownames(egsea.comparison), 
-                    fc=logFC, gs.annot=gs.annot, symbolsMap=symbolsMap,
+                    fc=logFC,
+                    limma.tops = limma.tops,
+                    gs.annot=gs.annot, symbolsMap=symbolsMap,
                     gsa.dir=egsea.dir)
                 file.name = paste0(ranked.gs.dir, "/ranked-", gs.annot@label, 
                     "-gene-sets-compare.txt")   
@@ -268,7 +308,7 @@ file or change the egsea.dir value.\n")
     }    
     if (report){
         gs.annots = gs.annots[! names(gs.annots) %in% skipped]
-        generateEGSEAReport(voom.results, contrast, gs.annots, baseGSEAs, 
+        generateEGSEAReport(voom.results, contrast, gs.annots, gsas@baseInfo, 
                             combineMethod, sort.by,  egsea.dir, kegg.dir, 
                             logFC.calculated, symbolsMap)    
         if (interactive()) try(browseURL(paste0("file://", 
@@ -277,6 +317,56 @@ file or change the egsea.dir value.\n")
     }    
     print("EGSEA analysis has completed")
     return(gsas)
+}
+
+
+calculateSetScores <- function(voom.results, gs.annot, set.methods){    
+    set.scores = list()
+    data.log = voom.results$E
+    rownames(data.log) = as.character(seq(1, nrow(data.log)))
+    gsets = list()
+    for (j in 1:length(gs.annot@idx)){
+        gsets[[j]] = as.character(gs.annot@idx[[j]])
+    }
+    names(gsets) = names(gs.annot@idx)
+    for (method in set.methods){
+        cat(paste0("Gene set enrichment scores per sample are\n", 
+                    "being calculated using ", 
+                        method, "...\n"))
+        gs.es = gsva(expr=data.log, gset.idx.list=gsets, mx.diff=TRUE, 
+                min.sz=1, method=method, parallel.sz=1, 
+                verbose=FALSE, rnaseq=FALSE)        
+        if (method == "gsva"){
+            gs.es = gs.es$es.obs
+        }
+        set.scores[[method]] = gs.es
+    }
+    return(set.scores)
+}
+
+getBaseInfo <- function(baseGSEAs){
+    basePkg = list()
+    basePkg[["camera"]] = "limma"
+    basePkg[["roast"]] = "limma"
+    basePkg[["safe"]] = "safe"
+    basePkg[["gage"]] = "gage"
+    basePkg[["padog"]] = "PADOG"
+    basePkg[["plage"]] = "GSVA"
+    basePkg[["zscore"]] = "GSVA"
+    basePkg[["gsva"]] = "GSVA"
+    basePkg[["ssgsea"]] = "GSVA"
+    basePkg[["globaltest"]] = "globaltest"
+    basePkg[["ora"]] = "stats"
+    basePkg[["fry"]] = "limma"    
+    baseInfo = list()
+    for (baseGSEA in baseGSEAs){
+        baseInfoi = list()
+        pkg = basePkg[[baseGSEA]]
+        baseInfoi$version = packageVersion(pkg)        
+        baseInfoi$package = pkg
+        baseInfo[[baseGSEA]] = baseInfoi
+    }
+    return(baseInfo)
 }
 
 
@@ -310,22 +400,19 @@ fdr,length(gs.annot@idx))
                 }else{
                     top.table = cbind(gs.annot@anno[
                                     match(rownames(egsea.results.top), 
-    gs.annot@anno[,2])
-                                    ,-2],
+                                        gs.annot@anno[,2]), -2],
                             egsea.results.top)
                     print(top.table[1:top.print, c("Type", "p.adj")])
                 }
-            
-                print(paste0("Writing out the top-ranked gene sets for each contrast .. 
-                                        ", toupper(gs.annot@label), " gene sets"))
-                write.table(top.table, file=file.name[i], sep="\t", quote=FALSE, 
-row.names=FALSE)        
+                if (!file.exists(file.name[i])){
+                    cat(paste0("Writing out the top-ranked gene sets for each contrast ..", 
+                                    toupper(gs.annot@label), " gene sets\n"))
+                    write.table(top.table, file=file.name[i], sep="\t", quote=FALSE, 
+                    row.names=FALSE)        
+                }
             }
             
-        }else{
-            write("No gene sets below current FDR found for this contrast, \n 
-                            increase FDR or give up on this set." , 
-file=file.name[i])
+        }else{            
             print("No gene sets found")
             gene.sets.fdr.detail[[i]] = NA
         }
@@ -340,13 +427,16 @@ file=file.name[i])
 runbaseGSEAParallelWorker <- function(args){
     #print(paste0("Running ", toupper(args$baseGSEA), " on all contrasts ... "))
     tryCatch({
-                temp.result = runbaseGSEA(method=args$baseGSEA, 
+                #t = system.time(
+                temp.result <- runbaseGSEA(method=args$baseGSEA, 
                         args$voom.results, args$contrast, args$gs.annot,
                         args$ranked.gs.dir, output.base = args$print.base, 
                         num.threads = args$num.threads, verbose=args$verbose)
+                #)
+                #print(paste0(args$baseGSEA, " ", args$gs.annot$name, " ", t[3]))
                 if (args$verbose)
-                    print(paste0("Running ", toupper(args$baseGSEA), " on all 
-							contrasts ... COMPLETED "))
+                    cat(paste0("Running ", toupper(args$baseGSEA), " on all ", 
+							"contrasts ... COMPLETED \n"))
                 else{
                     cat(args$baseGSEA)
                     cat("*")
@@ -830,6 +920,7 @@ nrow(egsea.comparison))
 
 getlogFCFromLMFit <- function(voom.results, contrast){
     # to be changed for gene symbols support
+    stopifnot(class(voom.results) == "EList")
     print("Log fold changes are estimated using limma package ... ")
     # fit linear model for each gene using limma package functions
     vfit = lmFit(voom.results, design=voom.results$design) # Fit linear model 
@@ -840,17 +931,21 @@ getlogFCFromLMFit <- function(voom.results, contrast){
 #F-statistic, 
     #and log-odds of differential expression by empirical Bayes moderation of 
 # the 
-    #standard errors towards a common value         
-    
+    #standard errors towards a common value     
+    contr.names = colnames(contrast)    
     logFC = matrix(0, nrow(ebayes.results), ncol(contrast))
+    limma.tops = list()
     for (i in 1:ncol(contrast)){
         top.table = topTable(ebayes.results, coef=i, number=Inf, sort.by="none")
         limma.fc = top.table$logFC      
         names(limma.fc) = rownames(ebayes.results)  
         logFC[, i] = limma.fc
+        rownames(top.table) = rownames(ebayes.results)
+        limma.tops[[contr.names[i]]] = top.table
     }
     
     rownames(logFC) = rownames(ebayes.results)
-    colnames(logFC) = colnames(contrast)
-    return(logFC)
+    colnames(logFC) = contr.names
+    
+    return(list(logFC=logFC, limma.results=ebayes.results, limma.tops=limma.tops))
 }

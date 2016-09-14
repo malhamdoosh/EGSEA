@@ -50,12 +50,84 @@ NULL
 #' hypothesis while the 
 #' remaining seven methods are based on a self-contained hypothesis. 
 #' Conveniently, the 
-#' algorithm proposed here is not limited to these eleven GSE methods and new 
+#' algorithm proposed here is not limited to these twelve GSE methods and new 
 #' GSE tests 
 #' can be easily integrated into the framework. This function takes the voom 
 #' object and 
 #' the contrast matrix as parameters. 
-#' The results of EGSEA can be seen using the \code{\link{topSets}} function. 
+#' The results of EGSEA can be seen using the \code{\link{topSets}} function. \cr 
+#' \cr
+#' EGSEA report is an interactive HTML report that is generated if \code{report=TRUE} to
+#' enable a swift navigation through the results of an EGSEA analysis. The following pages 
+#' are generated for each gene set collection and contrast/comparison: \cr
+#' 1. Stats Table page shows the detailed statistics of the EGSEA analysis for the 
+#' \code{display.top} gene sets. It shows the EGSEA scores, individual rankings and 
+#' additional annotation for each gene set. Hyperlinks to the source of each gene set
+#' can be seen in this table when they are available. The "Direction" column shows the regulation
+#' direction of a gene set which is calculated based on the \code{logFC}, which is
+#' either calculated from the limma differential expression analysis or provided by the user. 
+#' The \code{logFC.cutoff} is applied for this calculation. The calculations of the EGSEA 
+#' scores can be seen in the references section. The method \code{topSets} can be used to
+#' generate custom Stats Table. \cr
+#' 2. Heatmaps page shows the heatmaps of the gene fold changes for the gene sets that are
+#' presented in the Stats Table page. Red indicates up-regulation
+#' while blue indicates down-regulation. Only genes that appear in the input expression/count 
+#' matrix are visualized in the heat map. Gene names are coloured based on their 
+#' statistical significance in the \code{limma} differential expression analysis. 
+#' The "Interpret Results" link below each heat map allows the user to download the 
+#' original heat map values along with additional statistics from \code{limma} DE analysis (
+#' if available) so that they can be used to perform further analysis in R, e.g., customizing 
+#' the heat map visualization. Additional heat maps can be generated and customized
+#'  using the method \code{plotHeatmap}. \cr
+#' 3. Summary Plots page  shows the methods ranking plot along with the summary plots of 
+#' EGSEA analysis. The method plot uses multidimensional scaling (MDS) to visualize the 
+#' ranking of individual methods on a given gene set collection. The summary plots are 
+#' bubble plots that visualize the distribution of gene sets based on the EGSEA
+#' Significance Score and another EGSEA score (default, p-value). 
+#' Two summary plots are generated: ranking and directional plots. Each gene set is 
+#' reprersented with a bubble which is coloured based on the EGSEA ranking (in ranking
+#' plots ) or gene set regulation direction (in directional plots) and sized based on the 
+#' gene set cardinality (in ranking plots) or EGSEA Significance score (in directional plots).
+#' Since the EGSEA "Significance Score" is proportional to the p-value and the 
+#' absolute fold changes, it could be useful to highlight gene sets that
+#' have high Significance scores. The blue labels on the summary plot indicate 
+#' gene sets that do not appear in the top 10 list of gene sets based on the "sort.by" 
+#' argument (black labels) yet they appear in the top 5 list of gene sets based on 
+#' the EGSEA "Significance Score". If two contrasts are provided, the rank is calculated 
+#' based on the "comparison" analysis results and the "Significance Score" is calculated 
+#' as the mean. If \code{sort.by = NULL}, the slot \code{sort.by} of the \code{object} 
+#' is used to order gene sets.
+#' The method \code{plotSummary} can be used to customize the Summary plots by 
+#' changing the x-axis score
+#' and filtering bubbles based on the values of the x-axis. The method \code{plotMethods} can be
+#' used to generate Methods plots. \cr
+#' 4. Pathways page shows the KEGG pathways for the gene sets that are presented in the
+#' Stats Table of a KEGG gene set collection. The gene fold changes are overlaid on the 
+#' pathway maps and coloured based on the gene regulation direction: blue for down-regulation
+#' and red for up-regulation. The method \code{plotPathway} can be used to generate
+#' additional pathway maps. Note that this page only appears if a KEGG gene set collection
+#' is used in the EGSEA analysis. \cr
+#' 5. Go Graphs page shows the Gene Ontology graphs for top 5 GO terms in each of 
+#' three GO categories: Biological Processes (BP), Molecular Functions (MF), 
+#' and Cellular Components (CC). Nodes are coloured based on the default \code{sort.by}
+#' score where red indicates high significance and yellow indicates low significance. 
+#' The method \code{plotGOGraph} can be used to customize GO graphs by 
+#' changing the default sorting score and the number of significance nodes that can be
+#' visualized. It is recommended that a small number of nodes is selected. Note that
+#' this page only appears if a Gene Ontology gene set collection is used, i.e., for
+#' the c5 collection from MSigDB or the gsdbgo collection from GeneSetDB. \cr
+#' \cr
+#' Finally, the "Interpret Results" hyperlink in the EGSEA report allows the user to download
+#' the fold changes and limma analysis results and thus improve the interpretation of the results.
+#' \cr 
+#' Note that the running time of this function significantly increseas when 
+#' \code{report = TRUE}. For example, the analysis in the example section below
+#' was conducted on the $203$ signaling and disease KEGG pathways using a MacBook Pro 
+#' machine that had a 2.8 GHz Intel Core i7 CPU and 16 GB of RAM. The execution time 
+#' varied between 23.1 seconds (single thread) to 7.9 seconds (16 threads) when the HTML 
+#' report generation was disabled. The execution time took 145.5 seconds when the report 
+#' generation was enabled using 16 threads.
+#' 
 #'
 #' @param voom.results list, an EList object generated using the  
 #' \code{\link[limma]{voom}} function. 
@@ -128,6 +200,9 @@ NULL
 #' individual GSE methods.
 #'  Default FALSE.  
 #' @param verbose logical, whether to print out progress messages and warnings. 
+#' @param keep.limma logical, whether to return the results of the limma analysis.
+#' @param keep.set.scores logical, whether to calculate the gene set enrichment scores
+#' per sample for the methods that support this option, i.e., "ssgsea".
 #' 
 #' @return A list of elements, each with two/three elements that store the top 
 #' gene sets and the detailed analysis
@@ -146,12 +221,13 @@ NULL
 #' @importFrom safe safe safe.toptable getCmatrix
 #' @importFrom parallel mclapply
 #' @importFrom AnnotationDbi Ontology
-#' @importFrom stats p.adjust pchisq phyper
-#' @importFrom grDevices pdf dev.off png 
-#' @importFrom graphics par
-#' @importFrom utils write.table browseURL write.csv data capture.output
+#' @importFrom stats p.adjust pchisq phyper quantile
+#' @importFrom grDevices pdf dev.off png colorRampPalette 
+#' @importFrom graphics par legend
+#' @importFrom utils write.table browseURL write.csv data capture.output packageVersion
 #' @importFrom gage gage kegg.gsets
 #' @importFrom metap logitp meanp sumlog sump sumz wilkinsonp
+#' @importFrom methods new slot
 #' @import hwriter HTMLUtils stringi ggplot2 pathview gplots  Biobase topGO
 #' @export
 #' @references 
@@ -162,6 +238,7 @@ NULL
 #' analyses. 
 #' 
 #' @examples
+#' # Example of egsea
 #' library(EGSEAdata)
 #' data(il13.data)
 #' v = il13.data$voom
@@ -185,12 +262,13 @@ egsea <- function(voom.results, contrasts, logFC=NULL,
         minSize=2, display.top=20, 
         combineMethod="fisher", combineWeights = NULL,      
         sort.by="p.adj", 
-        egsea.dir="./", kegg.dir=NULL, 
+        egsea.dir=NULL, kegg.dir=NULL, 
         logFC.cutoff=0, sum.plot.axis="p.adj", sum.plot.cutoff=NULL, 
         vote.bin.width=5,
         num.threads=4, report = TRUE,
         print.base = FALSE, 
-        verbose=FALSE){
+        verbose=FALSE,
+        keep.limma=FALSE, keep.set.scores=FALSE){
     stopifnot((class(voom.results) == "list" && 
                     "ids" %in% names(voom.results)) 
                 || class(voom.results) == "EList")
@@ -203,7 +281,7 @@ egsea <- function(voom.results, contrasts, logFC=NULL,
     if (length(baseGSEAs) == 1){
         sort.by = "p.adj"
     }
-    set.seed(581986) # to gurantee reproducibility of results
+    set.seed(581986) # to guaranteereproducibility of results
     if (verbose)    
         return(egsea.main(voom.results, contrasts, gs.annots, baseGSEAs, 
 combineMethod, 
@@ -211,7 +289,7 @@ combineMethod,
                         kegg.dir, logFC, symbolsMap, minSize, display.top, 
 logFC.cutoff, sum.plot.cutoff, sum.plot.axis, 
                         vote.bin.width, print.base, verbose, num.threads, 
-report))
+report, keep.limma, keep.set.scores))
     else
         suppressWarnings(
                 return(egsea.main(voom.results, contrasts, gs.annots, 
@@ -220,7 +298,7 @@ baseGSEAs, combineMethod,
                                 kegg.dir, logFC, symbolsMap, minSize, 
 display.top, logFC.cutoff, sum.plot.cutoff, 
                                 sum.plot.axis, vote.bin.width,print.base, 
-verbose, num.threads, report)))
+verbose, num.threads, report, keep.limma, keep.set.scores)))
     
 }
 
@@ -253,7 +331,78 @@ verbose, num.threads, report)))
 #' matrix as parameters. 
 #' It performs TMM normalization and then applies \link[limma]{voom} to 
 #' calculate the logCPM and weighting factors. 
-#' The results of EGSEA can be seen using the \code{\link{topSets}} function. 
+#' The results of EGSEA can be seen using the \code{\link{topSets}} function. \cr 
+#'  \cr
+#'  EGSEA report is an interactive HTML report that is generated if \code{report=TRUE} to
+#' enable a swift navigation through the results of an EGSEA analysis. The following pages 
+#' are generated for each gene set collection and contrast/comparison: \cr
+#' 1. Stats Table page shows the detailed statistics of the EGSEA analysis for the 
+#' \code{display.top} gene sets. It shows the EGSEA scores, individual rankings and 
+#' additional annotation for each gene set. Hyperlinks to the source of each gene set
+#' can be seen in this table when they are available. The "Direction" column shows the regulation
+#' direction of a gene set which is calculated based on the \code{logFC}, which is
+#' either calculated from the limma differential expression analysis or provided by the user. 
+#' The \code{logFC.cutoff} is applied for this calculation. The calculations of the EGSEA 
+#' scores can be seen in the references section. The method \code{topSets} can be used to
+#' generate custom Stats Table. \cr
+#' 2. Heatmaps page shows the heatmaps of the gene fold changes for the gene sets that are
+#' presented in the Stats Table page. Red indicates up-regulation
+#' while blue indicates down-regulation. Only genes that appear in the input expression/count 
+#' matrix are visualized in the heat map. Gene names are coloured based on their 
+#' statistical significance in the \code{limma} differential expression analysis. 
+#' The "Interpret Results" link below each heat map allows the user to download the 
+#' original heat map values along with additional statistics from \code{limma} DE analysis (
+#' if available) so that they can be used to perform further analysis in R, e.g., customizing 
+#' the heat map visualization. Additional heat maps can be generated and customized
+#'  using the method \code{plotHeatmap}. \cr
+#' 3. Summary Plots page  shows the methods ranking plot along with the summary plots of 
+#' EGSEA analysis. The method plot uses multidimensional scaling (MDS) to visualize the 
+#' ranking of individual methods on a given gene set collection. The summary plots are 
+#' bubble plots that visualize the distribution of gene sets based on the EGSEA
+#' Significance Score and another EGSEA score (default, p-value). 
+#' Two summary plots are generated: ranking and directional plots. Each gene set is 
+#' reprersented with a bubble which is coloured based on the EGSEA ranking (in ranking
+#' plots ) or gene set regulation direction (in directional plots) and sized based on the 
+#' gene set cardinality (in ranking plots) or EGSEA Significance score (in directional plots).
+#' Since the EGSEA "Significance Score" is proportional to the p-value and the 
+#' absolute fold changes, it could be useful to highlight gene sets that
+#' have high Significance scores. The blue labels on the summary plot indicate 
+#' gene sets that do not appear in the top 10 list of gene sets based on the "sort.by" 
+#' argument (black labels) yet they appear in the top 5 list of gene sets based on 
+#' the EGSEA "Significance Score". If two contrasts are provided, the rank is calculated 
+#' based on the "comparison" analysis results and the "Significance Score" is calculated 
+#' as the mean. If \code{sort.by = NULL}, the slot \code{sort.by} of the \code{object} 
+#' is used to order gene sets.
+#' The method \code{plotSummary} can be used to customize the Summary plots by 
+#' changing the x-axis score
+#' and filtering bubbles based on the values of the x-axis. The method \code{plotMethods} can be
+#' used to generate Methods plots. \cr
+#' 4. Pathways page shows the KEGG pathways for the gene sets that are presented in the
+#' Stats Table of a KEGG gene set collection. The gene fold changes are overlaid on the 
+#' pathway maps and coloured based on the gene regulation direction: blue for down-regulation
+#' and red for up-regulation. The method \code{plotPathway} can be used to generate
+#' additional pathway maps. Note that this page only appears if a KEGG gene set collection
+#' is used in the EGSEA analysis. \cr
+#' 5. Go Graphs page shows the Gene Ontology graphs for top 5 GO terms in each of 
+#' three GO categories: Biological Processes (BP), Molecular Functions (MF), 
+#' and Cellular Components (CC). Nodes are coloured based on the default \code{sort.by}
+#' score where red indicates high significance and yellow indicates low significance. 
+#' The method \code{plotGOGraph} can be used to customize GO graphs by 
+#' changing the default sorting score and the number of significance nodes that can be
+#' visualized. It is recommended that a small number of nodes is selected. Note that
+#' this page only appears if a Gene Ontology gene set collection is used, i.e., for
+#' the c5 collection from MSigDB or the gsdbgo collection from GeneSetDB. \cr
+#' \cr
+#' Finally, the "Interpret Results" hyperlink in the EGSEA report allows the user to download
+#' the fold changes and limma analysis results and thus improve the interpretation of the results.
+#' \cr 
+#' Note that the running time of this function significantly increseas when 
+#' \code{report = TRUE}. For example, the analysis in the example section below
+#' was conducted on the $203$ signaling and disease KEGG pathways using a MacBook Pro 
+#' machine that had a 2.8 GHz Intel Core i7 CPU and 16 GB of RAM. The execution time 
+#' varied between 23.1 seconds (single thread) to 7.9 seconds (16 threads) when the HTML 
+#' report generation was disabled. The execution time took 145.5 seconds when the report 
+#' generation was enabled using 16 threads.
 #'
 #' @param counts double, numeric matrix of read counts where genes are the rows 
 #' and samples are
@@ -330,6 +479,9 @@ verbose, num.threads, report)))
 #' individual GSE methods.
 #'  Default FALSE.  
 #' @param verbose logical, whether to print out progress messages and warnings. 
+#' @param keep.limma logical, whether to return the results of the limma analysis.
+#' @param keep.set.scores logical, whether to calculate the gene set enrichment scores
+#' per sample for the methods that support this option, i.e., "ssgsea".
 #' 
 #' @return A list of elements, each with two/three elements that store the top 
 #' gene sets and the detailed analysis
@@ -353,6 +505,7 @@ verbose, num.threads, report)))
 #' analyses. 
 #' 
 #' @examples
+#' # Example of egsea.cnt
 #' library(EGSEAdata)
 #' data(il13.data.cnt)
 #' cnt = il13.data.cnt$counts
@@ -380,12 +533,12 @@ egsea.cnt <- function(counts, group, design = NULL, contrasts, logFC=NULL,
         minSize=2, display.top=20, 
         combineMethod="fisher", combineWeights = NULL,      
         sort.by="p.adj", 
-        egsea.dir="./", kegg.dir=NULL, 
+        egsea.dir=NULL, kegg.dir=NULL, 
         logFC.cutoff=0, sum.plot.axis="p.adj", sum.plot.cutoff=NULL, 
         vote.bin.width=5,
         num.threads=4, report = TRUE,
         print.base = FALSE, 
-        verbose=FALSE){
+        verbose=FALSE, keep.limma=FALSE, keep.set.scores=FALSE){
     d = DGEList(counts, group=group)
     d = calcNormFactors(d, method="TMM")    
     if (is.null(design)){
@@ -404,7 +557,7 @@ egsea.cnt <- function(counts, group, design = NULL, contrasts, logFC=NULL,
                     vote.bin.width,
                     num.threads, report,
                     print.base , 
-                    verbose))
+                    verbose, keep.limma, keep.set.scores))
     
 }
 
@@ -503,6 +656,7 @@ egsea.cnt <- function(counts, group, design = NULL, contrasts, logFC=NULL,
 #' analyses. 
 #' 
 #' @examples
+#' # Example of egsea.ora
 #' library(EGSEAdata)
 #' data(il13.data)
 #' voom.results = il13.data$voom
@@ -527,11 +681,12 @@ egsea.cnt <- function(counts, group, design = NULL, contrasts, logFC=NULL,
 #'               egsea.dir="./il13-egsea-ora-report", num.threads = 2, 
 #' 				report = FALSE)
 #' topSets(gsa) 
+#' 
 
 egsea.ora <- function(entrezIDs, universe=NULL, logFC=NULL, title=NULL, 
         gs.annots, symbolsMap=NULL, 
         minSize=2, display.top=20, sort.by = "p.adj",   
-        egsea.dir="./", kegg.dir=NULL, 
+        egsea.dir=NULL, kegg.dir=NULL, 
         logFC.cutoff=0, sum.plot.axis="p.adj", sum.plot.cutoff=NULL, 
         vote.bin.width=5,
         num.threads=4, report = TRUE,
@@ -583,6 +738,7 @@ egsea.ora <- function(entrezIDs, universe=NULL, logFC=NULL, title=NULL,
 #' @export
 #' @examples 
 #' egsea.sort()
+#' 
 
 egsea.sort <-function(){
     return(c(c("p.value", "p.adj", "avg.rank", "med.rank", "min.rank", 
@@ -598,6 +754,7 @@ egsea.sort <-function(){
 #' @export
 #' @examples 
 #' egsea.combine()
+#' 
 
 egsea.combine <- function(){
     return(c("fisher", "wilkinson", "average", "logitp", 
@@ -606,11 +763,64 @@ egsea.combine <- function(){
 
 
 #' @title EGSEA Base GSE Methods
-#' @description It lists the supported GSEA methods
+#' @description It lists the supported GSEA methods. Since EGSEA base methods 
+#' are implemented in the Bioconductor project, the most recent version of 
+#' each individual method is always used. 
+#' @details These methods include: 
+#' \pkg{ora}[1], \pkg{globaltest}[2], \pkg{plage}[3], \pkg{safe}[4], \pkg{zscore}[5],
+#'  \pkg{gage}[6], \pkg{ssgsea}[7], \pkg{roast}[8], \pkg{fry}[8], \pkg{padog}[9],
+#'  \pkg{camera}[10] and \pkg{gsva}[11]. 
+#' The \code{ora, gage, camera} and \code{gsva} methods depend on a competitive null 
+#' hypothesis while the remaining seven methods are based on a self-contained hypothesis. 
+#' Conveniently, EGSEA is not limited to these twelve
+#' GSE methods and new GSE tests can be easily integrated into the framework. \cr
+#' \cr
+#' Note: the execution time of base methods can vary depending on the size of gene set collections, 
+#' number of samples, number of genes and number of contrasts.  When a gene set collection of 
+#' around 200 gene sets was tested on a dataset of 17,500 genes, 8 samples and 2 contrasts, the
+#' execution  time of base methods in ascending order was as follows:
+#' \code{globaltest; safe; gage; gsva; zscore; plage; fry; camera; ora; ssgsea; padog}. When the
+#' same dataset was tested on a large gene set collection of 3,700 gene sets, the execution
+#' time of base methods in ascending order was as follows: 
+#' \code{globaltest; camera; fry; zscore; plage; safe; gsva; ora; gage; padog; ssgsea}. Apparently, the
+#' size of gene set collection plays a key role in the execution time of most of the base
+#' methods. The reduction rate of execution time between the large and small gene set
+#' collections varied between 18\% and 88\%. \code{camera, fry, plage, zscore} and \code{ora} showed the least
+#' reduction rate of execution time. As a result, there is no guarantee that a single combination 
+#' of base methods would run faster than other combinations. It is worth mentioning that 
+#' our simulation results showed that the increasing number of base methods in the EGSEA 
+#' analysis is desirable to achieve high performance.  
+#'
+#' @references 
+#' [1] Tavazoie, S. et al. (1999). Systematic determination of genetic network architecture.
+#' Nature Genetics, 22(3), 281-5.\cr 
+#' [2] Goeman, J. J. et al. (2004). A global test for groups of genes: testing association with a
+#' clinical outcome. Bioinformatics, 20(1), 93-9.\cr 
+#' [3] Tomfohr, J. et al. (2005). Pathway level analysis of gene expression using singular
+#' value decomposition. BMC Bioinformatics, 6, 225.\cr 
+#' [4] Barry, W. T. et al. (2005). Significance analysis of functional categories in gene
+#' expression studies: a structured permutation approach. Bioinformatics, 21(9), 1943-9.\cr 
+#' [5] Lee, E. et al. (2008). Inferring pathway activity toward precise disease classification.
+#' PLoS Computational Biology, 4(11), e1000217.\cr 
+#' [6] Luo, W. et al. (2009). GAGE: generally applicable gene set enrichment for pathway
+#' analysis. BMC Bioinformatics, 10, 161.\cr 
+#' [7] Barbie, D. A. et al. (2009). Systematic RNA interference reveals that oncogenic KRASdriven
+#' cancers require TBK1. Nature, 462(7269), 108-12.\cr 
+#' [8] Wu, D. et al. (2010). ROAST: rotation gene set tests for complex microarray
+#' experiments. Bioinformatics, 26(17), 2176-82.\cr 
+#' [9] Tarca, A. L. et al. (2009). A novel signaling pathway impact analysis. Bioinformatics,
+#' 25(1), 75-82.\cr 
+#' [10] Wu, D. and Smyth, G. K. (2012). Camera: a competitive gene set test accounting for
+#' inter-gene correlation. Nucleic Acids Research, 40(17), e133.\cr 
+#' [11] Hanzelmann, S. et al. (2013). GSVA: gene set variation analysis for microarray and
+#' RNA-seq data. BMC Bioinformatics, 14, 7.
+#' 
+#' 
 #' @return It returns a character vector of supported GSE methods. 
 #' @export
 #' @examples
 #' egsea.base()
+#' 
 
 egsea.base <- function(){
     return(c("camera", "roast", "safe", "gage", "padog", "plage", "zscore", 

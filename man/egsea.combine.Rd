@@ -15,5 +15,6 @@ It lists the p-value combining methods
 }
 \examples{
 egsea.combine()
+
 }
 

@@ -443,6 +443,8 @@ that are defined as follows
       \textit{comparison} element only exists when more than one contrast are
       analyzed. The \textit{ind.results} only exists if the
       EGSEA function argument \Rcode{print.base = TRUE}.  
+      \item \Robject{limmaResults} is a limma linear fit model. This is only
+      defined when \Rcode{keep.limma = TRUE}.
       \item \Robject{contrasts} is a character vector of contrast names. 
       \item \Robject{sampleSize} is a numeric value of the number of samples. 
       \item \Robject{gs.annots} is a list of objects of class 
@@ -450,6 +452,8 @@ that are defined as follows
       that were used in the EGSEA analysis.
       \item \Robject{baseMethods} is a character vector of the base GSE methods
       that were used in the EGSEA analysis. 
+      \item \Robject{baseInfo} is a list that stores additional information on
+      the base methods (e.g., version).
       \item \Robject{combineMethod} is a character value of the name of p-value
       combinging method. 
       \item \Robject{sort.by} is a character value of the sorting EGSEA score. 
@@ -481,6 +485,18 @@ that are defined as follows
       given their names and their collection.
       \item \Rfunction{showSetByID} displays the details of gene sets
       given their IDs and their collection.
+      \item \Rfunction{limmaTopTable} returns a dataframe of the top table of
+      the limma analysis for a given contrast. This is only
+      defined when \Rcode{keep.limma = TRUE}.
+      \item \Rfunction{getlimmaResults} returns the linear model fit produced by
+      \Rfunction{limma::eBayes}. This is only
+      defined when \Rcode{keep.limma = TRUE}.
+      \item \Rfunction{getSetScores} returns a dataframe of the gene set
+      enrichment scores per sample. This can be only calculated using specific 
+      base methods, namely, "ssgsea". This is only defined when
+      \Rcode{keep.set.scores = TRUE}.
+      \item \Rfunction{plotSummaryHeatmap} generates a summary heatmap for the
+      top n gene sets of the comparative analysis of multiple contrasts. 
    \end{itemize}
 \end{itemize}
 
@@ -668,8 +684,31 @@ plotSummary(gsa, gs.label="kegg", contrast=c(1,2), file.name="kegg-summary-cmp")
 
 Figure \ref{fig:kegg_summary_multi} shows a comparative summary plot between the
 two contrasts of the IL-13 dataset. It clearly highlights the effectiveness of
-the IL-13 antagonist in neuteralizing most of the IL-13 stimulated pathways. To
-closely see how this happens, a comparative heatmap can be generated as follows 
+the IL-13 antagonist in neuteralizing most of the IL-13 stimulated pathways. 
+
+Alternatively, a summary heatmap for all the contrasts at the gene set level can
+generated as follows
+
+<<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE,width.cutoff=60)>>=
+plotSummaryHeatmap(gsa, gs.label="kegg", show.vals = "p.adj",
+        file.name="il13_sum_heatmap")
+@
+
+Figure \ref{fig:kegg_summary_heatmap} shows a summary heatmap for the rankings
+of top 20 gene sets of the comparative analysis across all the contrasts. The
+EGSEA adjusted p-values are displayed on the heatmap for each gene set. This can
+help to identify gene sets that are highly ranked/sgnificant in multiple
+contrasts. 
+
+\begin{figure}[!h]
+\center
+\includegraphics[width=0.6\paperwidth]{il13_sum_heatmap.pdf}
+\caption{Summary heatmap for the comparative analysis}
+\label{fig:kegg_summary_heatmap}
+\end{figure}
+
+To closely see how the antagonist works for a given pathway, a comparative
+heatmap can be generated as follows
 
 <<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE,width.cutoff=60)>>= 
 plotHeatmap(gsa, "Asthma", gs.label="kegg", contrast="comparison",

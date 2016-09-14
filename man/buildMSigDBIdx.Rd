@@ -5,7 +5,7 @@
 \title{Gene Set Collection Indexes from the MSigDB Database}
 \usage{
 buildMSigDBIdx(entrezIDs, geneSets = "all", species = "Homo sapiens",
-  min.size = 1, rdata.dir = NULL)
+  min.size = 1)
 }
 \arguments{
 \item{entrezIDs}{character, a vector that stores the Entrez Gene IDs tagged 
@@ -24,10 +24,6 @@ is human specific. If "all", all available gene set collections are loaded.}
 
 \item{min.size}{integer, the minium number of genes required in a testing 
 gene set}
-
-\item{rdata.dir}{character, directory from which the MSigDB collections are 
-loaded. 
-If NULL, EGSEA tries to load the data from \pkg{EGSEAdata}.}
 }
 \value{
 indexed gene set annotation that can be used with other functions in 

@@ -52,5 +52,20 @@ EGSEA 1.1.9 (2016-08-19)
 ------------------------
 - Fixed: a bug in buildIdx of mouse H gene set 
 
+EGSEA 1.1.10 (2016-)
+------------------------
+- Added: two slots to the GSCollectionIndex: version and date
+- Added: citations of the base methods to the documentation of egsea.base()
+- Removed: rdata.dir from buildIdx functions
+- Added: the gene set collection version/update date to the GSCollectionIndex class
+- Added: an argument to egsea() and egsea.cnt() to return the analysis of limma results, which is
+keep.imma 
+- Added: an argument to egsea() and egsea.cnt() to return the set scores of ssgsea, keep.set.scores
+- Added: a slot to the EGSEAResults, which is limmaResults
+- Added: a slot to the EGSEAResults, baseInfo
+- Added: limmaTopTable, getlimmaResults and getSetScores to the class EGSEAResults
+- Added: plotSummaryHeatmap to the class EGSEAResults 
+- Improved: documentation across several functions. 
+
 
 

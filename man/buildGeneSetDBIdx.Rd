@@ -4,8 +4,7 @@
 \alias{buildGeneSetDBIdx}
 \title{Gene Set Collection Indexes from the GeneSetDB Database}
 \usage{
-buildGeneSetDBIdx(entrezIDs, species, geneSets = "all", min.size = 1,
-  rdata.dir = NULL)
+buildGeneSetDBIdx(entrezIDs, species, geneSets = "all", min.size = 1)
 }
 \arguments{
 \item{entrezIDs}{character, a vector that stores the Entrez Gene IDs tagged 
@@ -27,10 +26,6 @@ collection.}
 
 \item{min.size}{integer, the minium number of genes required in a testing 
 gene set}
-
-\item{rdata.dir}{character, directory from which the GeneSetDB collections 
-are loaded. 
-If NULL, EGSEA tries to load the data from \pkg{EGSEAdata}.}
 }
 \value{
 indexed gene set annotation that can be used with other functions in 

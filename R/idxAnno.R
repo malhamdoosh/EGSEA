@@ -64,9 +64,8 @@ loadKeggData <- function(){
 #' gene set
 #' @param updated logical, set to TRUE if you want to download the most recent 
 #' KEGG pathways.
-#' @param rdata.dir character, directory from which the KEGG pathway 
-#' collections are loaded. 
-#' If NULL, EGSEA tries to load the data from \pkg{EGSEAdata}. 
+#' @param exclude character, vector used to exclude KEGG pathways of 
+#' specific category. Accepted values are "Disease", "Metabolism", or "Signaling".
 #'
 #' @return indexed gene set annotation that can be used with other functions in 
 #' the package.
@@ -92,41 +91,28 @@ loadKeggData <- function(){
 #' 
 
 buildKEGGIdx <- function(entrezIDs, species = "human", min.size=1, 
-updated=FALSE, 
-        rdata.dir=NULL) {   
+updated=FALSE, exclude = c()) {   
     species = normalizeSpecies(species)
-    
-    entrezIDs = as.character(entrezIDs)
-    kegg.file = paste0(rdata.dir, "/kegg.pathways.rda")
+    updatedSuccess = FALSE
+    entrezIDs = as.character(entrezIDs)    
     kegg = NULL
-    if (!is.null(rdata.dir) && file.exists(kegg.file)){
-        print(paste0("KEGG pathways have been loaded from ", kegg.file))
-        load(kegg.file)     
+    print("Building KEGG pathways annotation object ... ")      
+    if (!updated){
+        kegg.pathways = loadKeggData()
         kegg = kegg.pathways[[species.fullToShort[[tolower(species)]]]]
-    }else {
-        print("Building KEGG pathways annotation object ... ")      
-        if (!updated){
-            kegg.pathways = loadKeggData()
-            kegg = 
-kegg.pathways[[species.fullToShort[[tolower(species)]]]]
-        }else{
-            kegg = tryCatch({                   
-    
-                        kegg.gsets(species = 
-species.fullToShort[[tolower(species)]], id.type = "kegg")          
-        
-                    },
-                    error = function(e){    
-                        warning("KEGG pathways have not 
-been updated successfully.")
-                        #kegg.pathways = NULL
-                        kegg.pathways = loadKeggData()  
-                                        
-                        
-return(kegg.pathways[[species.fullToShort[[tolower(species)]]]])
-                    })
-        }
+    }else{
+        kegg = tryCatch({ 
+            kegg.gsets(species = 
+            species.fullToShort[[tolower(species)]], id.type = "kegg")
+            updatedSuccess = TRUE
+        },
+        error = function(e){    
+            warning("KEGG pathways have not been updated successfully.")                
+            kegg.pathways = loadKeggData() 
+            return(kegg.pathways[[species.fullToShort[[tolower(species)]]]])
+        })
     }
+    
     if (is.null(kegg))
         stop("Failed to load the KEGG pathway data.")
     gsets = kegg$kg.sets        
@@ -150,17 +136,33 @@ sapply(gsets.ez, length)),
     rownames(anno) = gsets.names
     names(gsets) = gsets.names
     names(gsets.ez) = gsets.names 
+    if (!updatedSuccess){
+        db.info = egsea.data(simple=TRUE, returnInfo=TRUE)
+        ver = db.info$kegg$info$version
+        dat = db.info$kegg$info$date
+    }else{
+        ver = "NA"
+        dat = date()
+    }
     gs.annot = GSCollectionIndex(original = gsets.ez,
             idx = gsets,
             anno = anno,                
             featureIDs = entrezIDs,
             species = species,
             name = "KEGG Pathways",
-            label = "kegg")
+            label = "kegg",
+            version = ver,
+            date = dat)
     gs.annot = selectGeneSets(gs.annot, min.size=min.size)   
     if (length(gs.annot@idx) == 0)
         print("KEGG pathway collection is empty.")
-    
+    ### shall you want to exclude the KEGG metabolic pathways
+    if (length(exclude) > 0){
+        sel = ! tolower(gs.annot@anno[, "Type"]) %in% tolower(exclude)
+        gs.annot@idx = gs.annot@idx[sel]
+        gs.annot@original = gs.annot@original[sel]
+        gs.annot@anno = gs.annot@anno[sel, ]
+    }
     return(gs.annot)
 }
 
@@ -184,10 +186,7 @@ sapply(gsets.ez, length)),
 #' @param species character, determine the organism of selected gene sets: 
 #' "human", "mouse" or "rat". 
 #' @param min.size integer, the minium number of genes required in a testing 
-#' gene set
-#' @param rdata.dir character, directory from which the MSigDB collections are 
-#' loaded. 
-#' If NULL, EGSEA tries to load the data from \pkg{EGSEAdata}. 
+#' gene set 
 #'
 #'@return indexed gene set annotation that can be used with other functions in 
 #' the package.
@@ -215,7 +214,7 @@ sapply(gsets.ez, length)),
 
 
 buildMSigDBIdx <- function(entrezIDs, geneSets="all", 
-        species="Homo sapiens", min.size=1, rdata.dir=NULL){
+        species="Homo sapiens", min.size=1){
     geneSets = tolower(geneSets)
     stopifnot(geneSets %in% c("all", "h", "c1", "c2", "c3", "c4", "c5", 
                 "c6","c7"))
@@ -231,8 +230,7 @@ buildMSigDBIdx <- function(entrezIDs, geneSets="all",
         if (length(geneSets) == 1 && geneSets == "all")
             geneSets = c("h", "c1", "c2", "c3", "c4", "c5", 
                 "c6","c7")
-    }else if (species == "Mus musculus"){
-       
+    }else if (species == "Mus musculus"){       
         if (length(geneSets) == 1 && geneSets == "all")
             geneSets = c("h", "c2", "c3", "c4", "c5", "c6","c7")
     }
@@ -245,13 +243,8 @@ buildMSigDBIdx <- function(entrezIDs, geneSets="all",
     gs.annots = list() # Gene set annotation indexes
     # Read all gene set collections
     print("Loading MSigDB Gene Sets ... ")
-    # SymbolIdentifier(), EntrezIdentifier()
-    gsc.all = NULL
-    msigdb.file = paste0(rdata.dir, "/msigdb.rda")
-    if (!is.null(rdata.dir) && file.exists(msigdb.file))
-        load(msigdb.file)
-    else
-        data("msigdb", package="EGSEAdata")
+    # SymbolIdentifier(), EntrezIdentifier()   
+    data("msigdb", package="EGSEAdata")
     gsc.all = msigdb              
     if (is.null(gsc.all))
         stop("Failed to load the MSigDB gene set collection data")
@@ -262,26 +255,22 @@ buildMSigDBIdx <- function(entrezIDs, geneSets="all",
         gsc.all = gsc.all[organisms == "Homo sapiens"] #  "Homo 
 #sapiens","Mus musculus", "Rattus norvegicus","Danio rerio","Macaca mulatta"
     types = tolower(sapply(gsc.all, function(x) x["CATEGORY_CODE"])) 
+    db.info = egsea.data(simple=TRUE, returnInfo=TRUE)
 #character vector c1 c2 c3 c4 or c5
     ## process each gene set collection
     for (geneSet in geneSets){     
-        gs.annot = GSCollectionIndex()
+        gs.annot = GSCollectionIndex(version = db.info$msigdb$info$version,
+                date = db.info$msigdb$info$date)        
         gsc.small = gsc.all[types == geneSet] 
         if (species == "Mus musculus"){
             if (geneSet %in% c("h", "c2", "c3", "c4", "c5", 
                         "c6","c7")){                
-                geneSet1 = ifelse(geneSet == "h", "H", geneSet)
-                msigdb.file = paste0(rdata.dir, 
-                "/Mm.", geneSet1, ".rdata")
-                if (!is.null(rdata.dir) && 
-                        file.exists(msigdb.file))
-                    load(msigdb.file)
-                else
-                    data(list=paste0("Mm.", geneSet1), package="EGSEAdata")                
+                geneSet1 = ifelse(geneSet == "h", "H", geneSet)               
+                data(list=paste0("Mm.", geneSet1), package="EGSEAdata")                
                 gs.annot@original =get(paste0("Mm.", geneSet1))
             }
             else{
-                warning(paste0("Unsupported gene set for Mus 
+                warning(paste0("Unsupported gene set collection for Mus 
 					Musculus ... ", geneSet))
                 next
             }
@@ -392,9 +381,6 @@ buildMSigDBIdx <- function(entrezIDs, geneSets="all",
 #' collection. 
 #' @param min.size integer, the minium number of genes required in a testing 
 #' gene set
-#' @param rdata.dir character, directory from which the GeneSetDB collections 
-#' are loaded. 
-#' If NULL, EGSEA tries to load the data from \pkg{EGSEAdata}. 
 #'
 #' @return indexed gene set annotation that can be used with other functions in 
 #' the package.
@@ -423,18 +409,13 @@ buildMSigDBIdx <- function(entrezIDs, geneSets="all",
 
 
 buildGeneSetDBIdx <- function(entrezIDs, species, geneSets="all", 
-min.size=1, rdata.dir=NULL){
+min.size=1){
     geneSets = tolower(geneSets)
     stopifnot(geneSets %in% c("all", "gsdbdis", "gsdbgo", "gsdbdrug", 
                     "gsdbpath" , "gsdbreg"))
     print("Loading GeneSetDB Gene Sets ... ")
-    species = normalizeSpecies(species) 
-    gsdb.file = paste0(rdata.dir, '/gsetdb.', 
-        species.fullToShort[[tolower(species)]], ".rdata")
-    if (!is.null(rdata.dir) && file.exists(gsdb.file))
-        load(gsdb.file)
-    else
-        data(list=paste0('gsetdb.', 
+    species = normalizeSpecies(species)     
+    data(list=paste0('gsetdb.', 
             species.fullToShort[[tolower(species)]]), 
             package="EGSEAdata")
     gsetdb.all = get(paste0('gsetdb.', 
@@ -447,6 +428,9 @@ min.size=1, rdata.dir=NULL){
         gsetdb.all$original,
         anno = gsetdb.all$anno, label = "gsDB", 
         name="GeneSetDB Gene Sets", species = species)
+    db.info = egsea.data(simple=TRUE, returnInfo=TRUE)
+    gs.annot@version = db.info$gsetdb$info$version
+    gs.annot@date = db.info$gsetdb$info$date
     
     categories = unique(as.character(gs.annot@anno$Category))
     gs.annots = list()
@@ -585,7 +569,9 @@ buildCustomIdx <- function(entrezIDs, gsets, anno=NULL,label="custom",
             featureIDs = entrezIDs,
             species =species,
             name = name,
-            label = label)
+            label = label,
+            version = "NA",
+            date = date())
     gs.annot = selectGeneSets(gs.annot, min.size=min.size)   
     if (length(gs.annot@idx) == 0)
         print(paste0("The cutsom gene set collection is empty."))
@@ -634,9 +620,6 @@ buildCustomIdx <- function(entrezIDs, gsets, anno=NULL,label="custom",
 #' included.  
 #' @param min.size integer, the minium number of genes required in a testing 
 #' gene set
-#' @param rdata.dir character, directory from which the MSigDB collections are 
-#' loaded. 
-#' If NULL, EGSEA tries to load the data from \pkg{EGSEAdata}. 
 #'
 #' @return indexed gene set annotation that can be used with other functions in 
 #' the package.
@@ -667,31 +650,21 @@ buildIdx <- function(entrezIDs, species="human",
         msigdb.gsets="all",
         gsdb.gsets = "none",
         kegg.updated=FALSE, kegg.exclude=c(), 
-        min.size = 1,
-        rdata.dir=NULL ){
+        min.size = 1){
     if (length(msigdb.gsets) == 1 && tolower(msigdb.gsets[1]) == "none")
         gs.annots = list()
     else
         gs.annots = buildMSigDBIdx(entrezIDs=entrezIDs, 
             geneSets=msigdb.gsets,
-            species = species,  min.size = min.size,
-            rdata.dir=rdata.dir)
+            species = species,  min.size = min.size)
     if (!is.null(gsdb.gsets) && tolower(gsdb.gsets[1]) != "none")
         gs.annots = c(gs.annots, buildGeneSetDBIdx(entrezIDs = entrezIDs, 
                         species = species, geneSets=gsdb.gsets, 
-                min.size=min.size, rdata.dir=rdata.dir))
+                min.size=min.size))
     if (length(kegg.exclude) == 1 && tolower(kegg.exclude[1]) == "all")
         return(gs.annots)
     gs.annot = buildKEGGIdx(entrezIDs=entrezIDs,species = species,  
-min.size= min.size,
-            rdata.dir=rdata.dir, updated = kegg.updated) # type 
-#?buildKEGGIdxEZID to see docs! 
-    ### shall you want to exclude the KEGG metabolic pathways
-    sel = ! tolower(gs.annot@anno[, "Type"]) %in% tolower(kegg.exclude)
-    gs.annot@idx = gs.annot@idx[sel]
-    gs.annot@original = gs.annot@original[sel]
-    gs.annot@anno = gs.annot@anno[sel, ]
-    ### Otherwise, continue here
+            min.size= min.size, updated = kegg.updated, exclude=kegg.exclude) 
     gs.annots[["kegg"]] = gs.annot
     rm(gs.annot)
     return(gs.annots)

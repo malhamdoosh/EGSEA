@@ -23,7 +23,7 @@ runora <- function(voom.results, contrast, gs.annot,
         logfc.cut=1     
         universe = gs.annot@featureIDs
     }
-    else if (!is.null(voom.results$featureIDs)){
+    else if (!is.null(voom.results$featureIDs)){ # ORA Analysis 
         universe = voom.results$featureIDs
     }
     else{

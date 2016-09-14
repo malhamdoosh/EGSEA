@@ -7,7 +7,7 @@ Databases}
 \usage{
 buildIdx(entrezIDs, species = "human", msigdb.gsets = "all",
   gsdb.gsets = "none", kegg.updated = FALSE, kegg.exclude = c(),
-  min.size = 1, rdata.dir = NULL)
+  min.size = 1)
 }
 \arguments{
 \item{entrezIDs}{character, a vector that stores the Entrez Gene IDs tagged 
@@ -46,10 +46,6 @@ included.}
 
 \item{min.size}{integer, the minium number of genes required in a testing 
 gene set}
-
-\item{rdata.dir}{character, directory from which the MSigDB collections are 
-loaded. 
-If NULL, EGSEA tries to load the data from \pkg{EGSEAdata}.}
 }
 \value{
 indexed gene set annotation that can be used with other functions in 

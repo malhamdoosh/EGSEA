@@ -6,7 +6,7 @@
 \usage{
 egsea.ora(entrezIDs, universe = NULL, logFC = NULL, title = NULL,
   gs.annots, symbolsMap = NULL, minSize = 2, display.top = 20,
-  sort.by = "p.adj", egsea.dir = "./", kegg.dir = NULL,
+  sort.by = "p.adj", egsea.dir = NULL, kegg.dir = NULL,
   logFC.cutoff = 0, sum.plot.axis = "p.adj", sum.plot.cutoff = NULL,
   vote.bin.width = 5, num.threads = 4, report = TRUE,
   print.base = FALSE, verbose = FALSE)
@@ -110,6 +110,7 @@ an interative report for the ORA analysis.
 The results can be explored using the \code{\link{topSets}} function.
 }
 \examples{
+# Example of egsea.ora
 library(EGSEAdata)
 data(il13.data)
 voom.results = il13.data$voom
@@ -134,6 +135,7 @@ gs.annots=gs.annots,
               egsea.dir="./il13-egsea-ora-report", num.threads = 2, 
 				report = FALSE)
 topSets(gsa) 
+
 }
 \references{
 Monther Alhamdoosh, Milica Ng, Nicholas J. Wilson, Julie M. Sheridan, Huy 

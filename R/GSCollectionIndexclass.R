@@ -5,9 +5,11 @@
 ###############################################################################
 
 
-#' The GSCollectionIndex class
+#' @title The GSCollectionIndex class
 #'
-#' This class contains an indexed gene set collection
+#' @description The \code{GSCollectionIndex} class stores an indexed gene set collection.
+#' @details The \code{GSCollectionIndex} is used by \code{buildIdx}, \code{buildCustomIdx},
+#' \code{buildKEGGIdx}, \code{buildMSigDBIdx} and \code{buildGeneSetDBIdx}.
 #'
 #' @slot original list, the original gene sets
 #' @slot idx list, the gene set indexes
@@ -17,6 +19,8 @@
 #' @slot species character, the species name 
 #' @slot name character, the name of the gene set collection
 #' @slot label character, a label to distnguish this collection 
+#' @slot version character, the database version from which the collection was extracted
+#' @slot date character, the update/download date of the database
 #' from other collections 
 #' 
 #' 
@@ -33,18 +37,23 @@ GSCollectionIndex <- setClass(
                 featureIDs = "character",
                 species = "character",
                 name = "character",
-                label = "character"),                      
+                label = "character",
+                version="character",
+                date="character"),                      
         prototype = list(original = list(),
                 idx = list(),
                 anno = data.frame(),                
-                featureIDs = c(),
+                featureIDs = "",
                 species = "",
                 name = "",
-                label = "")           
+                label = "",
+                version="",
+                date = "")           
 )
 
 #' @title Extract a slot from an object of class GSCollectionIndex
-#' @description Extract a slot from an object of class GSCollectionIndex
+#' @description The operator \code{$} extracts a slot from an object of class 
+#' GSCollectionIndex.
 #' 
 #' @param x GSCollectionIndex, the indexed gene set collection generated
 #' from \code{\link{buildIdx}}, \code{\link{buildMSigDBIdx}}, 
@@ -53,21 +62,22 @@ GSCollectionIndex <- setClass(
 #' @param name character, the slot name
 #' 
 #' @export
-#' @return the selected slot.
+#' @return \code{$} returns the selected slot data.
 #' 
 #' 
 #' @aliases $,GSCollectionIndex-method
 #' @rdname GSCollectionIndex-methods
 #' 
 #' @examples
+#' # Example of GSCollectionIndex
 #' library(EGSEAdata)
 #' data(il13.data)
 #' v = il13.data$voom
 #' gs.annots = buildIdx(entrezIDs=rownames(v$E), species="human", 
 #' 			msigdb.gsets="none", 
 #'          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
-#' 
 #' print(gs.annots[[1]]$name)
+#' 
 
 setMethod("$", "GSCollectionIndex",
         function(x, name){           
@@ -103,6 +113,8 @@ setMethod(f = "selectGeneSets",
             gs.annot.top@featureIDs = object@featureIDs
             gs.annot.top@species = object@species
             gs.annot.top@name = object@name
+            gs.annot.top@version = object@version
+            gs.annot.top@date = object@date
             return(gs.annot.top)          
         }
 
@@ -110,7 +122,7 @@ setMethod(f = "selectGeneSets",
 
 
 #' @title Print a summary of the gene set collection
-#' @description A brief summary of the gene set collection
+#' @description \code{summary} displays a brief summary of a gene set collection
 #' 
 #' @inheritParams object GSCollectionIndex, the indexed gene set collection generated
 #' from \code{\link{buildIdx}}, \code{\link{buildMSigDBIdx}}, 
@@ -118,27 +130,29 @@ setMethod(f = "selectGeneSets",
 #' \code{\link{buildGeneSetDBIdx}}, and \code{\link{buildCustomIdx}}. 
 #' 
 #' @export
-#' @return summary of the collection.
+#' @return \code{summary} does not return data.
 #' 
 #' 
 #' @aliases summary,GSCollectionIndex-method
 #' @rdname GSCollectionIndex-methods
 #'  
 #' @examples
+#' # Example of summary
 #' library(EGSEAdata)
 #' data(il13.data)
 #' v = il13.data$voom
 #' gs.annots = buildIdx(entrezIDs=rownames(v$E), species="human", 
 #' 			msigdb.gsets="none", 
 #'          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
-#' 
 #' summary(gs.annots[[1]])
+#' 
 
 setMethod(f = "summary",
         signature(object = "GSCollectionIndex"),
         definition = function(object){
             cat(paste0(object@name, " (", object@label , "): ",
-                                  length(object@idx), " gene sets"))
+                                  length(object@idx), " gene sets - Version: ",
+                                object@version, ", Update date: ", object@date))
         }
 
 )
@@ -146,7 +160,7 @@ setMethod(f = "summary",
 
 
 #' @title Display the content of the gene set collection
-#' @description Print the details of the gene set collection
+#' @description \code{show} displays the details of a gene set collection
 #' 
 #' @inheritParams object GSCollectionIndex, the indexed gene set collection generated
 #' from \code{\link{buildIdx}}, \code{\link{buildMSigDBIdx}}, 
@@ -154,21 +168,22 @@ setMethod(f = "summary",
 #' \code{\link{buildGeneSetDBIdx}}, and \code{\link{buildCustomIdx}}. 
 #' 
 #' @export
-#' @return details of the collection.
+#' @return \code{show} does not return data.
 #' 
 #' 
 #' @aliases show,GSCollectionIndex-method
 #' @rdname GSCollectionIndex-methods
 #'  
 #' @examples
+#' # Example of show
 #' library(EGSEAdata)
 #' data(il13.data)
 #' v = il13.data$voom
 #' gs.annots = buildIdx(entrezIDs=rownames(v$E), species="human", 
 #' 			msigdb.gsets="none", 
 #'          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
-#' 
 #' show(gs.annots[[1]])
+#' 
 
 setMethod(f = "show",
         signature(object = "GSCollectionIndex"),
@@ -184,7 +199,9 @@ setMethod(f = "show",
                             length(object@featureIDs), "\n"))
             cat(paste0("\tSpecies: ", object@species, "\n"))
             cat(paste0("\tCollection name: ", object@name, "\n"))
-            cat(paste0("\tCollection uniqe label: ", object@label, "\n"))            
+            cat(paste0("\tCollection uniqe label: ", object@label, "\n")) 
+            cat(paste0("\tDatabase version: ", object@version, "\n"))
+            cat(paste0("\tDatabase update date: ", object@date, "\n"))
         }
 
 )
@@ -192,7 +209,8 @@ setMethod(f = "show",
 
 
 #' @title Display the information of a given gene set name
-#' @description Print the details of a given gene set name
+#' @description \code{getSetByName} retrieves the details of a given gene set 
+#' indicated by name
 #' 
 #' @param object GSCollectionIndex, the indexed gene set collection generated
 #' from \code{\link{buildIdx}}, \code{\link{buildMSigDBIdx}}, 
@@ -201,7 +219,7 @@ setMethod(f = "show",
 #' @param set.name character, a vector of gene set names as they appear in \code{\link{topSets}}.
 #' 
 #' @export
-#' @return a list of the details of a gene set
+#' @return \code{getSetByName} returns a list of annotation records
 #' 
 #' 
 #' @name getSetByName
@@ -209,14 +227,15 @@ setMethod(f = "show",
 #' @rdname GSCollectionIndex-methods
 #' 
 #' @examples
+#' # Example of getSetByName
 #' library(EGSEAdata)
 #' data(il13.data)
 #' v = il13.data$voom
 #' gs.annots = buildIdx(entrezIDs=rownames(v$E), species="human", 
 #' 			msigdb.gsets="none", 
 #'          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
-#' 
 #' getSetByName(gs.annots[[1]], "Asthma")
+#' 
 
 setGeneric(name="getSetByName",
         def = function(object, set.name){
@@ -246,7 +265,7 @@ setMethod(f = "getSetByName",
 
 
 #' @title Display the information of a given gene set ID
-#' @description Print the details of a given gene set ID
+#' @description \code{getSetByID} retrieves the details of a given gene set indicated by ID
 #' 
 #' @inheritParams object GSCollectionIndex, the indexed gene set collection generated
 #' from \code{\link{buildIdx}}, \code{\link{buildMSigDBIdx}}, 
@@ -256,7 +275,7 @@ setMethod(f = "getSetByName",
 #' \code{\link{plotSummary}}.
 #' 
 #' @export
-#' @return  a list of the details of a gene set
+#' @return  \code{getSetByID} returns a list of the annotation records. 
 #' 
 #' 
 #' @name getSetByID
@@ -264,14 +283,15 @@ setMethod(f = "getSetByName",
 #' @rdname GSCollectionIndex-methods
 #'  
 #' @examples
+#' # Example of getSetByID
 #' library(EGSEAdata)
 #' data(il13.data)
 #' v = il13.data$voom
 #' gs.annots = buildIdx(entrezIDs=rownames(v$E), species="human", 
 #' 			msigdb.gsets="none", 
 #'          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
-#' 
 #' getSetByID(gs.annots[[1]], "hsa04060")
+#' 
 
 setGeneric(name="getSetByID",
         def = function(object, id){

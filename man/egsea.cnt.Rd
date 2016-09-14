@@ -7,10 +7,11 @@
 egsea.cnt(counts, group, design = NULL, contrasts, logFC = NULL, gs.annots,
   symbolsMap = NULL, baseGSEAs = egsea.base(), minSize = 2,
   display.top = 20, combineMethod = "fisher", combineWeights = NULL,
-  sort.by = "p.adj", egsea.dir = "./", kegg.dir = NULL,
+  sort.by = "p.adj", egsea.dir = NULL, kegg.dir = NULL,
   logFC.cutoff = 0, sum.plot.axis = "p.adj", sum.plot.cutoff = NULL,
   vote.bin.width = 5, num.threads = 4, report = TRUE,
-  print.base = FALSE, verbose = FALSE)
+  print.base = FALSE, verbose = FALSE, keep.limma = FALSE,
+  keep.set.scores = FALSE)
 }
 \arguments{
 \item{counts}{double, numeric matrix of read counts where genes are the rows 
@@ -110,6 +111,11 @@ individual GSE methods.
  Default FALSE.}
 
 \item{verbose}{logical, whether to print out progress messages and warnings.}
+
+\item{keep.limma}{logical, whether to return the results of the limma analysis.}
+
+\item{keep.set.scores}{logical, whether to calculate the gene set enrichment scores
+per sample for the methods that support this option, i.e., "ssgsea".}
 }
 \value{
 A list of elements, each with two/three elements that store the top 
@@ -144,9 +150,81 @@ the experimental group of each sample, the design matrix and the contrast
 matrix as parameters. 
 It performs TMM normalization and then applies \link[limma]{voom} to 
 calculate the logCPM and weighting factors. 
-The results of EGSEA can be seen using the \code{\link{topSets}} function.
+The results of EGSEA can be seen using the \code{\link{topSets}} function. \cr 
+ \cr
+ EGSEA report is an interactive HTML report that is generated if \code{report=TRUE} to
+enable a swift navigation through the results of an EGSEA analysis. The following pages 
+are generated for each gene set collection and contrast/comparison: \cr
+1. Stats Table page shows the detailed statistics of the EGSEA analysis for the 
+\code{display.top} gene sets. It shows the EGSEA scores, individual rankings and 
+additional annotation for each gene set. Hyperlinks to the source of each gene set
+can be seen in this table when they are available. The "Direction" column shows the regulation
+direction of a gene set which is calculated based on the \code{logFC}, which is
+either calculated from the limma differential expression analysis or provided by the user. 
+The \code{logFC.cutoff} is applied for this calculation. The calculations of the EGSEA 
+scores can be seen in the references section. The method \code{topSets} can be used to
+generate custom Stats Table. \cr
+2. Heatmaps page shows the heatmaps of the gene fold changes for the gene sets that are
+presented in the Stats Table page. Red indicates up-regulation
+while blue indicates down-regulation. Only genes that appear in the input expression/count 
+matrix are visualized in the heat map. Gene names are coloured based on their 
+statistical significance in the \code{limma} differential expression analysis. 
+The "Interpret Results" link below each heat map allows the user to download the 
+original heat map values along with additional statistics from \code{limma} DE analysis (
+if available) so that they can be used to perform further analysis in R, e.g., customizing 
+the heat map visualization. Additional heat maps can be generated and customized
+ using the method \code{plotHeatmap}. \cr
+3. Summary Plots page  shows the methods ranking plot along with the summary plots of 
+EGSEA analysis. The method plot uses multidimensional scaling (MDS) to visualize the 
+ranking of individual methods on a given gene set collection. The summary plots are 
+bubble plots that visualize the distribution of gene sets based on the EGSEA
+Significance Score and another EGSEA score (default, p-value). 
+Two summary plots are generated: ranking and directional plots. Each gene set is 
+reprersented with a bubble which is coloured based on the EGSEA ranking (in ranking
+plots ) or gene set regulation direction (in directional plots) and sized based on the 
+gene set cardinality (in ranking plots) or EGSEA Significance score (in directional plots).
+Since the EGSEA "Significance Score" is proportional to the p-value and the 
+absolute fold changes, it could be useful to highlight gene sets that
+have high Significance scores. The blue labels on the summary plot indicate 
+gene sets that do not appear in the top 10 list of gene sets based on the "sort.by" 
+argument (black labels) yet they appear in the top 5 list of gene sets based on 
+the EGSEA "Significance Score". If two contrasts are provided, the rank is calculated 
+based on the "comparison" analysis results and the "Significance Score" is calculated 
+as the mean. If \code{sort.by = NULL}, the slot \code{sort.by} of the \code{object} 
+is used to order gene sets.
+The method \code{plotSummary} can be used to customize the Summary plots by 
+changing the x-axis score
+and filtering bubbles based on the values of the x-axis. The method \code{plotMethods} can be
+used to generate Methods plots. \cr
+4. Pathways page shows the KEGG pathways for the gene sets that are presented in the
+Stats Table of a KEGG gene set collection. The gene fold changes are overlaid on the 
+pathway maps and coloured based on the gene regulation direction: blue for down-regulation
+and red for up-regulation. The method \code{plotPathway} can be used to generate
+additional pathway maps. Note that this page only appears if a KEGG gene set collection
+is used in the EGSEA analysis. \cr
+5. Go Graphs page shows the Gene Ontology graphs for top 5 GO terms in each of 
+three GO categories: Biological Processes (BP), Molecular Functions (MF), 
+and Cellular Components (CC). Nodes are coloured based on the default \code{sort.by}
+score where red indicates high significance and yellow indicates low significance. 
+The method \code{plotGOGraph} can be used to customize GO graphs by 
+changing the default sorting score and the number of significance nodes that can be
+visualized. It is recommended that a small number of nodes is selected. Note that
+this page only appears if a Gene Ontology gene set collection is used, i.e., for
+the c5 collection from MSigDB or the gsdbgo collection from GeneSetDB. \cr
+\cr
+Finally, the "Interpret Results" hyperlink in the EGSEA report allows the user to download
+the fold changes and limma analysis results and thus improve the interpretation of the results.
+\cr 
+Note that the running time of this function significantly increseas when 
+\code{report = TRUE}. For example, the analysis in the example section below
+was conducted on the $203$ signaling and disease KEGG pathways using a MacBook Pro 
+machine that had a 2.8 GHz Intel Core i7 CPU and 16 GB of RAM. The execution time 
+varied between 23.1 seconds (single thread) to 7.9 seconds (16 threads) when the HTML 
+report generation was disabled. The execution time took 145.5 seconds when the report 
+generation was enabled using 16 threads.
 }
 \examples{
+# Example of egsea.cnt
 library(EGSEAdata)
 data(il13.data.cnt)
 cnt = il13.data.cnt$counts

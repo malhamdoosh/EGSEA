@@ -5,7 +5,7 @@
 \title{Gene Set Collection Index from the KEGG Database}
 \usage{
 buildKEGGIdx(entrezIDs, species = "human", min.size = 1, updated = FALSE,
-  rdata.dir = NULL)
+  exclude = c())
 }
 \arguments{
 \item{entrezIDs}{character, a vector that stores the Entrez Gene IDs tagged 
@@ -22,9 +22,8 @@ gene set}
 \item{updated}{logical, set to TRUE if you want to download the most recent 
 KEGG pathways.}
 
-\item{rdata.dir}{character, directory from which the KEGG pathway 
-collections are loaded. 
-If NULL, EGSEA tries to load the data from \pkg{EGSEAdata}.}
+\item{exclude}{character, vector used to exclude KEGG pathways of 
+specific category. Accepted values are "Disease", "Metabolism", or "Signaling".}
 }
 \value{
 indexed gene set annotation that can be used with other functions in 

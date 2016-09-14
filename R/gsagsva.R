@@ -35,6 +35,7 @@ gs.annot@label, "-gene-sets-",
         verbose = verbose                                        
         )
     }
+    # parallelize the calculation of gene set scores to speed up the algorithm
     if (Sys.info()['sysname'] == "Windows" || ncol(contrast) <= 1)
         gsva.results = lapply(args.all, rungsva.contrast)
     else
@@ -86,7 +87,7 @@ length(cnt.sam.indx)))
     data.log.sel = args$data.log[, c(tre.sam.indx, cnt.sam.indx)]   
 
     gs.es = gsva(expr=data.log.sel, gset.idx.list=args$gsets, mx.diff=TRUE, 
-min.sz=3, 
+            min.sz=1, 
             method=args$method, parallel.sz=1, 
             verbose=FALSE, rnaseq=FALSE)#$es.obs
   
@@ -94,8 +95,7 @@ min.sz=3,
         gs.es = gs.es$es.obs
     }
     design.sel = args$design[c(tre.sam.indx, cnt.sam.indx), 
-            args$contrast[,args$i] > 0 | args$contrast[,args$i] < 0 
-]
+        args$contrast[,args$i] > 0 | args$contrast[,args$i] < 0]
     contrast.sel = args$contrast[args$contrast[,args$i] != 0,args$i]
     gs.fit = lmFit(gs.es, design=design.sel)
     gs.fit = contrasts.fit(gs.fit, contrast.sel)
@@ -113,3 +113,11 @@ gsva.results, args$gs.annot, toupper(args$method), args$file.name)
 
     return(gsva.results)
 }
+
+
+
+
+
+
+
+

@@ -15,5 +15,6 @@ It lists the accepted sorting methods for analysis results
 }
 \examples{
 egsea.sort()
+
 }
 

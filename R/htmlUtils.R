@@ -84,7 +84,7 @@ using EGSEA (",
     }
     
     heatmaps = hmakeTag("a", "Show Map", href=heatmaps)     
-    csvfiles = hmakeTag("a", "Download values", href=csvfiles)
+    csvfiles = hmakeTag("a", "Interpret Results", href=csvfiles)
     heatmaps = paste(heatmaps, csvfiles)
     
     if (length(grep("^kegg", gs.annot@label)) == 0){
@@ -418,7 +418,7 @@ ids, ".heatmap.csv")
     heatmaps.img = hmakeTag("a", hmakeTag("img", src=heatmaps.img, 
 width=300, center=TRUE), href=heatmaps) 
     heatmaps = hmakeTag("a", "Large Map", href=heatmaps)    
-    csvfiles = hmakeTag("a", "Download values", href=csvfiles)
+    csvfiles = hmakeTag("a", "Interpret Results", href=csvfiles)
     heatmaps = paste(heatmaps, csvfiles)
     heatmaps = paste(heatmaps.img, ids, substr(names, 1, 30), heatmaps, 
 sep="<br />")   
@@ -465,7 +465,7 @@ ids, ".pathview.png")
     }   
     pathways.img = hmakeTag("a", hmakeTag("img", src=pathways.img, 
 width=300, center=TRUE), href=pathways)     
-    csvfiles = hmakeTag("a", "Download values", href=csvfiles)  
+    csvfiles = hmakeTag("a", "Interpret Results", href=csvfiles)  
     pathways = hmakeTag("a", "Large Pathway", href=pathways)
     pathways = paste(pathways, csvfiles)
     pathways = paste(pathways.img,ids, substr(names, 1, 30), pathways, 
@@ -508,12 +508,14 @@ getNumberofSamples <- function(voom.results, contrast){
     return(length(unique(samples)))
 }
 
-generateEGSEAReport <- function(voom.results, contrast, gs.annots, baseGSEAs, 
+generateEGSEAReport <- function(voom.results, contrast, gs.annots, baseInfo, 
 combineMethod, 
         sort.by,  egsea.dir, 
         kegg.dir, logFC.cal, symbolsMap){
     gs.labels = sapply(gs.annots, function(x) x$label)
     gs.names =  sapply(gs.annots, function(x) x$name)
+    gs.versions = sapply(gs.annots, function(x) x$version)
+    gs.dates = sapply(gs.annots, function(x) x$date)
     ranked.gs.dir = paste0("./ranked-gene-sets-", combineMethod)
     top.gs.dir = paste0("./top-gene-sets-", combineMethod)
     pv.dir = paste0("./pv-top-gs-", gs.labels[grep("^kegg", gs.labels)], 
@@ -531,25 +533,36 @@ heading=1, br=TRUE, page=p)
     #### write analysis parameters
     hwrite(paste0(hmakeTag("b", "Total number of genes: ") ,
                     length(gs.annots[[1]]$featureIDs)), 
-br=TRUE, page=p)
+        br=TRUE, page=p)
     hwrite(paste0(hmakeTag("b", "Total number of samples: " ),
                     getNumberofSamples(voom.results, 
-contrast)), br=TRUE, page=p)
+            contrast)), br=TRUE, page=p)
     hwrite(paste0(hmakeTag("b", "Number of contrasts: ") ,ncol(contrast)), 
-br=TRUE, page=p)
-    hwrite(paste0(hmakeTag("b","Base GSEA methods: ") ,paste(baseGSEAs, 
-collapse=",")), br=TRUE, page=p)
+            br=TRUE, page=p)
+    base.names = names(baseInfo)
+    base.vers = sapply(base.names, function(x) as.character(baseInfo[[x]]$version))
+    base.pkgs = sapply(base.names, function(x) baseInfo[[x]]$package)
+    baseMethods = paste0(base.names, " (", base.pkgs, ":", base.vers, ")")
+    hwrite(paste0(hmakeTag("b","Base GSEA methods: ") ,paste(baseMethods, 
+            collapse=", ")), br=TRUE, page=p)
     hwrite(paste0(hmakeTag("b","P-value combine method: " ), 
-combineMethod), br=TRUE, page=p)
+            combineMethod), br=TRUE, page=p)
     hwrite(paste0(hmakeTag("b","Sorting statistic: " ),sort.by), br=TRUE, 
-page=p)
+            page=p)
     hwrite(paste0(hmakeTag("b","Fold changes calculated: " ),logFC.cal), 
-br=TRUE, page=p)    
+            br=TRUE, page=p)    
     hwrite(paste0(hmakeTag("b","Gene IDs - Symbols mapping used: " ), 
-                    ifelse(nrow(symbolsMap) > 0, "Yes", 
-"No")), br=TRUE, page=p)
+            ifelse(nrow(symbolsMap) > 0, "Yes", 
+            "No")), br=TRUE, page=p)
     hwrite(paste0(hmakeTag("b","Organism: " ), gs.annots[[1]]$species), 
-br=TRUE, page=p)
+            br=TRUE, page=p)
+    gs.cols = paste0(gs.names, " (", gs.versions, ", ", gs.dates, ")")
+    hwrite(paste0(hmakeTag("b","Gene set collections: " ), paste(gs.cols, collapse=", ")), 
+        br=TRUE, page=p)
+    hwrite(paste0(hmakeTag("b","EGSEA version: " ), packageVersion("EGSEA")), 
+        br=TRUE, page=p)
+    hwrite(paste0(hmakeTag("b","EGSEAdata version: " ), packageVersion("EGSEAdata")), 
+        br=TRUE, page=p)
     
     
     hwrite("Analysis Results", heading=2, br=TRUE, page=p)

@@ -42,28 +42,34 @@ from \code{\link{buildIdx}}, \code{\link{buildMSigDBIdx}},
 \code{\link{plotSummary}}.}
 }
 \value{
-the selected slot.
+\code{$} returns the selected slot data.
 
-summary of the collection.
+\code{summary} does not return data.
 
-details of the collection.
+\code{show} does not return data.
 
-a list of the details of a gene set
+\code{getSetByName} returns a list of annotation records
 
-a list of the details of a gene set
+\code{getSetByID} returns a list of the annotation records.
 }
 \description{
-This class contains an indexed gene set collection
+The \code{GSCollectionIndex} class stores an indexed gene set collection.
 
-Extract a slot from an object of class GSCollectionIndex
+The operator \code{$} extracts a slot from an object of class 
+GSCollectionIndex.
 
-A brief summary of the gene set collection
+\code{summary} displays a brief summary of a gene set collection
 
-Print the details of the gene set collection
+\code{show} displays the details of a gene set collection
 
-Print the details of a given gene set name
+\code{getSetByName} retrieves the details of a given gene set 
+indicated by name
 
-Print the details of a given gene set ID
+\code{getSetByID} retrieves the details of a given gene set indicated by ID
+}
+\details{
+The \code{GSCollectionIndex} is used by \code{buildIdx}, \code{buildCustomIdx},
+\code{buildKEGGIdx}, \code{buildMSigDBIdx} and \code{buildGeneSetDBIdx}.
 }
 \section{Slots}{
 
@@ -81,49 +87,58 @@ used in the indexing procedure}
 
 \item{\code{name}}{character, the name of the gene set collection}
 
-\item{\code{label}}{character, a label to distnguish this collection 
+\item{\code{label}}{character, a label to distnguish this collection}
+
+\item{\code{version}}{character, the database version from which the collection was extracted}
+
+\item{\code{date}}{character, the update/download date of the database
 from other collections}
 }}
 \examples{
+# Example of GSCollectionIndex
 library(EGSEAdata)
 data(il13.data)
 v = il13.data$voom
 gs.annots = buildIdx(entrezIDs=rownames(v$E), species="human", 
 			msigdb.gsets="none", 
          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
-
 print(gs.annots[[1]]$name)
+
+# Example of summary
 library(EGSEAdata)
 data(il13.data)
 v = il13.data$voom
 gs.annots = buildIdx(entrezIDs=rownames(v$E), species="human", 
 			msigdb.gsets="none", 
          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
-
 summary(gs.annots[[1]])
+
+# Example of show
 library(EGSEAdata)
 data(il13.data)
 v = il13.data$voom
 gs.annots = buildIdx(entrezIDs=rownames(v$E), species="human", 
 			msigdb.gsets="none", 
          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
-
 show(gs.annots[[1]])
+
+# Example of getSetByName
 library(EGSEAdata)
 data(il13.data)
 v = il13.data$voom
 gs.annots = buildIdx(entrezIDs=rownames(v$E), species="human", 
 			msigdb.gsets="none", 
          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
-
 getSetByName(gs.annots[[1]], "Asthma")
+
+# Example of getSetByID
 library(EGSEAdata)
 data(il13.data)
 v = il13.data$voom
 gs.annots = buildIdx(entrezIDs=rownames(v$E), species="human", 
 			msigdb.gsets="none", 
          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
-
 getSetByID(gs.annots[[1]], "hsa04060")
+
 }
 
