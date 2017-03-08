@@ -7,9 +7,8 @@
 egsea.ora(entrezIDs, universe = NULL, logFC = NULL, title = NULL,
   gs.annots, symbolsMap = NULL, minSize = 2, display.top = 20,
   sort.by = "p.adj", egsea.dir = NULL, kegg.dir = NULL,
-  logFC.cutoff = 0, sum.plot.axis = "p.adj", sum.plot.cutoff = NULL,
-  vote.bin.width = 5, num.threads = 4, report = TRUE,
-  print.base = FALSE, verbose = FALSE)
+  sum.plot.axis = "p.adj", sum.plot.cutoff = NULL, vote.bin.width = 5,
+  num.threads = 4, report = TRUE, keep.base = FALSE, verbose = FALSE)
 }
 \arguments{
 \item{entrezIDs}{character, a vector of Entrez Gene IDs to be tested for ORA.}
@@ -60,10 +59,6 @@ written out.}
 and image file (.png). 
 Default kegg.dir=paste0(egsea.dir, "/kegg-dir/").}
 
-\item{logFC.cutoff}{numeric, cut-off threshold of logFC and is used for 
-Sginificance Score 
-and Regulation Direction Calculations. Default logFC.cutoff=0.}
-
 \item{sum.plot.axis}{character, the x-axis of the summary plot. All the 
 values accepted by the 
 \strong{sort.by} parameter can be used. Default sum.plot.axis="p.adj".}
@@ -76,14 +71,14 @@ sum.plot.cutoff=NULL.}
 \item{vote.bin.width}{numeric, the bin width of the vote ranking. Default 
 vote.bin.width=5.}
 
-\item{num.threads}{numeric, number of CPU threads to be used. Default 
+\item{num.threads}{numeric, number of CPU cores to be used. Default 
 num.threads=2.}
 
 \item{report}{logical, whether to generate the EGSEA interactive report. It 
 takes longer time
 to run. Default is True.}
 
-\item{print.base}{logical, whether to write out the results of the 
+\item{keep.base}{logical, whether to write out the results of the 
 individual GSE methods.
  Default FALSE.}
 
@@ -138,11 +133,10 @@ topSets(gsa)
 
 }
 \references{
-Monther Alhamdoosh, Milica Ng, Nicholas J. Wilson, Julie M. Sheridan, Huy 
-Huynh, Michael J. Wilson
-and Matthew E. Ritchie. Combining multiple tools outperforms individual 
-methods in gene set enrichment
-analyses.
+Monther Alhamdoosh, Milica Ng, Nicholas J. Wilson, Julie M. Sheridan, Huy Huynh, 
+Michael J. Wilson, Matthew E. Ritchie; Combining multiple tools outperforms 
+individual methods in gene set enrichment analyses. Bioinformatics 2017; 
+33 (3): 414-424. doi: 10.1093/bioinformatics/btw623
 }
 \seealso{
 \code{\link{topSets}},

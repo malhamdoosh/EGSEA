@@ -25,10 +25,38 @@
 #' @docType package
 #' @title Ensemble of Gene Enrichment Analysis (EGSEA)
 #' @author Monther Alhamdoosh, Milica Ng and Matthew Ritchie 
-#' @description This packages provides the implementatino of the EGSEA 
-#' algorithm 
-#' and addition functions to help perform GSE analysis
+#' @description This packages provides the implementation of the EGSEA 
+#' algorithm and addition functions to help perform GSE analysis. 
+#' @references 
+#' Monther Alhamdoosh, Milica Ng, Nicholas J. Wilson, Julie M. Sheridan, Huy Huynh, 
+#' Michael J. Wilson, Matthew E. Ritchie; Combining multiple tools outperforms 
+#' individual methods in gene set enrichment analyses. Bioinformatics 2017; 
+#' 33 (3): 414-424. doi: 10.1093/bioinformatics/btw623
+#' 
+#' @rdname EGSEA-package
 NULL
+
+#' @title EGSEA logo
+#' @description This function writes out the official EGSEA package logo
+#' @details This function generates a PNG file of the EGSEA logo, which can
+#' be used to acknowledge EGSEA in presentations/reports. 
+#' The logo was designed by Roberto Bonelli from The Walter and Eliza Hall Institute
+#' of Medical Research. 
+#' @param out.dir character, the target directory to which the logo will be written. 
+#' @return a PNG file. 
+#' 
+#' @export 
+#' 
+#' @rdname EGSEA-package
+
+egsea.logo <- function(out.dir = "./"){
+    logo.file = system.file("logo", "EGSEA_logo.png", package="EGSEA")
+    if (file.exists(logo.file)){
+        file.copy(logo.file, out.dir)
+    }else{
+        cat("EGSEA logo was not installed\n")
+    }
+}
 
 #' @title Ensemble of Gene Set Enrichment Analyses Function
 #' 
@@ -66,7 +94,8 @@ NULL
 #' can be seen in this table when they are available. The "Direction" column shows the regulation
 #' direction of a gene set which is calculated based on the \code{logFC}, which is
 #' either calculated from the limma differential expression analysis or provided by the user. 
-#' The \code{logFC.cutoff} is applied for this calculation. The calculations of the EGSEA 
+#' The \code{logFC.cutoff} and \code{fdr.cutoff} are applied for this calculation. 
+#' The calculations of the EGSEA 
 #' scores can be seen in the references section. The method \code{topSets} can be used to
 #' generate custom Stats Table. \cr
 #' 2. Heatmaps page shows the heatmaps of the gene fold changes for the gene sets that are
@@ -132,10 +161,12 @@ NULL
 #' @param voom.results list, an EList object generated using the  
 #' \code{\link[limma]{voom}} function. 
 #' Entrez Gene IDs should be used as row names.  
-#' @param contrasts double, an N x L matrix indicates the contrast of the 
+#' @param contrasts double, an N x L matrix indicates the contrasts of the 
 #' linear model coefficients for
-#' which the test is required. N is number of experimental conditions and L is 
-#' number of contrasts.
+#' which the test is required. N is number of columns of the 
+#' design matrix and L is 
+#' number of contrasts. Can be also a vector of integers that specify the columns of the
+#' design matrix. 
 #' @param logFC double, an K x L matrix indicates the log2 fold change of each 
 #' gene for each contrast. 
 #' K is the number of genes included in the analysis. If logFC=NULL, the logFC 
@@ -180,8 +211,11 @@ NULL
 #' and image file (.png). 
 #' Default kegg.dir=paste0(egsea.dir, "/kegg-dir/").
 #' @param logFC.cutoff numeric, cut-off threshold of logFC and is used for 
-#' Sginificance Score 
-#' and Regulation Direction Calculations. Default logFC.cutoff=0.
+#' the calculation of Sginificance Score 
+#' and Regulation Direction. Default logFC.cutoff=0.
+#' @param fdr.cutoff numeric, cut-off threshold of DE genes and is used
+#' for the calculation of Significance Score and Regulation Direction. 
+#' Default fdr.cutoff = 0.05. 
 #' @param sum.plot.axis character, the x-axis of the summary plot. All the 
 #' values accepted by the 
 #' \strong{sort.by} parameter can be used. Default sum.plot.axis="p.value".
@@ -191,16 +225,17 @@ NULL
 #' sum.plot.cutoff=NULL.
 #' @param vote.bin.width numeric, the bin width of the vote ranking. Default 
 #' vote.bin.width=5.
-#' @param num.threads numeric, number of CPU threads to be used. Default 
+#' @param num.threads numeric, number of CPU cores to be used. Default 
 #' num.threads=2.
 #' @param report logical, whether to generate the EGSEA interactive report. It 
 #' takes longer time
 #' to run. Default is True.
-#' @param print.base logical, whether to write out the results of the 
+#' @param keep.base logical, whether to write out the results of the 
 #' individual GSE methods.
 #'  Default FALSE.  
 #' @param verbose logical, whether to print out progress messages and warnings. 
-#' @param keep.limma logical, whether to return the results of the limma analysis.
+#' @param keep.limma logical, whether to store the results of the limma analysis
+#' in the EGSEAResults object.
 #' @param keep.set.scores logical, whether to calculate the gene set enrichment scores
 #' per sample for the methods that support this option, i.e., "ssgsea".
 #' 
@@ -219,23 +254,22 @@ NULL
 #' @importFrom PADOG padog
 #' @importFrom GSVA gsva
 #' @importFrom safe safe safe.toptable getCmatrix
-#' @importFrom parallel mclapply
+#' @importFrom parallel mclapply detectCores
 #' @importFrom AnnotationDbi Ontology
 #' @importFrom stats p.adjust pchisq phyper quantile
 #' @importFrom grDevices pdf dev.off png colorRampPalette 
 #' @importFrom graphics par legend
-#' @importFrom utils write.table browseURL write.csv data capture.output packageVersion
+#' @importFrom utils write.table browseURL write.csv data capture.output packageVersion timestamp
 #' @importFrom gage gage kegg.gsets
 #' @importFrom metap logitp meanp sumlog sump sumz wilkinsonp
 #' @importFrom methods new slot
 #' @import hwriter HTMLUtils stringi ggplot2 pathview gplots  Biobase topGO
 #' @export
 #' @references 
-#' Monther Alhamdoosh, Milica Ng, Nicholas J. Wilson, Julie M. Sheridan, Huy 
-#' Huynh, Michael J. Wilson
-#' and Matthew E. Ritchie. Combining multiple tools outperforms individual 
-#' methods in gene set enrichment
-#' analyses. 
+#' Monther Alhamdoosh, Milica Ng, Nicholas J. Wilson, Julie M. Sheridan, Huy Huynh, 
+#' Michael J. Wilson, Matthew E. Ritchie; Combining multiple tools outperforms 
+#' individual methods in gene set enrichment analyses. Bioinformatics 2017; 
+#' 33 (3): 414-424. doi: 10.1093/bioinformatics/btw623
 #' 
 #' @examples
 #' # Example of egsea
@@ -256,52 +290,40 @@ NULL
 #' 
 
 
-egsea <- function(voom.results, contrasts, logFC=NULL,
+egsea <- function(voom.results, contrasts = NULL, logFC=NULL,
         gs.annots, symbolsMap=NULL, 
         baseGSEAs=egsea.base(),
         minSize=2, display.top=20, 
         combineMethod="fisher", combineWeights = NULL,      
         sort.by="p.adj", 
         egsea.dir=NULL, kegg.dir=NULL, 
-        logFC.cutoff=0, sum.plot.axis="p.adj", sum.plot.cutoff=NULL, 
+        logFC.cutoff = 0, fdr.cutoff = 0.05, 
+        sum.plot.axis="p.adj", sum.plot.cutoff=NULL, 
         vote.bin.width=5,
         num.threads=4, report = TRUE,
-        print.base = FALSE, 
+        keep.base = FALSE, 
         verbose=FALSE,
-        keep.limma=FALSE, keep.set.scores=FALSE){
-    stopifnot((class(voom.results) == "list" && 
-                    "ids" %in% names(voom.results)) 
-                || class(voom.results) == "EList")
-    if (is.null(sum.plot.cutoff)){
-        if (sum.plot.axis %in% c("p.value", "p.adj"))
-            sum.plot.cutoff = 1     
-        else
-            sum.plot.cutoff = 10000
-    }
-    if (length(baseGSEAs) == 1){
-        sort.by = "p.adj"
-    }
-    set.seed(581986) # to guaranteereproducibility of results
+        keep.limma=TRUE, keep.set.scores=FALSE){
+
+    set.seed(581986) # to guarantee reproducibility of results
     if (verbose)    
         return(egsea.main(voom.results, contrasts, gs.annots, baseGSEAs, 
-combineMethod, 
-                        combineWeights,sort.by,  egsea.dir, 
-                        kegg.dir, logFC, symbolsMap, minSize, display.top, 
-logFC.cutoff, sum.plot.cutoff, sum.plot.axis, 
-                        vote.bin.width, print.base, verbose, num.threads, 
-report, keep.limma, keep.set.scores))
+            combineMethod, combineWeights,sort.by,  egsea.dir, 
+            kegg.dir, logFC, symbolsMap, minSize, display.top, 
+            logFC.cutoff, fdr.cutoff, sum.plot.cutoff, sum.plot.axis, 
+            vote.bin.width, keep.base, verbose, num.threads, 
+            report, keep.limma, keep.set.scores))
     else
         suppressWarnings(
-                return(egsea.main(voom.results, contrasts, gs.annots, 
-baseGSEAs, combineMethod, 
-                                combineWeights,sort.by,  egsea.dir, 
-                                kegg.dir, logFC, symbolsMap, minSize, 
-display.top, logFC.cutoff, sum.plot.cutoff, 
-                                sum.plot.axis, vote.bin.width,print.base, 
-verbose, num.threads, report, keep.limma, keep.set.scores)))
-    
+            return(egsea.main(voom.results, contrasts, gs.annots, 
+                baseGSEAs, combineMethod, combineWeights, sort.by, 
+                egsea.dir, kegg.dir, logFC, symbolsMap, minSize, 
+                display.top, logFC.cutoff, fdr.cutoff,
+                sum.plot.cutoff, 
+                sum.plot.axis, vote.bin.width,keep.base, 
+                verbose, num.threads, report, keep.limma, 
+                keep.set.scores)))    
 }
-
 
 #' @title Ensemble of Gene Set Enrichment Analyses Function
 #' 
@@ -342,7 +364,8 @@ verbose, num.threads, report, keep.limma, keep.set.scores)))
 #' can be seen in this table when they are available. The "Direction" column shows the regulation
 #' direction of a gene set which is calculated based on the \code{logFC}, which is
 #' either calculated from the limma differential expression analysis or provided by the user. 
-#' The \code{logFC.cutoff} is applied for this calculation. The calculations of the EGSEA 
+#' The \code{logFC.cutoff} and \code{fdr.cutoff} are applied for this calculation.
+#'  The calculations of the EGSEA 
 #' scores can be seen in the references section. The method \code{topSets} can be used to
 #' generate custom Stats Table. \cr
 #' 2. Heatmaps page shows the heatmaps of the gene fold changes for the gene sets that are
@@ -404,17 +427,19 @@ verbose, num.threads, report, keep.limma, keep.set.scores)))
 #' report generation was disabled. The execution time took 145.5 seconds when the report 
 #' generation was enabled using 16 threads.
 #'
-#' @param counts double, numeric matrix of read counts where genes are the rows 
+#' @param counts double, an K x M numeric matrix of read counts where genes are the rows 
 #' and samples are
 #' the columns.
 #' @param group character, vector or factor giving the experimental 
 #' group/condition for each sample/library
-#' @param design double, numeric matrix giving the design matrix of the linear 
+#' @param design double, an M x N numeric matrix giving the design matrix of the linear 
 #' model fitting.
-#' @param contrasts double, an N x L matrix indicates the contrast of the 
+#' @param contrasts double, an N x L matrix indicates the contrasts of the 
 #' linear model coefficients for
-#' which the test is required. N is number of experimental conditions and L is 
-#' number of contrasts.
+#' which the test is required. N is the number of columns of the 
+#' design matrix and L is 
+#' number of contrasts. Can be also a vector of integers that specify the columns of the
+#' design matrix. 
 #' @param logFC double, an K x L matrix indicates the log2 fold change of each 
 #' gene for each contrast. 
 #' K is the number of genes included in the analysis. If logFC=NULL, the logFC 
@@ -459,8 +484,11 @@ verbose, num.threads, report, keep.limma, keep.set.scores)))
 #' and image file (.png). 
 #' Default kegg.dir=paste0(egsea.dir, "/kegg-dir/").
 #' @param logFC.cutoff numeric, cut-off threshold of logFC and is used for 
-#' Sginificance Score 
-#' and Regulation Direction Calculations. Default logFC.cutoff=0.
+#' the calculation of Sginificance Score 
+#' and Regulation Direction. Default logFC.cutoff=0.
+#' @param fdr.cutoff numeric, cut-off threshold of DE genes and is used
+#' for the calculation of Significance Score and Regulation Direction. 
+#' Default fdr.cutoff = 0.05. 
 #' @param sum.plot.axis character, the x-axis of the summary plot. All the 
 #' values accepted by the 
 #' \strong{sort.by} parameter can be used. Default sum.plot.axis="p.value".
@@ -470,16 +498,17 @@ verbose, num.threads, report, keep.limma, keep.set.scores)))
 #' sum.plot.cutoff=NULL.
 #' @param vote.bin.width numeric, the bin width of the vote ranking. Default 
 #' vote.bin.width=5.
-#' @param num.threads numeric, number of CPU threads to be used. Default 
+#' @param num.threads numeric, number of CPU cores to be used. Default 
 #' num.threads=2.
 #' @param report logical, whether to generate the EGSEA interactive report. It 
 #' takes longer time
 #' to run. Default is True.
-#' @param print.base logical, whether to write out the results of the 
+#' @param keep.base logical, whether to write out the results of the 
 #' individual GSE methods.
 #'  Default FALSE.  
 #' @param verbose logical, whether to print out progress messages and warnings. 
-#' @param keep.limma logical, whether to return the results of the limma analysis.
+#' @param keep.limma logical, whether to store the results of the limma analysis
+#' in the EGSEAResults object.
 #' @param keep.set.scores logical, whether to calculate the gene set enrichment scores
 #' per sample for the methods that support this option, i.e., "ssgsea".
 #' 
@@ -498,11 +527,10 @@ verbose, num.threads, report, keep.limma, keep.set.scores)))
 #' @importFrom stats model.matrix
 #' @export
 #' @references 
-#' Monther Alhamdoosh, Milica Ng, Nicholas J. Wilson, Julie M. Sheridan, Huy 
-#' Huynh, Michael J. Wilson
-#' and Matthew E. Ritchie. Combining multiple tools outperforms individual 
-#' methods in gene set enrichment
-#' analyses. 
+#' Monther Alhamdoosh, Milica Ng, Nicholas J. Wilson, Julie M. Sheridan, Huy Huynh, 
+#' Michael J. Wilson, Matthew E. Ritchie; Combining multiple tools outperforms 
+#' individual methods in gene set enrichment analyses. Bioinformatics 2017; 
+#' 33 (3): 414-424. doi: 10.1093/bioinformatics/btw623
 #' 
 #' @examples
 #' # Example of egsea.cnt
@@ -527,20 +555,25 @@ verbose, num.threads, report, keep.limma, keep.set.scores)))
 #' topSets(gsa) 
 #' 
 
-egsea.cnt <- function(counts, group, design = NULL, contrasts, logFC=NULL,
+egsea.cnt <- function(counts, group, design = NULL, contrasts = NULL, logFC=NULL,
         gs.annots, symbolsMap=NULL, 
         baseGSEAs=egsea.base(),
         minSize=2, display.top=20, 
         combineMethod="fisher", combineWeights = NULL,      
         sort.by="p.adj", 
         egsea.dir=NULL, kegg.dir=NULL, 
-        logFC.cutoff=0, sum.plot.axis="p.adj", sum.plot.cutoff=NULL, 
+        logFC.cutoff=0, fdr.cutoff = 0.05, sum.plot.axis="p.adj", sum.plot.cutoff=NULL, 
         vote.bin.width=5,
         num.threads=4, report = TRUE,
-        print.base = FALSE, 
-        verbose=FALSE, keep.limma=FALSE, keep.set.scores=FALSE){
-    d = DGEList(counts, group=group)
-    d = calcNormFactors(d, method="TMM")    
+        keep.base = FALSE, 
+        verbose=FALSE, keep.limma=TRUE, keep.set.scores=FALSE){
+    stopifnot(!is.null(counts))
+    if (is.matrix(counts)){
+        d = DGEList(counts, group=group)
+        d = calcNormFactors(d, method="TMM")  
+    }else{
+        d = counts
+    }
     if (is.null(design)){
         design = model.matrix(~0+group)
         colnames(design) = levels(factor(group))
@@ -553,10 +586,11 @@ egsea.cnt <- function(counts, group, design = NULL, contrasts, logFC=NULL,
                     combineMethod, combineWeights,      
                     sort.by, 
                     egsea.dir, kegg.dir, 
-                    logFC.cutoff, sum.plot.axis, sum.plot.cutoff, 
+                    logFC.cutoff, fdr.cutoff, 
+                    sum.plot.axis, sum.plot.cutoff, 
                     vote.bin.width,
                     num.threads, report,
-                    print.base , 
+                    keep.base , 
                     verbose, keep.limma, keep.set.scores))
     
 }
@@ -613,9 +647,6 @@ egsea.cnt <- function(counts, group, design = NULL, contrasts, logFC=NULL,
 #' @param kegg.dir character, the directory of KEGG pathway data file (.xml) 
 #' and image file (.png). 
 #' Default kegg.dir=paste0(egsea.dir, "/kegg-dir/").
-#' @param logFC.cutoff numeric, cut-off threshold of logFC and is used for 
-#' Sginificance Score 
-#' and Regulation Direction Calculations. Default logFC.cutoff=0.
 #' @param sum.plot.axis character, the x-axis of the summary plot. All the 
 #' values accepted by the 
 #' \strong{sort.by} parameter can be used. Default sum.plot.axis="p.adj".
@@ -625,12 +656,12 @@ egsea.cnt <- function(counts, group, design = NULL, contrasts, logFC=NULL,
 #' sum.plot.cutoff=NULL.
 #' @param vote.bin.width numeric, the bin width of the vote ranking. Default 
 #' vote.bin.width=5.
-#' @param num.threads numeric, number of CPU threads to be used. Default 
+#' @param num.threads numeric, number of CPU cores to be used. Default 
 #' num.threads=2.
 #' @param report logical, whether to generate the EGSEA interactive report. It 
 #' takes longer time
 #' to run. Default is True.
-#' @param print.base logical, whether to write out the results of the 
+#' @param keep.base logical, whether to write out the results of the 
 #' individual GSE methods.
 #'  Default FALSE.  
 #' @param verbose logical, whether to print out progress messages and warnings. 
@@ -649,11 +680,10 @@ egsea.cnt <- function(counts, group, design = NULL, contrasts, logFC=NULL,
 #' @importFrom org.Rn.eg.db org.Rn.egGO2ALLEGS
 #' @export
 #' @references 
-#' Monther Alhamdoosh, Milica Ng, Nicholas J. Wilson, Julie M. Sheridan, Huy 
-#' Huynh, Michael J. Wilson
-#' and Matthew E. Ritchie. Combining multiple tools outperforms individual 
-#' methods in gene set enrichment
-#' analyses. 
+#' Monther Alhamdoosh, Milica Ng, Nicholas J. Wilson, Julie M. Sheridan, Huy Huynh, 
+#' Michael J. Wilson, Matthew E. Ritchie; Combining multiple tools outperforms 
+#' individual methods in gene set enrichment analyses. Bioinformatics 2017; 
+#' 33 (3): 414-424. doi: 10.1093/bioinformatics/btw623
 #' 
 #' @examples
 #' # Example of egsea.ora
@@ -687,10 +717,10 @@ egsea.ora <- function(entrezIDs, universe=NULL, logFC=NULL, title=NULL,
         gs.annots, symbolsMap=NULL, 
         minSize=2, display.top=20, sort.by = "p.adj",   
         egsea.dir=NULL, kegg.dir=NULL, 
-        logFC.cutoff=0, sum.plot.axis="p.adj", sum.plot.cutoff=NULL, 
+        sum.plot.axis="p.adj", sum.plot.cutoff=NULL, 
         vote.bin.width=5,
         num.threads=4, report = TRUE,
-        print.base = FALSE, 
+        keep.base = FALSE, 
         verbose=FALSE){
     voom.results = list(ids=as.character(entrezIDs))
     if (!is.null(universe))
@@ -723,10 +753,11 @@ egsea.ora <- function(entrezIDs, universe=NULL, logFC=NULL, title=NULL,
                     combineMethod = "average", combineWeights = NULL,       
                     sort.by, 
                     egsea.dir, kegg.dir, 
-                    logFC.cutoff, sum.plot.axis, sum.plot.cutoff, 
+                    logFC.cutoff = 0, fdr.cutoff = 1, 
+                    sum.plot.axis, sum.plot.cutoff, 
                     vote.bin.width,
                     num.threads, report,
-                    print.base , 
+                    keep.base , 
                     verbose))
 
 }
@@ -742,8 +773,8 @@ egsea.ora <- function(entrezIDs, universe=NULL, logFC=NULL, title=NULL,
 
 egsea.sort <-function(){
     return(c(c("p.value", "p.adj", "avg.rank", "med.rank", "min.rank", 
-"min.pvalue", "vote.rank",
-                            "Significance"),egsea.base()))
+"min.pvalue", "vote.rank", "avg.logfc.dir", "avg.logfc", "direction",
+                            "significance"),egsea.base()))
 }
 
 
@@ -758,7 +789,7 @@ egsea.sort <-function(){
 
 egsea.combine <- function(){
     return(c("fisher", "wilkinson", "average", "logitp", 
-            "sump", "sumz"))
+            "sump", "sumz", "median"))
 }
 
 
@@ -840,18 +871,19 @@ egsea.base <- function(){
 #TODO: add support to use linear models in camera, roast and fry
 
 #TODO: explore the use of ReportingTools for html generation
+#TODO: Build a universal I/O interface for the wrappers
 
 
 # rsync -av --exclude ".*" ../EGSEA .
-# R CMD build --resave-data EGSEA 
-# R CMD check EGSEA_*.tar.gz 
-# R CMD BiocCheck EGSEA_*.tar.gz 
-# R CMD INSTALL EGSEA_*.tar.gz 
+# R-dev CMD build --resave-data EGSEA / R CMD build --resave-data EGSEA
+# R-dev CMD check EGSEA_*.tar.gz   / R CMD check EGSEA_*.tar.gz 
+# R-dev CMD BiocCheck EGSEA_*.tar.gz / R CMD BiocCheck EGSEA_*.tar.gz  
+# R-dev CMD INSTALL EGSEA_*.tar.gz / R CMD INSTALL EGSEA_*.tar.gz  
 
 
-# R CMD build --resave-data EGSEAdata
-# R CMD check EGSEAdata_0.99.0.tar.gz 
-# R CMD BiocCheck EGSEAdata_0.99.0.tar.gz 
+# R-dev CMD build --resave-data EGSEAdata
+# R-dev CMD check EGSEAdata_0.99.0.tar.gz 
+# R-dev CMD BiocCheck EGSEAdata_0.99.0.tar.gz 
 
 
 ## Create test units, type inside the EGSEA directory

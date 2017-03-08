@@ -4,21 +4,23 @@
 ###############################################################################
 # Plot GO graphs using topGO package
 
-plotGOGraphs <- function(egsea.results, gs.annot, gsa.dir, sort.by){
-    cat("GO graphs are being generated for top-ranked GO terms based on 
-			p-values ... \n")        
+plotGOGraphs <- function(egsea.results, gs.annot, gsa.dir, sort.by, 
+        verbose){
+    cat(paste0("   GO graphs are being generated for top-ranked GO terms\n",  
+			"based on ", sort.by, " ... \n"))
     go.dir = paste0(gsa.dir, "/go-graphs/") 
     if (!dir.exists(go.dir))
         dir.create(file.path(go.dir), showWarnings = FALSE)
     contrast.names = names(egsea.results)
     file.name = paste0(go.dir, sub(" - ", "-", contrast.names), "-", 
-        gs.annot@label, "-top-")
+        gs.annot@label, "-top-", sort.by, "-")
     if (file.exists(paste0(file.name[length(file.name)], "CC.png")))
         return()
     topGOdata = loadTopGOdata(gs.annot, go.dir)    
     noSig = 5 
-    for (i in 1:length(contrast.names)){            
-        print(contrast.names[i])
+    for (i in 1:length(contrast.names)){   
+        if (verbose)
+            print(contrast.names[i])
         generateGOGraphs(egsea.results[[i]], gs.annot, sort.by,
                 file.name[i], topGOdata, noSig)
         
@@ -27,13 +29,13 @@ plotGOGraphs <- function(egsea.results, gs.annot, gsa.dir, sort.by){
 }
 
 plotGOGraphs.comparison <- function(egsea.results, gs.annot, gsa.dir, sort.by){
-    cat("GO graphs are being generated for top-ranked COMPARISON\n 
-		GO terms based on p-values ... \n")        
+    cat(paste0("   GO graphs are being generated for top-ranked COMPARISON\n",  
+		"GO terms based on ", sort.by, " ... \n"))
     go.dir = paste0(gsa.dir, "/go-graphs/") 
     if (!dir.exists(go.dir))
         dir.create(file.path(go.dir), showWarnings = FALSE)   
     file.name = paste0(go.dir, "comparison-", 
-            gs.annot@label, "-top-")
+            gs.annot@label, "-top-", sort.by, "-")
     if (file.exists(paste0(file.name, "CC.png")))
         return()
     topGOdata = loadTopGOdata(gs.annot, go.dir)    
@@ -204,15 +206,15 @@ topDiffGenes <- function (allScore) {
 
 generateSumPlots <- function(egsea.results, baseGSEAs, gs.annot, gsa.dir,
         sum.plot.cutoff=1, sum.plot.axis="p.value"){
-    print("Summary plots are being generated ... ")
+    cat("   Summary plots are being generated ... \n")
     
-    summary.dir = paste0(gsa.dir, "/summary/")
-    dir.create(file.path(summary.dir), showWarnings = FALSE)
+    summary.dir = paste0(gsa.dir, "/summary/")    
     contrast.names = names(egsea.results)   
     
     for(i in 1:length(egsea.results)){      
         file.name = paste0(summary.dir, sub(" - ", "-", 
-        contrast.names[i]), "-", gs.annot@label, "-summary")        
+                contrast.names[i]), "-", gs.annot@label, 
+                "-summary-", sum.plot.axis)        
 
         if (!file.exists(paste0(file.name, ".dir.png"))){
             plot.data = generatePlotData(egsea.results[[i]], 
@@ -236,7 +238,7 @@ generateSumPlots <- function(egsea.results, baseGSEAs, gs.annot, gsa.dir,
 generateSumPlots.comparison <- function(egsea.results, egsea.comparison, gs.annot, 
 gsa.dir,         
         sum.plot.cutoff=1, sum.plot.axis="p.value"){
-    print("Comparison summary plots are being generated  ... ")
+    cat("   Comparison summary plots are being generated  ...\n")
     
     summary.dir = paste0(gsa.dir, "/summary/")
     dir.create(file.path(summary.dir), showWarnings = FALSE)
@@ -249,7 +251,7 @@ gsa.dir,
                 file.prefix="", summary.dir)
     } 
     else if (length(contrast.names) > 2){
-        print("There are more than 2 contrasts!")
+        cat("   There are more than 2 contrasts!\n")
         for (i in 1:(length(contrast.names)-1)){
             for (j in (i+1):length(contrast.names)){
                 egsea.results.sub = egsea.results[c(i,j)]  
@@ -265,7 +267,8 @@ gsa.dir,
 generateSummaryPlots.comparison <- function(egsea.results, egsea.comparison, 
                         gs.annot, sum.plot.axis, sum.plot.cutoff,
                         file.prefix, summary.dir){
-    file.name = paste0(summary.dir, gs.annot@label, file.prefix, "-summary")
+    file.name = paste0(summary.dir, gs.annot@label, file.prefix, 
+            "-summary-", sum.plot.axis)
     if (!file.exists(paste0(file.name, ".dir.png"))){
         contrast.names = names(egsea.results)
         plot.data = generatePlotData.comparison(egsea.results, 
@@ -291,6 +294,12 @@ generateSummaryPlots.comparison <- function(egsea.results, egsea.comparison,
 generatePlotData.comparison <- function(egsea.results.two, egsea.comparison, 
                  gs.annot,  sum.plot.axis, sum.plot.cutoff,
                  use.names = FALSE){ 
+     if (is.null(sum.plot.cutoff)){
+         if (sum.plot.axis %in% c("p.value", "p.adj"))
+             sum.plot.cutoff = 1     
+         else
+             sum.plot.cutoff = 10000
+     }
     tmp = egsea.results.two[[1]]
     gsets1 = as.character(rownames(tmp)) [tmp[, sum.plot.axis] <= sum.plot.cutoff]  
     tmp = egsea.results.two[[2]]
@@ -309,16 +318,18 @@ generatePlotData.comparison <- function(egsea.results.two, egsea.comparison,
         egsea.results = egsea.results.two[[i]]      
         if ( sum.plot.axis %in% c("p.value", "p.adj")){
             pvalues = egsea.results[gsets, sum.plot.axis]   
-            pvalues[pvalues == 0] = 1*10^-22
+            #pvalues[pvalues == 0] = 1*10^-22
             pvalues = -1 * log10(pvalues)
-            pvalues[is.na(pvalues)] = max(pvalues, na.rm=TRUE) + 1 
+            pvalues[pvalues == Inf] = max(pvalues[pvalues != Inf]) + 50
+            pvalues[is.na(pvalues)] = 0
+            #pvalues[is.na(pvalues)] = max(pvalues, na.rm=TRUE) + 1 
         }else{
             pvalues =  - egsea.results[gsets, sum.plot.axis] 
         }
         sig.combined = sig.combined + 
-                egsea.results[gsets, "Significance"]
+                egsea.results[gsets, "significance"]
         pvalues.all[, i] = pvalues
-        gs.dirs.all[, i] = egsea.results[gsets, "Direction"]
+        gs.dirs.all[, i] = egsea.results[gsets, "direction"]
     }
     gs.dirs = rowMeans(gs.dirs.all, na.rm=TRUE)
     gs.sizes = as.numeric(sapply(
@@ -339,14 +350,22 @@ generatePlotData.comparison <- function(egsea.results.two, egsea.comparison,
 }
 
 generatePlotData <- function(egsea.results, gs.annot,
-        sum.plot.cutoff,  sum.plot.axis, use.names = FALSE){    
+        sum.plot.cutoff,  sum.plot.axis, use.names = FALSE){ 
+    if (is.null(sum.plot.cutoff)){
+        if (sum.plot.axis %in% c("p.value", "p.adj"))
+            sum.plot.cutoff = 1     
+        else
+            sum.plot.cutoff = 10000
+    }
     x.data = egsea.results[, sum.plot.axis]
     gsets = as.character(rownames(egsea.results))[x.data <= sum.plot.cutoff]
     x.data = x.data[x.data <= sum.plot.cutoff]
     if (sum.plot.axis %in% c("p.value", "p.adj")){
-        x.data[x.data == 0] = 1*10^-22
+        #x.data[x.data == 0] = 1*10^-22
         x.data = -1 * log10(x.data)
-        x.data[is.na(x.data)] = max(x.data, na.rm=TRUE) + 1     
+        x.data[x.data == Inf] = max(x.data[x.data != Inf]) + 50
+        x.data[is.na(x.data)] = 0
+        #x.data[is.na(x.data)] = max(x.data, na.rm=TRUE) + 1     
     }
     else{
        x.data = - x.data         
@@ -361,9 +380,9 @@ generatePlotData <- function(egsea.results, gs.annot,
     else
         labels = gs.annot@anno[gsets, "GeneSet"]
     plot.data = data.frame(id=labels , 
-            x.data=x.data, y.data=egsea.results[gsets, "avg.logFC"], 
-            gsSize=gs.sizes, sig=egsea.results[gsets, "Significance"], 
-            dir=egsea.results[gsets, "Direction"], rank = rank)  
+            x.data=x.data, y.data=egsea.results[gsets, "avg.logfc"], 
+            gsSize=gs.sizes, sig=egsea.results[gsets, "significance"], 
+            dir=egsea.results[gsets, "direction"], rank = rank)  
     return(plot.data)
 }
 
@@ -460,7 +479,7 @@ plot.data[, "id"]), ]
 high="#E35F5F",
                 limits=c(-1,1), na.value="black", 
 name="Regulation Direction") # low="#5FE377"
-        p = p + scale_size("Significance", range=c(2,20))   
+        p = p + scale_size("significance", range=c(2,20))   
         if (is.null(format) || tolower(format) == "pdf"){
             pdf(paste0(file.name, ".dir.pdf"), width = 10, height = 7,
                     useDingbats = FALSE)  
@@ -495,17 +514,18 @@ plotPathways = function(gene.sets, fc, gs.annot, gsa.dir, kegg.dir,
 verbose=FALSE){
     #TODO: adjust the limit of the expression values 
     
-    cat(paste0("Pathway maps are being generated for top-ranked \n pathways based ", 
-"on logFC ... \n"))
+    cat(paste0("   Pathway maps are being generated for top-ranked \n pathways based ", 
+                "on logFC ... \n"))
     current = getwd()   
     contrast.names = colnames(fc)
     if (is.null(kegg.dir))
         kegg.dir = paste0(gsa.dir, "/kegg-dir/")
-    dir.create(file.path(kegg.dir))
+    dir.create(file.path(kegg.dir), showWarnings = FALSE)
     kegg.dir = normalizePath(kegg.dir)  
 
-    for(i in 1:ncol(fc)){       
-        print(paste0("    ", contrast.names[i]))
+    for(i in 1:ncol(fc)){   
+        if (verbose)
+            cat(paste0("  ", contrast.names[i], "\n"))
         pv.dir = paste0(gsa.dir, "/pv-top-gs-", gs.annot@label, "/", 
                 sub(" - ", "-", contrast.names[i]))     
     
@@ -564,12 +584,12 @@ generatePathway <- function(gene.set, gs.annot, fc, kegg.dir="./",
 
 plotPathways.comparison <- function(gene.sets, fc, gs.annot, gsa.dir, kegg.dir, 
 verbose=FALSE){
-    cat(paste0("Pathway maps are being generated for top-ranked comparative\n", 
-"pathways based on logFC ... \n"))
+    cat(paste0("   Pathway maps are being generated for top-ranked comparative\n", 
+            "pathways based on logFC ... \n"))
     current = getwd()
     if (is.null(kegg.dir))
         kegg.dir = paste0(gsa.dir, "/kegg-dir/")
-    dir.create(file.path(kegg.dir))
+    dir.create(file.path(kegg.dir), showWarnings = FALSE)
     kegg.dir = normalizePath(kegg.dir)
     pv.dir = paste0(gsa.dir, "/pv-top-gs-", gs.annot@label, "/")    
     setwd(pv.dir)
@@ -639,8 +659,8 @@ gsa.dir){
 
 plotHeatMapsLogFC = function(gene.sets, fc, limma.tops, gs.annot,  symbolsMap, gsa.dir){
     # create output directory for heatmaps
-    print("Heat maps are being generated for top-ranked gene sets based on 
-logFC ... ")
+    cat(paste0("   Heat maps are being generated for top-ranked gene sets \n",
+               "based on logFC ... \n"))
     if (!identical(rownames(fc), gs.annot@featureIDs)){     
         fc = fc[match(gs.annot@featureIDs, rownames(fc)) , ]    
         if (!identical(rownames(fc), gs.annot@featureIDs)){
@@ -743,9 +763,13 @@ generateHeatMap <- function(gene.set, gs.annot, fc, limma.tops, symbolsMap,
                                     symbolsMap[,1]), 2]
                 
     # initialize and create the heat map plot
-    colrange = colorpanel(74, fc.colors[1], fc.colors[2],fc.colors[3])
-    br=c(seq(-2,-0.5,length=25),seq(-0.499,0.5,length=25), 
-            seq(0.51,2,length=25))
+    colrange = colorpanel(99, fc.colors[1], fc.colors[2],fc.colors[3])   
+    upperBound = max(round(quantile(abs(hm))[4]), 1)   
+    br=c(seq(-1*upperBound,-1*upperBound*0.5,length=25),
+            seq(-1*upperBound*0.5+0.001, upperBound*0.5,length=50), 
+            seq(upperBound*0.5 + 0.001, upperBound,length=25))
+#    br=c(seq(-2,-0.5,length=25),seq(-0.499,0.5,length=25), 
+#            seq(0.51,2,length=25))
     # adjust font size depending on the number of rows
     sel.genes.size = length(sel.genes)   
     if(sel.genes.size < 20){
@@ -780,14 +804,16 @@ generateHeatMap <- function(gene.set, gs.annot, fc, limma.tops, symbolsMap,
                 colRow = sig.color,
                 main = paste0(gene.set, "(logFC)")
         ) 
-        legend("topright",      
-                legend = leglabels,
-                col = c("#529F4E", "#6C6C6C"), 
-                title = "Significance of DE",
-                lty= 1,             
-                lwd = 5,           
-                cex=.7
-        )
+        if (length(limma.tops) > 0){
+            legend("topright",      
+                    legend = leglabels,
+                    col = c("#529F4E", "#6C6C6C"), 
+                    title = "Significance of DE",
+                    lty= 1,             
+                    lwd = 5,           
+                    cex=.7
+            )
+        }
         dev.off()   
     }
     # Export PNG file
@@ -808,5 +834,135 @@ generateHeatMap <- function(gene.set, gs.annot, fc, limma.tops, symbolsMap,
     }
 }
 
+generateSummaryHeatmaps <- function(hm, hm.vals, contrasts, title, 
+        xlab, file.name, cellvals = NULL, format = NULL){    
+    t = rownames(hm)
+    t1 = t
+    for (i in 1:length(t1)){                      
+        if (nchar(t1[i]) > 18)
+            t1[i] = paste0(substr(t1[i], 1, 18), " ...")
+    }
+    rownames(hm) = t1
+    if (length(contrasts) > 1){
+#        colrow = rev(colorpanel(length(t), "#7FCC77", "#53AC49", "#186F0F")) # GREEN
+        colrow = rev(colorpanel(length(t), "#BDBDBD", "#737373", "#000000")) # BLUE
+    }else{
+        colrow = "black"
+    }
+    if (hm.vals %in% c("significance", "p.value", "p.adj"))
+        colrange = colorRampPalette(brewer.pal(9, "Greens"))(99)
+    else if (hm.vals %in% c("direction", "avg.logfc.dir"))
+        if (max(abs(hm)) <= 1)
+            colrange = colorRampPalette(rev(brewer.pal(9, "RdYlBu")))(99)
+        else
+            colrange = colorRampPalette(rev(brewer.pal(11, "RdYlBu")))(99)
+    else
+        colrange = colorRampPalette(rev(brewer.pal(9, "Greens")))(99)
+    #                  colrange = colorpanel(99, hm.valss[1], hm.valss[2], hm.valss[3])  
+    
+    if (hm.vals %in% c("p.value", "p.adj")){
+        qs = quantile(hm)
+        br = seq(qs[2], qs[4], length=100)
+    }else if (hm.vals %in% c("direction", "avg.logfc.dir")){
+        upperBound = max(round(quantile(abs(hm))[4]), 1)
+        br=c(seq(-1*upperBound,-1*upperBound*0.5,length=25),
+                seq(-1*upperBound*0.5+0.001, upperBound*0.5,length=50), 
+                seq(upperBound*0.5 + 0.001, upperBound,length=25))
+    }
+    else{
+        qs = quantile(hm)
+        br = c(seq(qs[1], qs[2], length=25),
+                seq(qs[2]+ 1, qs[3], length=25),
+                seq(qs[3] + 1, qs[4], length=25),
+                seq(qs[4] + 1, qs[5],length=25))
+    }
+    sel.genes.sets = length(t)
+    if(sel.genes.sets <= 20){
+        cr = 0.8
+    }else if(sel.genes.sets < 40){
+        cr = 0.65
+    }else if(sel.genes.sets < 70){
+        cr = 0.35
+    }else if(sel.genes.sets < 100){
+        cr = 0.35
+    }else 
+        cr = 0.15
+    
+    if (is.null(format) || tolower(format) == "pdf"){        
+        pdf(paste0(file.name, ".pdf"))
+        createSummaryHeatmap(hm, contrasts, colrange,
+                br, cr, colrow,
+                xlab, title, cellvals,
+                showLegend = length(contrasts) > 1)
+        dev.off()
+    }
+    
+    if (is.null(format) || tolower(format) == "png"){        
+        png(paste0(file.name, ".png"), width=800, height=800)
+        createSummaryHeatmap(hm, contrasts, colrange,
+                br, cr, colrow,
+                xlab, title, cellvals,
+                showLegend = FALSE)
+        dev.off()
+    }
+    rownames(hm) = t
+    #colnames(hm) = paste0(colnames(hm), ".", sort.by)
+    if (!is.null(cellvals)){        
+        hm = cbind(hm, cellvals)
+    }
+    write.csv(hm, file=paste0(file.name, ".csv"), 
+            row.names=TRUE)
+}
 
+createSummaryHeatmap <- function(hm, contrasts, colrange, 
+        br, cr, colrow, 
+        xlab, title, cellvals, showLegend=TRUE){
+    # creates 3x3 table with location of heatmap elements defined
+    mylmat = rbind(c(0,3,0),c(0,1,2),c(0,4,0)) 
+    mylwid = c(0.5,4,0.5)
+    mylhei = c(1,4,1)
+    par(cex.main = 0.8)    
+    if (!is.null(cellvals)){
+        if (min(cellvals) < 1)
+            cellvals1 = round(cellvals, 4)
+        else
+            cellvals1 = round(cellvals, 1)
+        heatmap.2(hm, lmat=mylmat, lwid=mylwid, lhei=mylhei,
+                breaks=br, col=colrange, margins=c(10,10),
+                cexRow=cr, cexCol=0.85, trace = "none", 
+                Colv = FALSE, 
+                Rowv = ifelse(length(contrasts) > 1, TRUE, FALSE), 
+                dendrogram = "none",
+                key.xlab=xlab,
+                keysize=1, key.title="", density.info="none",
+                colRow = colrow,
+                main = title,
+                cellnote = cellvals1, notecol = "#6C6C6C")
+        #key.title="Contrast Rank"
+    }else
+        heatmap.2(hm, lmat=mylmat, lwid=mylwid, lhei=mylhei,
+                breaks=br, col=colrange, margins=c(10,10),
+                cexRow=cr, cexCol=0.85, trace = "none", 
+                Colv = FALSE, , 
+                Rowv = ifelse(length(contrasts) > 1, TRUE, FALSE),
+                dendrogram = "none",
+                key.xlab=xlab,
+                keysize=1, key.title="", density.info="none",
+                colRow = colrow,
+                main = title)
+    if (showLegend){ 
+        legend(x=0.73, y=1.1, xpd=TRUE,   
+                legend = c("Highly ranked", "Averagely ranked",
+                        "Lowly ranked"),
+                border = "#FFFFFF",
+                fill = "#FFFFFF",
+                #col = c("#186F0F", "#53AC49", "#7FCC77"), # GREEN
+                col = c("#000000", "#737373", "#BDBDBD"), # BLUE
+                title = "Comparison Rank",                             
+                lty= 1,             
+                lwd = 5,           
+                cex=.7
+        )
+    }
+}
 ### Later the D3 Javascript library will be used to generated clickable plots 

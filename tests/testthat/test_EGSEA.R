@@ -6,8 +6,8 @@
 ## test egsea.sort
 
 sort.opts = c(c("p.value", "p.adj", "avg.rank", "med.rank", "min.rank", 
-                "min.pvalue", "vote.rank",
-                    "Significance"),egsea.base())
+                "min.pvalue", "vote.rank", "avg.logfc.dir", "avg.logfc", "direction",
+                "significance"),egsea.base())
 expect_identical(egsea.sort(), sort.opts)
 
 
@@ -19,7 +19,7 @@ expect_identical(egsea.base(), c("camera", "roast", "safe", "gage", "padog",
 
 # test egsea.combine
 expect_identical(egsea.combine(), c("fisher", "wilkinson", "average", "logitp", 
-                "sump", "sumz"))
+                "sump", "sumz", "median"))
 
 
 # test buildCustomIdxEZID

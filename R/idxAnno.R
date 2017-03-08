@@ -270,21 +270,21 @@ buildMSigDBIdx <- function(entrezIDs, geneSets="all",
                 gs.annot@original =get(paste0("Mm.", geneSet1))
             }
             else{
-                warning(paste0("Unsupported gene set collection for Mus 
-					Musculus ... ", geneSet))
+                warning(paste0("Unsupported gene set collection for Mus", 
+					" Musculus ... ", geneSet))
                 next
             }
         }
         else if (species == "Homo sapiens")
             gs.annot@original = sapply(gsc.small, function (x) 
                 strsplit(x["MEMBERS_EZID"], ",")[[1]])      
-        print(paste0("Loaded gene sets for the collection ", geneSet, " 
-					..."))
+        print(paste0("Loaded gene sets for the collection ", geneSet,  
+					" ..."))
         gs.annot@idx = ids2indices(gs.annot@original, entrezIDs, 
                 remove.empty=TRUE) # pathways
         if (length(gs.annot@idx) == 0){
-            print(paste0("None of the genes in ", geneSet, "are 
-				mapped to your gene IDs"))          
+            print(paste0("None of the genes in ", geneSet, 
+                            " are mapped to your gene IDs"))          
         }
         else{
             print(paste0("Indexed the collection ", geneSet, 
@@ -324,24 +324,28 @@ buildMSigDBIdx <- function(entrezIDs, geneSets="all",
         gs.annot@featureIDs = entrezIDs
         gs.annot@species = species
         gs.annot@name = msigdb.gs.names[[gs.annot@label]]       
-        if (geneSet == "c5"){
+        if (geneSet == "c5" && length(gs.annot@idx) > 0){
 #           print(colnames(gs.annot$anno))
-            go.terms = gsub(".*(GO:[0-9]+).*$","\\1", 
-                gs.annot@anno[, "Description"]) 
-            xx = GOTERM
-            ontology = character(0)
-            sel.gsets = character(0)
-            goID = character(0)
-            for (i in 1:length(go.terms)){              
-                temp = xx[[go.terms[i]]]
-                if (!is.null(temp)){
-                    ontology = c(ontology, Ontology(temp))
-                    sel.gsets = c (sel.gsets, 
-                        as.character(gs.annot@anno[i, "GeneSet"]))
-                    goID = c(goID, go.terms[i])
-                }
-            }
-            gs.annot = selectGeneSets(gs.annot, sel.gsets)
+            external.urls = sapply(gsc.small, 
+                    function(x) x["EXTERNAL_DETAILS_URL"])
+            goID = gsub(".*(GO:[0-9]+).*$","\\1", 
+                    external.urls)
+            ontology = sapply(gsc.small, 
+                    function(x) x["SUB_CATEGORY_CODE"])
+#            xx = GOTERM
+#            ontology = character(0)
+#            sel.gsets = character(0)
+#            goID = character(0)
+#            for (i in 1:length(go.terms)){              
+#                temp = xx[[go.terms[i]]]
+#                if (!is.null(temp)){
+#                    ontology = c(ontology, Ontology(temp))
+#                    sel.gsets = c (sel.gsets, 
+#                        as.character(gs.annot@anno[i, "GeneSet"]))
+#                    goID = c(goID, go.terms[i])
+#                }
+#            }
+#            gs.annot = selectGeneSets(gs.annot, sel.gsets)
             gs.annot@anno = cbind(gs.annot@anno, Ontology=ontology, 
                 GOID=goID)
             gs.annot@anno = droplevels(gs.annot@anno)       
@@ -349,8 +353,8 @@ buildMSigDBIdx <- function(entrezIDs, geneSets="all",
         }
         gs.annot = selectGeneSets(gs.annot, min.size=min.size)   
         if (length(gs.annot@idx) == 0)
-            print(paste0("MSigDB ", gs.annot@label, " gene set 
-				collection is empty."))        
+            print(paste0("MSigDB ", gs.annot@label, " gene set ", 
+				"collection is empty."))        
         gs.annots[[geneSet]] = gs.annot
     }
     return(gs.annots)

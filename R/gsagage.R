@@ -1,89 +1,60 @@
 # Wrapper function to run GAGE on different contrasts
 
-rungage <- function(voom.results, contrast, gs.annot, ranked.gs.dir="", output 
-= TRUE,
+rungage <- function(voom.results, contrast, gs.annot, 
         num.workers=4, verbose = TRUE){     
     # run GAGE and write out ranked 'gene sets' for each 'contrast'
-
-    file.name = paste0(ranked.gs.dir, "/gage-ranked-", gs.annot@label, 
-"-gene-sets-", 
-            sub(" - ", "-", colnames(contrast)), '.txt')        
-    
-    gage.results = vector("list", ncol(contrast))   
-    data.log = voom.results$E
-    design = voom.results$design
-    rownames(data.log) = as.character(seq(1, nrow(data.log)))   
-    sam.idx = 1:ncol(data.log)
-    
-    gsets = list()
-    for (j in 1:length(gs.annot@idx)){
-        gsets[[j]] = as.character(gs.annot@idx[[j]])
+    if (is.matrix(contrast)){
+        contr.names = colnames(contrast)
+        contr.num = ncol(contrast)
+    }else{
+        contr.names = names(contrast)
+        contr.num = length(contrast)
     }
-    names(gsets) = names(gs.annot@idx)
-    set.seed(05081986)
-    #print(contrast)
-    #print(design)
-    for(i in 1:ncol(contrast)){
-        if (verbose)
-            print(paste0("   Running GAGE for ", colnames(contrast)[i]))
-        else
-            cat(".")
-        d = design[, contrast[,i] > 0]
-        if (is.null(ncol(d))){
-            tre.sam.indx = sam.idx[ d == 1]
-        }else if (ncol(d) > 1){
-            tre.sam.indx = c()
-            for (j in 1:ncol(d))
-                tre.sam.indx = c(tre.sam.indx, sam.idx[ d[,j] 
-== 1])
-        }
-        else
-            stop("Invalid contrasts selected.")
-        if (length(tre.sam.indx) == 1)
-            tre.sam.indx = rep(tre.sam.indx, 3)
-        else if (length(tre.sam.indx) < 3)
-            tre.sam.indx = c(tre.sam.indx, sample(tre.sam.indx, 3 - 
-length(tre.sam.indx)))
-        d = design[, contrast[,i] < 0]
-        if (is.null(ncol(d))){
-            cnt.sam.indx = sam.idx[ d == 1]
-        }else if (ncol(d) > 1){
-            cnt.sam.indx = c()
-            for (j in 1:ncol(d))
-                cnt.sam.indx = c(cnt.sam.indx, sam.idx[ d[,j] 
-== 1])
-        }
-        else
-            stop("Invalid contrasts selected.")     
-        #print(cnt.sam.indx)
-        if (length(cnt.sam.indx) == 1)
-            cnt.sam.indx = rep(cnt.sam.indx, 3)
-        else if (length(cnt.sam.indx) < 3)
-            cnt.sam.indx = c(cnt.sam.indx, sample(cnt.sam.indx, 3 - 
-length(cnt.sam.indx)))
-        #print(cnt.sam.indx)
-        data.log.sel = data.log[, c(cnt.sam.indx, tre.sam.indx)]
-        #print(head(data.log.sel))
-        # same.dir=FALSE ==> Two directional test
-        gage.results[[i]] = gage(exprs=data.log.sel, gsets=gsets, 
-ref=seq(1,length(cnt.sam.indx)),
-                samp=seq(length(cnt.sam.indx) + 
-1,ncol(data.log.sel)), same.dir=FALSE, 
-                compare = "unpaired")$greater[, 1:5]        
-        # returns PropDown/PropUp ==> proportion of genes that are 
-# down/up-regulated
-        gage.results[[i]] = 
-gage.results[[i]][order(gage.results[[i]][,"p.val"]),]  
-        gage.results[[i]] = cbind(Rank=seq(1, nrow(gage.results[[i]])), 
-gage.results[[i]])
-        #print(head(gage.results[[i]]))
-        
-        if (!output)
-            next
-        writeResultsToHTML(colnames(contrast)[i], gage.results[[i]], 
-gs.annot, "GAGE", file.name[i])
+      
+    groupData = prepareTwoGroupsData(voom.results, contrast, gs.annot,
+            min.samples = 3, verbose)
+    #gage.results = vector("list", ncol(contrast))    
+    args.all = list()
+    for(i in 1:contr.num){
+        args.all[[i]] = list(contrast = contr.names[i],
+                logCPM = groupData$data[[i]]$logCPM,
+                group1 = groupData$data[[i]]$group1,
+                group2 = groupData$data[[i]]$group2,
+                gsets = groupData$gsets,
+                gs.annot = gs.annot,             
+                verbose = verbose)
     }
+    names(args.all) = contr.names
+    if (Sys.info()['sysname'] == "Windows" || contr.num <= 1)
+        gage.results = lapply(args.all, rungage.contrast)
+    else
+        gage.results = mclapply(args.all, rungage.contrast, 
+                mc.cores=num.workers)
     #stop("here")
-    names(gage.results) = colnames(contrast)
+    #names(gage.results) = colnames(contrast)
     return(gage.results)
 }
+
+rungage.contrast <- function(args){
+    if (args$verbose)
+        print(paste0("   Running GAGE for ", args$contrast))
+    else
+        cat(".")
+    groupData = args$groupData
+    # same.dir=FALSE ==> Two directional test
+    gage.results = gage(exprs=args$logCPM, 
+            gsets=args$gsets, 
+            ref=args$group1,
+            samp=args$group2, same.dir=FALSE, 
+            compare = "unpaired")$greater[, 1:5]        
+    # returns PropDown/PropUp ==> proportion of genes that are 
+# down/up-regulated
+    gage.results = gage.results[ order ( 
+                    gage.results[,"p.val"]),]  
+    gage.results = cbind(Rank=seq(1, nrow(gage.results)), 
+            gage.results)    
+    colnames(gage.results)[which(colnames(gage.results) == "p.val")] = "p.value"
+    return(gage.results)
+}
+
+

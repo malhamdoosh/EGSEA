@@ -1,81 +1,63 @@
 # Wrapper function to run PADOG on different contrasts
 
-runpadog <- function(voom.results, contrast, gs.annot,  ranked.gs.dir="", 
-output = TRUE,
+runpadog <- function(voom.results, contrast, gs.annot, 
         num.workers=4, verbose = TRUE){     
 
     # run padog and write out ranked 'gene sets' for each 'contrast'    
-    file.name = paste0(ranked.gs.dir, "/padog-ranked-", gs.annot@label, 
-"-gene-sets-", 
-            sub(" - ", "-", colnames(contrast)), '.txt')        
-    padog.results = vector("list", ncol(contrast))  
-    data.log = voom.results$E
-    design = voom.results$design
-    rownames(data.log) = as.character(seq(1, nrow(data.log)))   
-    sam.idx = 1:ncol(data.log)
-    
-    gsets = list()
-    for (j in 1:length(gs.annot@idx)){
-        gsets[[j]] = as.character(gs.annot@idx[[j]])
+    if (is.matrix(contrast)){
+        contr.names = colnames(contrast)
+        contr.num = ncol(contrast)
+    }else{
+        contr.names = names(contrast)
+        contr.num = length(contrast)
     }
-    names(gsets) = names(gs.annot@idx)
-    set.seed(05081986)
     
-    for(i in 1:ncol(contrast)){
-        if (verbose)
-            print(paste0("   Running PADOG for ", colnames(contrast)[i]))
-        else
-            cat(".")
-        d = design[, contrast[,i] > 0]
-        if (is.null(ncol(d))){
-            tre.sam.indx = sam.idx[ d == 1]
-        }else if (ncol(d) > 1){
-            tre.sam.indx = c()
-            for (j in 1:ncol(d))
-                tre.sam.indx = c(tre.sam.indx, sam.idx[ d[,j] 
-== 1])
-        }
-        else
-            stop("Invalid contrasts selected.")
-        if (length(tre.sam.indx) == 1)
-            tre.sam.indx = rep(tre.sam.indx, 3)
-        else if (length(tre.sam.indx) < 3)
-            tre.sam.indx = c(tre.sam.indx, sample(tre.sam.indx, 3 - 
-length(tre.sam.indx)))
-        d = design[, contrast[,i] < 0]
-        if (is.null(ncol(d))){
-            cnt.sam.indx = sam.idx[ d == 1]
-        }else if (ncol(d) > 1){
-            cnt.sam.indx = c()
-            for (j in 1:ncol(d))
-                cnt.sam.indx = c(cnt.sam.indx, sam.idx[ d[,j] 
-== 1])
-        }
-        else
-            stop("Invalid contrasts selected.")     
-        if (length(cnt.sam.indx) == 1)
-            cnt.sam.indx = rep(cnt.sam.indx, 3)
-        else if (length(cnt.sam.indx) < 3)
-            cnt.sam.indx = c(cnt.sam.indx, sample(cnt.sam.indx, 3 - 
-length(cnt.sam.indx)))
-        data.log.sel = data.log[, c(tre.sam.indx, cnt.sam.indx)]
-        group = c(rep("d", length(tre.sam.indx)), rep("c", 
-length(cnt.sam.indx)))
-        
-        padog.results[[i]] = padog(esetm=data.log.sel, group=group, 
-paired=FALSE, 
-                gslist=gsets, NI=100, verbose=FALSE)
-        
-        padog.results[[i]] = 
-padog.results[[i]][order(padog.results[[i]][,"Ppadog"], 
-                -padog.results[[i]][,"padog0"]),]   
-        padog.results[[i]] = cbind(Rank=seq(1, 
-nrow(padog.results[[i]])), padog.results[[i]])
-        if (!output)
-            next
-        writeResultsToHTML(colnames(contrast)[i], padog.results[[i]], 
-gs.annot, "PADOG", file.name[i])
+    groupData = prepareTwoGroupsData(voom.results, contrast, gs.annot,
+            min.samples = 3, verbose)
+#    padog.results = vector("list", ncol(contrast))
+    args.all = list()
+    for(i in 1:contr.num){
+        args.all[[i]] = list(contrast = contr.names[i],
+                logCPM = groupData$data[[i]]$logCPM,
+                group1 = groupData$data[[i]]$group1,
+                group2 = groupData$data[[i]]$group2,
+                gsets = groupData$gsets,
+                gs.annot = gs.annot,                
+                verbose = verbose)
     }
-    names(padog.results) = colnames(contrast)
+    names(args.all) = contr.names
+    if (Sys.info()['sysname'] == "Windows" || contr.num <= 1)
+        padog.results = lapply(args.all, runpadog.contrast)
+    else
+        padog.results = mclapply(args.all, runpadog.contrast, 
+                mc.cores=num.workers)
+#    names(padog.results) = colnames(contrast)
     return(padog.results)
 }
+
+runpadog.contrast <- function(args){
+    if (args$verbose)
+        print(paste0("   Running PADOG for ", args$contrast))
+    else
+        cat(".")
+    
+    group = c(rep("c", length(args$group1)), 
+            rep("d", length(args$group2)))
+    
+    padog.results = padog(esetm=args$logCPM, 
+            group=group, paired=FALSE, 
+            gslist=args$gsets, NI=100, 
+            verbose=FALSE)
+    
+    padog.results = padog.results[order(
+                    padog.results[,"Ppadog"], 
+                    -padog.results[,"padog0"]),]   
+    padog.results = cbind(
+            Rank = seq(1, nrow(padog.results)), 
+            padog.results)
+    colnames(padog.results)[which(colnames(padog.results) == "Ppadog")] = "p.value"  
+    return(padog.results)
+}
+
+
+

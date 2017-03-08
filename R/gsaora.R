@@ -1,23 +1,31 @@
 # Wrapper function to run ORA on different contrasts
 
 
-runora <- function(voom.results, contrast, gs.annot,  
-        ranked.gs.dir="", output=TRUE,
+runora <- function(voom.results, contrast, gs.annot, 
         num.workers=4, verbose = TRUE){     
     # run hypergeomteric test and write out ranked 'gene sets' for each 
-'contrast'
+# 'contrast'
     # The p-value you want is the probability of getting 100 white balls in 
     # a sample of size 400 from an urn with 3000 white balls and 12000 
 # black balls. 
     # phyper(100, 3000, 12000, 400)
     #
-
-    file.name = paste0(ranked.gs.dir, "/ora-ranked-", gs.annot@label, 
-"-gene-sets-", 
-            sub(" - ", "-", colnames(contrast)), '.txt')    
+    if (is.matrix(contrast)){
+        contr.names = colnames(contrast)
+        contr.num = ncol(contrast)
+    }else{
+        contr.names = names(contrast)
+        contr.num = length(contrast)
+    }
+      
     if (!is.null(voom.results$E)){
         vfit = lmFit(voom.results, voom.results$design)
-        vfit = contrasts.fit(vfit, contrast)
+        if (is.matrix(contrast)){
+            vfit = contrasts.fit(vfit, contrast)
+            coefs = 1:contr.num
+        }else{
+            coefs = contrast
+        }
         vfit = eBayes(vfit)
         pvalue.cut=0.05
         logfc.cut=1     
@@ -41,14 +49,14 @@ runora <- function(voom.results, contrast, gs.annot,
         universe = as.character(unique(EG.GO$gene_id))# fix the univese
     }
     
-    ora.results = vector("list", ncol(contrast))    
-    for(i in 1:ncol(contrast)){     
+    ora.results = vector("list", contr.num)    
+    for(i in 1:contr.num){     
         if (verbose)
-            print(paste0("   Running ORA for ", colnames(contrast)[i]))
+            print(paste0("   Running ORA for ", contr.names[i]))
         else
             cat(".")
         if (!is.null(voom.results$E)){
-            deGenes = rownames(topTable(vfit, coef=i, number=Inf, 
+            deGenes = rownames(topTable(vfit, coef=coefs[i], number=Inf, 
                         p.value=pvalue.cut, 
                         lfc=logfc.cut))     
             if (length(deGenes) == 0){
@@ -63,24 +71,21 @@ runora <- function(voom.results, contrast, gs.annot,
             deGenes = voom.results$ids          
         }
         deGenes = deGenes[which(deGenes %in% universe)]
-        ora.stats = runora.contra(deGenes, gs.annot, universe)
+        ora.stats = runora.collection(deGenes, gs.annot, universe)
         ora.results[[i]] = ora.stats
 #       print(head(ora.results[[i]]))
         ora.results[[i]] = 
 ora.results[[i]][order(ora.results[[i]][,"p.value"]),]   # order by p.value     
         ora.results[[i]] = cbind(Rank=seq(1, nrow(ora.results[[i]])), 
 ora.results[[i]])
-        if (!output)
-            next
-        writeResultsToHTML(colnames(contrast)[i], ora.results[[i]], 
-gs.annot, "ORA", file.name[i])
+        
     }
     names(ora.results) = colnames(contrast)
     return(ora.results)
 }
 
 
-runora.contra <- function(deGenes, gs.annot, universe){
+runora.collection <- function(deGenes, gs.annot, universe){
     tmp = rep(NA, length(gs.annot@original))
     ora.stats = data.frame(p.value=tmp, p.adj = tmp) # , NumGenes=tmp
     totalDE = length(deGenes)

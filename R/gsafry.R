@@ -1,35 +1,60 @@
 # Wrapper function to run FRY on different contrasts
 
-runfry <- function(voom.results, contrast, gs.annot,  ranked.gs.dir="", 
-        output = TRUE,
+runfry <- function(voom.results, contrast, gs.annot,
         num.workers=4, verbose = TRUE){     
     # run fry and write out ranked 'gene sets' for each 'contrast'    
-    
-    file.name = paste0(ranked.gs.dir, "/fry-ranked-", gs.annot@label, 
-            "-gene-sets-", 
-            sub(" - ", "-", colnames(contrast)), '.txt')        
-    fry.results = vector("list", ncol(contrast))  
-    for(i in 1:ncol(contrast)){
-        if (verbose)
-            print(paste0("   Running FRY for ", colnames(contrast)[i]))
-        else
-            cat(".")
-        capture.output(fry.results[[i]] <- fry(y=voom.results, 
-                index=gs.annot@idx, 
-                design=voom.results$design, 
-                contrast=contrast[,i]))
-        # returns PropDown/PropUp ==> proportion of genes that are 
-# down/up-regulated
-        fry.results[[i]] = fry.results[[i]][order(fry.results[[i]][, 
-                                "PValue"]),]
-        fry.results[[i]] = cbind(Rank=seq(1, 
-                        nrow(fry.results[[i]])), fry.results[[i]])
-        if (!output)
-            next
-        writeResultsToHTML(colnames(contrast)[i], fry.results[[i]], 
-                gs.annot, "FRY", file.name[i])
+    if (is.matrix(contrast)){
+        contr.names = colnames(contrast)
+        contr.num = ncol(contrast)
+    }else{
+        contr.names = names(contrast)
+        contr.num = length(contrast)
     }
-    names(fry.results) = colnames(contrast)
+     
+#    fry.results = vector("list", ncol(contrast))  
+    args.all = list()
+    for(i in 1:contr.num){
+        if (is.matrix(contrast))
+            args.all[[i]] = list(voom.results = voom.results,
+                    contrast.name = contr.names[i],
+                    contrast = contrast[,i],
+                    gs.annot = gs.annot,
+                    verbose = verbose
+            )
+        else
+            args.all[[i]] = list(voom.results = voom.results,
+                    contrast.name = contr.names[i],
+                    contrast = contrast[i],
+                    gs.annot = gs.annot,
+                    verbose = verbose
+            )
+    }
+    names(args.all) = contr.names
+    if (Sys.info()['sysname'] == "Windows" || contr.num <= 1)
+        fry.results = lapply(args.all, runfry.contrast)
+    else
+        fry.results = mclapply(args.all, runfry.contrast, 
+                mc.cores=num.workers)    
+#    names(fry.results) = colnames(contrast)
+    return(fry.results)
+}
+
+runfry.contrast <- function(args){
+    if (args$verbose)
+        print(paste0("   Running FRY for ", args$contrast.name))
+    else
+        cat(".")
+    capture.output(fry.results <- fry(y=args$voom.results, 
+                    index=args$gs.annot@idx, 
+                    design=args$voom.results$design, 
+                    contrast=args$contrast))
+    # returns PropDown/PropUp ==> proportion of genes that are 
+# down/up-regulated
+    fry.results = fry.results[order(fry.results[, 
+                            "PValue"]),]
+    fry.results = cbind(Rank=seq(1, 
+                    nrow(fry.results)), fry.results)
+    colnames(fry.results)[which(colnames(fry.results) == "PValue")] = "p.value"
     return(fry.results)
 }
 

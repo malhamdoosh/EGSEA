@@ -52,20 +52,45 @@ EGSEA 1.1.9 (2016-08-19)
 ------------------------
 - Fixed: a bug in buildIdx of mouse H gene set 
 
-EGSEA 1.1.10 (2016-)
+EGSEA 1.1.10 (2016-08-30)
 ------------------------
 - Added: two slots to the GSCollectionIndex: version and date
 - Added: citations of the base methods to the documentation of egsea.base()
 - Removed: rdata.dir from buildIdx functions
 - Added: the gene set collection version/update date to the GSCollectionIndex class
 - Added: an argument to egsea() and egsea.cnt() to return the analysis of limma results, which is
-keep.imma 
+keep.limma 
 - Added: an argument to egsea() and egsea.cnt() to return the set scores of ssgsea, keep.set.scores
 - Added: a slot to the EGSEAResults, which is limmaResults
 - Added: a slot to the EGSEAResults, baseInfo
 - Added: limmaTopTable, getlimmaResults and getSetScores to the class EGSEAResults
 - Added: plotSummaryHeatmap to the class EGSEAResults 
 - Improved: documentation across several functions. 
+
+
+EGSEA 1.3.1 (2017-01-28)
+------------------------
+- Fixed: bug in the row names of limmaTopTable. Thanks to Ali Jalali from MD Anderson for reporting it.
+- Fixed: bug in plotSummaryHeatmap when there is only one single contrast. 
+- Added: "avg.logFC.Dir" to the EGSEA scores
+- Improved: the plotSummaryHeatmap function to work with Direction scores
+- Modified: EGSEA scores to be all small letters and updated egsea.sort() accordingly
+- Added: median to combining p-values
+- Added: plotBars function
+- Fixed: bug in buildMSigDBIdx when no genes mapped to c5
+- Improved: the wrapper I/O interfaces to become standard
+- Improved: the implementation of GSVA by parallelizing the calculations on gene sets and calculating the gene set scores using the whole expression matrix
+- Improved: the parallelization of several wrappers 
+- Added: ability to accept a design matrix with an intercept and a contrast vector of coefficient indexes. 
+- Added: a function to optimize the number of cores to be used for running EGSEA. It helps to avoid CPU overloading. 
+- Added: an information about the runnign time of the analysis. 
+- Added: a new way of report generation that completely depends on the EGSEAResults object. This allows users to re-generate their reports with different parameter values, e.g., display.top, sort.by, sum.plot.axis, sum.plot.cutoff. 
+- Added: summary heatmaps and bar plots to the report. 
+- Improved: the colour scheme of the summary heatmaps and bar plots.  
+- Fixed: bug in visualizations when log10(x) = Inf
+- Added: fdr.cutoff to the calculation of Significance Score and Regulation Direction. 
+- Improved: the colour of summary heatmaps. 
+- Modified: buildMSigDBIdx to work with C5 collection of version 5.2 
 
 
 

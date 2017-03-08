@@ -1,0 +1,16 @@
+bibentry(bibtype = "Article",
+         title = "Combining multiple tools outperforms individual methods in gene set enrichment analyses",
+         author = c(person("Monther", "Alhamdoosh"),
+                    person("Milica", "Ng"),
+                    person("Nicholas", "Wilson"),
+                    person("Julie", "Sheridan"),
+                    person("Huy", "Huynh"),
+                    person("Michael", "Wilson"),
+                    person("Matthew", "Ritchie")),
+         journal = "Bioinformatics",
+         page = "414-424",
+         volume = 33,
+         number = 3,
+         year = 2017,
+         doi = "10.1093/bioinformatics/btw623")
+        

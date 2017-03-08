@@ -4,23 +4,26 @@
 \alias{egsea}
 \title{Ensemble of Gene Set Enrichment Analyses Function}
 \usage{
-egsea(voom.results, contrasts, logFC = NULL, gs.annots, symbolsMap = NULL,
-  baseGSEAs = egsea.base(), minSize = 2, display.top = 20,
-  combineMethod = "fisher", combineWeights = NULL, sort.by = "p.adj",
-  egsea.dir = NULL, kegg.dir = NULL, logFC.cutoff = 0,
-  sum.plot.axis = "p.adj", sum.plot.cutoff = NULL, vote.bin.width = 5,
-  num.threads = 4, report = TRUE, print.base = FALSE, verbose = FALSE,
-  keep.limma = FALSE, keep.set.scores = FALSE)
+egsea(voom.results, contrasts = NULL, logFC = NULL, gs.annots,
+  symbolsMap = NULL, baseGSEAs = egsea.base(), minSize = 2,
+  display.top = 20, combineMethod = "fisher", combineWeights = NULL,
+  sort.by = "p.adj", egsea.dir = NULL, kegg.dir = NULL,
+  logFC.cutoff = 0, fdr.cutoff = 0.05, sum.plot.axis = "p.adj",
+  sum.plot.cutoff = NULL, vote.bin.width = 5, num.threads = 4,
+  report = TRUE, keep.base = FALSE, verbose = FALSE, keep.limma = TRUE,
+  keep.set.scores = FALSE)
 }
 \arguments{
 \item{voom.results}{list, an EList object generated using the
 \code{\link[limma]{voom}} function. 
 Entrez Gene IDs should be used as row names.}
 
-\item{contrasts}{double, an N x L matrix indicates the contrast of the 
+\item{contrasts}{double, an N x L matrix indicates the contrasts of the 
 linear model coefficients for
-which the test is required. N is number of experimental conditions and L is 
-number of contrasts.}
+which the test is required. N is number of columns of the 
+design matrix and L is 
+number of contrasts. Can be also a vector of integers that specify the columns of the
+design matrix.}
 
 \item{logFC}{double, an K x L matrix indicates the log2 fold change of each 
 gene for each contrast. 
@@ -77,8 +80,12 @@ and image file (.png).
 Default kegg.dir=paste0(egsea.dir, "/kegg-dir/").}
 
 \item{logFC.cutoff}{numeric, cut-off threshold of logFC and is used for 
-Sginificance Score 
-and Regulation Direction Calculations. Default logFC.cutoff=0.}
+the calculation of Sginificance Score 
+and Regulation Direction. Default logFC.cutoff=0.}
+
+\item{fdr.cutoff}{numeric, cut-off threshold of DE genes and is used
+for the calculation of Significance Score and Regulation Direction. 
+Default fdr.cutoff = 0.05.}
 
 \item{sum.plot.axis}{character, the x-axis of the summary plot. All the 
 values accepted by the 
@@ -92,20 +99,21 @@ sum.plot.cutoff=NULL.}
 \item{vote.bin.width}{numeric, the bin width of the vote ranking. Default 
 vote.bin.width=5.}
 
-\item{num.threads}{numeric, number of CPU threads to be used. Default 
+\item{num.threads}{numeric, number of CPU cores to be used. Default 
 num.threads=2.}
 
 \item{report}{logical, whether to generate the EGSEA interactive report. It 
 takes longer time
 to run. Default is True.}
 
-\item{print.base}{logical, whether to write out the results of the 
+\item{keep.base}{logical, whether to write out the results of the 
 individual GSE methods.
  Default FALSE.}
 
 \item{verbose}{logical, whether to print out progress messages and warnings.}
 
-\item{keep.limma}{logical, whether to return the results of the limma analysis.}
+\item{keep.limma}{logical, whether to store the results of the limma analysis
+in the EGSEAResults object.}
 
 \item{keep.set.scores}{logical, whether to calculate the gene set enrichment scores
 per sample for the methods that support this option, i.e., "ssgsea".}
@@ -151,7 +159,8 @@ additional annotation for each gene set. Hyperlinks to the source of each gene s
 can be seen in this table when they are available. The "Direction" column shows the regulation
 direction of a gene set which is calculated based on the \code{logFC}, which is
 either calculated from the limma differential expression analysis or provided by the user. 
-The \code{logFC.cutoff} is applied for this calculation. The calculations of the EGSEA 
+The \code{logFC.cutoff} and \code{fdr.cutoff} are applied for this calculation. 
+The calculations of the EGSEA 
 scores can be seen in the references section. The method \code{topSets} can be used to
 generate custom Stats Table. \cr
 2. Heatmaps page shows the heatmaps of the gene fold changes for the gene sets that are
@@ -232,11 +241,10 @@ topSets(gsa)
 
 }
 \references{
-Monther Alhamdoosh, Milica Ng, Nicholas J. Wilson, Julie M. Sheridan, Huy 
-Huynh, Michael J. Wilson
-and Matthew E. Ritchie. Combining multiple tools outperforms individual 
-methods in gene set enrichment
-analyses.
+Monther Alhamdoosh, Milica Ng, Nicholas J. Wilson, Julie M. Sheridan, Huy Huynh, 
+Michael J. Wilson, Matthew E. Ritchie; Combining multiple tools outperforms 
+individual methods in gene set enrichment analyses. Bioinformatics 2017; 
+33 (3): 414-424. doi: 10.1093/bioinformatics/btw623
 }
 \seealso{
 \code{\link{topSets}}, \code{\link{egsea.base}}, 

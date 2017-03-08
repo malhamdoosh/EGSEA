@@ -1,31 +1,60 @@
 # Wrapper function to run CAMERA on different contrasts
 
-runcamera <- function(voom.results, contrast, gs.annot,  ranked.gs.dir="", 
-                    output=TRUE, num.workers=4, verbose = TRUE){     
-    # run CAMERA and write out ranked 'gene sets' for each 'contrast'   
-    file.name = paste0(ranked.gs.dir, "/camera-ranked-", gs.annot@label, 
-"-gene-sets-", 
-            sub(" - ", "-", colnames(contrast)), '.txt')        
-    camera.results = vector("list", ncol(contrast)) 
-    for(i in 1:ncol(contrast)){     
-        if (verbose)
-            print(paste0("   Running CAMERA for ", colnames(contrast)[i]))
+runcamera <- function(voom.results, contrast, gs.annot,
+                    num.workers=4, verbose = TRUE){     
+    # run CAMERA and write out ranked 'gene sets' for each 'contrast'  
+    if (is.matrix(contrast)){
+        contr.names = colnames(contrast)
+        contr.num = ncol(contrast)
+    }else{
+        contr.names = names(contrast)
+        contr.num = length(contrast)
+    }   
+#    camera.results = vector("list", ncol(contrast)) 
+    args.all = list()
+    for(i in 1:contr.num){
+        if (is.matrix(contrast))
+            args.all[[i]] = list(voom.results = voom.results,
+                contrast.name = contr.names[i],
+                contrast = contrast[,i],
+                gs.annot = gs.annot,               
+                verbose = verbose
+            )
         else
-            cat(".")
-        camera.results[[i]] = camera(y=voom.results, 
-index=gs.annot@idx, 
-                design=voom.results$design, 
-                contrast=contrast[,i]) # , allow.neg.cor=TRUE, inter.gene.cor=NA 
-#       print(head(camera.results[[i]]))
-        camera.results[[i]] = 
-                    camera.results[[i]][order(camera.results[[i]][,"PValue"]),]     
-        camera.results[[i]] = cbind(Rank=seq(1, 
-                nrow(camera.results[[i]])), camera.results[[i]])
-        if (!output)
-            next
-        writeResultsToHTML(colnames(contrast)[i], camera.results[[i]], 
-gs.annot, "CAMERA", file.name[i])
+            args.all[[i]] = list(voom.results = voom.results,
+                contrast.name = contr.names[i],
+                contrast = contrast[i],
+                gs.annot = gs.annot,            
+                verbose = verbose
+            )
+#       print(args.all[[i]]) 
     }
-    names(camera.results) = colnames(contrast)
+    names(args.all) = contr.names
+    if (Sys.info()['sysname'] == "Windows" || contr.num <= 1)
+        camera.results = lapply(args.all, runcamera.contrast)
+    else
+        camera.results = mclapply(args.all, runcamera.contrast, 
+                mc.cores=num.workers)
+#    names(camera.results) = colnames(contrast)
+    return(camera.results)
+}
+
+runcamera.contrast <- function(args){
+    if (args$verbose)
+        print(paste0("   Running CAMERA for ", args$contrast.name))
+    else
+        cat(".")
+    camera.results = camera(y=args$voom.results, 
+            index=args$gs.annot@idx, 
+            design=args$voom.results$design, 
+            contrast=args$contrast) # , allow.neg.cor=TRUE, inter.gene.cor=NA 
+#       print(head(camera.results[[i]]))
+    
+    camera.results = 
+            camera.results[order(camera.results[,"PValue"]),]
+    
+    camera.results = cbind(Rank=seq(1, 
+                    nrow(camera.results)), camera.results)
+    colnames(camera.results)[which(colnames(camera.results) == "PValue")] = "p.value" 
     return(camera.results)
 }

@@ -1,92 +1,93 @@
 # Wrapper function to run GSVA, PLAGE, ZSCORE, and SSGSEA on different contrasts
 
 
-rungsva <- function(method, voom.results, contrast, gs.annot,  
-ranked.gs.dir="", output = TRUE,
+rungsva <- function(method, voom.results, contrast, gs.annot, 
         num.workers=4, verbose = TRUE){     
 
     # run gsva and write out ranked 'gene sets' for each 'contrast'
-    
-    file.name = paste0(ranked.gs.dir, "/", method,"-ranked-", 
-gs.annot@label, "-gene-sets-", 
-            sub(" - ", "-", colnames(contrast)), '.txt')        
-    gsva.results = vector("list", ncol(contrast))   
-    data.log = voom.results$E
-    design = voom.results$design
-    rownames(data.log) = as.character(seq(1, nrow(data.log)))       
+    if (is.matrix(contrast)){
+        contr.names = colnames(contrast)
+        contr.num = ncol(contrast)
+    }else{
+        contr.names = names(contrast)
+        contr.num = length(contrast)
+    }
     
     gsets = list()
     for (j in 1:length(gs.annot@idx)){
         gsets[[j]] = as.character(gs.annot@idx[[j]])
     }
     names(gsets) = names(gs.annot@idx)
-    
-    args.all = list()
-    for(i in 1:ncol(contrast)){
-        args.all[[colnames(contrast)[i]]] = list(contrast=contrast,                                        
-        i = i,                                        
-        design = design,                                        
-        method=method,                                        
-        data.log = data.log,                                        
-        gsets = gsets,                                        
-        gs.annot = gs.annot,                                        
-        file.name = file.name[i],                                        
-        output = output,
-        verbose = verbose                                        
-        )
-    }
-    # parallelize the calculation of gene set scores to speed up the algorithm
-    if (Sys.info()['sysname'] == "Windows" || ncol(contrast) <= 1)
-        gsva.results = lapply(args.all, rungsva.contrast)
+
+    if (verbose)
+        print(paste0("   Calculating gene set-level stats using ", 
+                        toupper(method)))
     else
-        gsva.results = mclapply(args.all, rungsva.contrast, 
-mc.cores=num.workers)
-    #names(gsva.results) = colnames(contrast)
+        cat(".")
+    # transform scores in gene set space using parallel computing
+    data.log = voom.results$E
+    rownames(data.log) = as.character(seq(1, nrow(data.log)))
+    gs.es = calculateSetScores.parallel(data.log, gsets, method, num.workers)
+    # fit the gene set scores and find DE gene sets
+    gs.fit = lmFit(gs.es, design=voom.results$design)
+    if (is.matrix(contrast)){
+        gs.fit = contrasts.fit(gs.fit, contrast)
+        coefs = 1:contr.num
+    }else{
+        coefs = contrast
+    }
+    gs.fit = eBayes(gs.fit)
+    gsva.results = vector("list", contr.num)
+    for(i in 1:contr.num){
+        if (verbose)
+            print(paste0("   Running ", toupper(method)," for ", 
+                            contr.names[i]))
+        else
+            cat(".")        
+        gsva.results[[i]] =  topTable(gs.fit, coef=coefs[i], , number=Inf, sort.by="p", 
+                adjust.method="BH") 
+        gsva.results[[i]] = gsva.results[[i]][order(gsva.results[[i]][, "P.Value"], 
+                        -gsva.results[[i]][, "B"]),]
+        gsva.results[[i]] = cbind(Rank=seq(1, nrow(gsva.results[[i]])), 
+                gsva.results[[i]])        
+        
+        colnames(gsva.results[[i]])[which(
+                        colnames(gsva.results[[i]]) == "P.Value")] = "p.value"
+    }
+    names(gsva.results) = contr.names
     return(gsva.results)
 }
 
-rungsva.contrast <- function(args){
+calculateSetScores.parallel <- function(data.log, gsets, method, num.workers){
+    args.all = list()
+    sets.per.task = 50
+    total.tasks = ceiling(length(gsets) /  sets.per.task)    
+    for (i in 1:total.tasks){
+        gsetsi = gsets[((i-1)*sets.per.task + 1):(i*sets.per.task)]
+        gsetsi = gsetsi[!sapply(gsetsi, is.null)]
+        args.all[[paste0("task", i)]] = list(
+                data.log = data.log,
+                gsets = gsetsi,
+                method = method
+        )
+    }
+    # parallelize the calculation of gene set scores to speed up the algorithms
+    if (Sys.info()['sysname'] == "Windows")
+        gs.es.all = lapply(args.all, rungsva.subcollection)
+    else
+        gs.es.all = mclapply(args.all, rungsva.subcollection, 
+                mc.cores=num.workers)
+    # collect gene set scores from differet workers
+    gs.es = c()
+    for (i in 1:total.tasks)
+        gs.es = rbind(gs.es, gs.es.all[[paste0("task", i)]])
+    rownames(gs.es) = names(gsets) 
+    return(gs.es)
+}
+
+rungsva.subcollection <- function(args){
     set.seed(519863)
-    if (args$verbose)
-        print(paste0("   Running ", toupper(args$method)," for ", 
-                colnames(args$contrast)[args$i]))
-    else
-        cat(".")
-    d = args$design[, args$contrast[,args$i] > 0]
-    sam.idx = 1:ncol(args$data.log)
-    if (is.null(ncol(d))){      
-        tre.sam.indx = sam.idx[ d == 1]     
-    }else if (ncol(d) > 1){     
-        tre.sam.indx = c()
-        for (j in 1:ncol(d))
-            tre.sam.indx = c(tre.sam.indx, sam.idx[ d[,j] == 1])
-    }
-    else
-        stop("Invalid contrasts selected.") 
-    if (length(tre.sam.indx) == 1)
-        tre.sam.indx = rep(tre.sam.indx, 3)
-    else if (length(tre.sam.indx) < 3)
-        tre.sam.indx = c(tre.sam.indx, sample(tre.sam.indx, 3 - 
-length(tre.sam.indx)))
-    d = args$design[, args$contrast[,args$i] < 0]
-    if (is.null(ncol(d))){
-        cnt.sam.indx = sam.idx[ d == 1]
-    }else if (ncol(d) > 1){
-        cnt.sam.indx = c()
-        for (j in 1:ncol(d))
-            cnt.sam.indx = c(cnt.sam.indx, sam.idx[ d[,j] == 1])
-    }
-    else
-        stop("Invalid contrasts selected.")     
-    if (length(cnt.sam.indx) == 1)
-        cnt.sam.indx = rep(cnt.sam.indx, 3)
-    else if (length(cnt.sam.indx) < 3)
-        cnt.sam.indx = c(cnt.sam.indx, sample(cnt.sam.indx, 3 - 
-length(cnt.sam.indx)))
-
-    data.log.sel = args$data.log[, c(tre.sam.indx, cnt.sam.indx)]   
-
-    gs.es = gsva(expr=data.log.sel, gset.idx.list=args$gsets, mx.diff=TRUE, 
+    gs.es = gsva(expr=args$data.log, gset.idx.list=args$gsets, mx.diff=TRUE, 
             min.sz=1, 
             method=args$method, parallel.sz=1, 
             verbose=FALSE, rnaseq=FALSE)#$es.obs
@@ -94,24 +95,8 @@ length(cnt.sam.indx)))
     if (args$method == "gsva"){
         gs.es = gs.es$es.obs
     }
-    design.sel = args$design[c(tre.sam.indx, cnt.sam.indx), 
-        args$contrast[,args$i] > 0 | args$contrast[,args$i] < 0]
-    contrast.sel = args$contrast[args$contrast[,args$i] != 0,args$i]
-    gs.fit = lmFit(gs.es, design=design.sel)
-    gs.fit = contrasts.fit(gs.fit, contrast.sel)
-    gs.fit = eBayes(gs.fit)
-    gsva.results =  topTable(gs.fit, coef=1, , number=Inf, sort.by="p", 
-adjust.method="BH") 
-    gsva.results = gsva.results[order(gsva.results[, "P.Value"], 
-                    -gsva.results[, "B"]),]
-    gsva.results = cbind(Rank=seq(1, nrow(gsva.results)), gsva.results)
     
-    
-    if (args$output)
-        writeResultsToHTML(colnames(args$contrast)[args$i], 
-gsva.results, args$gs.annot, toupper(args$method), args$file.name)
-
-    return(gsva.results)
+    return(gs.es)
 }
 
 

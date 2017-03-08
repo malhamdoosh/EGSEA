@@ -11,7 +11,11 @@
 #'
 #' @slot results list, EGSEA analysis results
 #' @slot limmaResults MArrayLM, is a limma linear fit model
-#' @slot contrasts character, the contrasts defined in the analysis 
+#' @slot contr.names character, the contrasts defined in the analysis 
+#' @slot contrast double, an N x L matrix indicates the contrasts of the 
+#' linear model coefficients for which the test is required. N is the number of 
+#' columns of the design matrix and L is number of contrasts. Can be also a vector 
+#' of integers that specify the columns of the design matrix. 
 #' @slot sampleSize numeric, number of samples
 #' @slot gs.annots list, the gene set collection annotation index
 #' @slot baseMethods character, vector of base GSE methods
@@ -20,8 +24,14 @@
 #' @slot sort.by character, the results ordering argument
 #' @slot symbolsMap data.frame, the mapping between Entrez IDs and Gene Symbols
 #' @slot logFC matrix, the logFC matrix of contrasts
+#' @slot logFC.calculated character, indicates whether the logFC was calculated using
+#' limma DE analysis.
+#' @slot sum.plot.axis character, the x-axis of the summary plot
+#' @slot sum.plot.cutoff numeric, the cut-off threshold for the summary plot x-axis
 #' @slot report logical, whether the report was generated
 #' @slot report.dir character, the directory of the EGSEA HTML report
+#' @slot egsea.version character, the version of EGSEA package
+#' @slot egseaData.version character, the version of EGSEAdata package
 #' 
 #' @importClassesFrom limma MArrayLM
 #' 
@@ -34,7 +44,8 @@ EGSEAResults <- setClass(
             "EGSEAResults",            
             slots = c(results = "list",
                     limmaResults = "MArrayLM",
-                    contrasts = "character",
+                    contr.names = "character",
+                    contrast = "ANY",
                     sampleSize = "numeric",
                     gs.annots = "list",
                     baseMethods = "character",
@@ -43,11 +54,17 @@ EGSEAResults <- setClass(
                     sort.by = "character",
                     symbolsMap = "ANY",
                     logFC = "matrix",
+                    logFC.calculated = "character",
+                    sum.plot.axis = "character",
+                    sum.plot.cutoff = "ANY",
                     report = "logical",
-                    report.dir = "character"),                      
+                    report.dir = "character",
+                    egsea.version = "character",
+                    egseaData.version = "character"),                      
             prototype = list(results = list(),
                     limmaResults = new("MArrayLM"),
-                    contrasts = "",
+                    contr.names = "",
+                    contrast = c(),
                     sampleSize = 0,
                     gs.annots = list(),
                     baseMethods = c(), 
@@ -56,8 +73,13 @@ EGSEAResults <- setClass(
                     sort.by = "p.adj",
                     symbolsMap = data.frame(),
                     logFC = matrix(),
+                    logFC.calculated = "No",
+                    sum.plot.axis = "p.adj",
+                    sum.plot.cutoff = NULL,
                     report = TRUE,
-                    report.dir = "./")           
+                    report.dir = "./",
+                    egsea.version = "Unknown",
+                    egseaData.version = "Unknown")           
         )
      
       
@@ -177,7 +199,7 @@ setGeneric(name="addSymbolsMap",
               tryCatch({              
                           if (is.numeric(contrast))
                               if (contrast != 0)
-                                  contrast = object@contrasts[contrast]
+                                  contrast = object@contr.names[contrast]
                               else
                                   contrast = "comparison"
                           if (verbose)
@@ -204,10 +226,10 @@ setGeneric(name="addSymbolsMap",
                               return(rownames(top.gs))
                           else{
                               top.gs = as.data.frame(top.gs)
-                              top.gs[, "Direction"] = 
-                                      as.character(lapply(as.numeric(top.gs[, "Direction"]), 
+                              top.gs[, "direction"] = 
+                                      as.character(lapply(as.numeric(top.gs[, "direction"]), 
                                                       function(x) if (x > 0) "Up" else if (x < 0) 
-                                                              "Down" else "No Change"))
+                                                              "Down" else "Neutral"))
                               return(top.gs)
                           }
                       }, 
@@ -254,7 +276,7 @@ setMethod(f = "show",
               cat(paste0("\tTotal number of genes: ", 
                               length(object@gs.annots[[1]]$featureIDs), "\n"))
               cat(paste0("\tTotal number of samples: ", object@sampleSize, "\n"))
-              cat(paste0("\tContrasts: ", paste(object@contrasts, collapse=", "), "\n"))
+              cat(paste0("\tContrasts: ", paste(object@contr.names, collapse=", "), "\n"))
               base.names = names(object@baseInfo)
               base.vers = sapply(base.names, function(x) 
                           as.character(object@baseInfo[[x]]$version))
@@ -278,8 +300,8 @@ setMethod(f = "show",
                                 gs.annot@version, ", Update date: ", gs.annot@date))
                   cat("\n")
               }
-              cat(paste0("\tEGSEA version: ", packageVersion("EGSEA"), "\n"))
-              cat(paste0("\tEGSEAdata version: ", packageVersion("EGSEAdata"), "\n"))
+              cat(paste0("\tEGSEA version: ", object@egsea.version, "\n"))
+              cat(paste0("\tEGSEAdata version: ", object@egseaData.version, "\n"))
               cat("Use summary(object) and topSets(object, ...) to explore this object.\n")
           }
 )
@@ -329,8 +351,8 @@ setMethod(f = "show",
                   cat(paste0("**** Top 10 gene sets in the ", 
                                   object@gs.annots[[label]]$name, 
                                   " collection **** \n"))
-                  for (contrast in 1:length(object@contrasts)){     
-                      cat(paste0("** Contrast ", object@contrasts[contrast], " **\n"))
+                  for (contrast in 1:length(object@contr.names)){     
+                      cat(paste0("** Contrast ", object@contr.names[contrast], " **\n"))
                       t = topSets(object, label, contrast, verbose=FALSE)
                       for (i in 1:length(t)){
                           cat(t[i])
@@ -397,12 +419,11 @@ setMethod(f = "limmaTopTable",
           definition = function(object, contrast = 1){
               if (length(object@limmaResults) > 0 ){
                   if (is.numeric(contrast))
-                      stopifnot(contrast > 0 && contrast <= length(object@contrasts))
+                      stopifnot(contrast > 0 && contrast <= length(object@contr.names))
                   else
-                      stopifnot(contrast %in% object@contrasts)     
-                  t = topTable(object@limmaResults, coef=contrast, number=Inf, sort.by="p")
-                  rownames(t) = rownames(object@limmaResults)
-#                  t = object@limmaResults[[contrast]]
+                      stopifnot(contrast %in% object@contr.names)     
+                  t = get.toptables(object@limmaResults, object@contrast)[[contrast]]                  
+                  rownames(t) = t[,1]
                   return(t[order(t[, "adj.P.Val"]), ])
               }else{
                   cat("Limma analysis results are not available. \n")
@@ -410,6 +431,131 @@ setMethod(f = "limmaTopTable",
                   return(NULL)
               }
           }
+)
+
+#' @title HTML report of the EGSEA analysis 
+#' @description \code{generateReport} creates an HTML report for the EGSEA analysis that
+#' enables users to seamlessly browse the test results.  
+#' @details EGSEA report is an interactive HTML report that is generated to
+#' enable a swift navigation through the results of an EGSEA analysis. The following pages 
+#' are generated for each gene set collection and contrast/comparison: \cr
+#' 1. Stats Table page shows the detailed statistics of the EGSEA analysis for the 
+#' \code{display.top} gene sets. It shows the EGSEA scores, individual rankings and 
+#' additional annotation for each gene set. Hyperlinks to the source of each gene set
+#' can be seen in this table when they are available. The "Direction" column shows the regulation
+#' direction of a gene set which is calculated based on the \code{logFC}, which is
+#' either calculated from the limma differential expression analysis or provided by the user. 
+#' The method \code{topSets} can be used to generate custom Stats Table. \cr
+#' 2. Heatmaps page shows the heatmaps of the gene fold changes for the gene sets that are
+#' presented in the Stats Table page. Red indicates up-regulation
+#' while blue indicates down-regulation. Only genes that appear in the input expression/count 
+#' matrix are visualized in the heat map. Gene names are coloured based on their 
+#' statistical significance in the \code{limma} differential expression analysis. 
+#' The "Interpret Results" link below each heat map allows the user to download the 
+#' original heat map values along with additional statistics from \code{limma} DE analysis (
+#' if available) so that they can be used to perform further analysis in R, e.g., customizing 
+#' the heat map visualization. Additional heat maps can be generated and customized
+#'  using the method \code{plotHeatmap}. \cr
+#' 3. Summary Plots page  shows the methods ranking plot along with the summary plots of 
+#' EGSEA analysis. The method plot uses multidimensional scaling (MDS) to visualize the 
+#' ranking of individual methods on a given gene set collection. The summary plots are 
+#' bubble plots that visualize the distribution of gene sets based on the EGSEA
+#' Significance Score and another EGSEA score (default, p-value). 
+#' Two summary plots are generated: ranking and directional plots. Each gene set is 
+#' reprersented with a bubble which is coloured based on the EGSEA ranking (in ranking
+#' plots ) or gene set regulation direction (in directional plots) and sized based on the 
+#' gene set cardinality (in ranking plots) or EGSEA Significance score (in directional plots).
+#' Since the EGSEA "Significance Score" is proportional to the p-value and the 
+#' absolute fold changes, it could be useful to highlight gene sets that
+#' have high Significance scores. The blue labels on the summary plot indicate 
+#' gene sets that do not appear in the top 10 list of gene sets based on the "sort.by" 
+#' argument (black labels) yet they appear in the top 5 list of gene sets based on 
+#' the EGSEA "Significance Score". If two contrasts are provided, the rank is calculated 
+#' based on the "comparison" analysis results and the "Significance Score" is calculated 
+#' as the mean. The method \code{plotSummary} can be used to customize the Summary plots by 
+#' changing the x-axis score
+#' and filtering bubbles based on the values of the x-axis. The method \code{plotMethods} can be
+#' used to generate Method plots. \cr
+#' 4. Pathways page shows the KEGG pathways for the gene sets that are presented in the
+#' Stats Table of a KEGG gene set collection. The gene fold changes are overlaid on the 
+#' pathway maps and coloured based on the gene regulation direction: blue for down-regulation
+#' and red for up-regulation. The method \code{plotPathway} can be used to generate
+#' additional pathway maps. Note that this page only appears if a KEGG gene set collection
+#' is used in the EGSEA analysis. \cr
+#' 5. Go Graphs page shows the Gene Ontology graphs for top 5 GO terms in each of 
+#' three GO categories: Biological Processes (BP), Molecular Functions (MF), 
+#' and Cellular Components (CC). Nodes are coloured based on the default \code{sort.by}
+#' score where red indicates high significance and yellow indicates low significance. 
+#' The method \code{plotGOGraph} can be used to customize GO graphs by 
+#' changing the default sorting score and the number of significance nodes that can be
+#' visualized. It is recommended that a small number of nodes is selected. Note that
+#' this page only appears if a Gene Ontology gene set collection is used, i.e., for
+#' the c5 collection from MSigDB or the gsdbgo collection from GeneSetDB. \cr
+#' \cr
+#' Finally, the "Interpret Results" hyperlink in the EGSEA report allows the user to download
+#' the fold changes and limma analysis results and thus improve the interpretation of the results.
+#' 
+#' @inheritParams object EGSEAResults object, the analysis result object 
+#' from  \code{\link{egsea}}, 
+#' \code{\link{egsea.cnt}}
+#' or  \code{\link{egsea.ora}}. 
+#' @inheritParams number
+#' @inheritParams sort.by
+#' @param egsea.dir character, directory into which the analysis results are 
+#' written out. 
+#' @param kegg.dir character, the directory of KEGG pathway data file (.xml) 
+#' and image file (.png). 
+#' Default kegg.dir=paste0(egsea.dir, "/kegg-dir/").
+#' @inheritParams x.axis
+#' @inheritParams x.cutoff
+#' @param num.threads numeric, number of CPU cores to be used. Default 
+#' num.threads=4.
+#' @param print.base logical, whether to write out the analysis results of the base methods.
+#' Default is False.
+#' @inheritParams verbose
+#' 
+#' @export
+#' @return  \code{generateReport} does not return data but creates an HTML report.
+#' 
+#' 
+#' @aliases generateReport,EGSEAResults-method
+#' @rdname EGSEAResults-methods
+#' 
+#' @examples
+#' # Example of generateReport
+#' library(EGSEAdata)
+#' data(il13.gsa)
+#' gsa = il13.gsa
+#' # generateReport(gsa)
+#'
+
+setGeneric(name="generateReport",
+        def = function(object, number = 20, sort.by = NULL, 
+                egsea.dir = NULL, kegg.dir = NULL, 
+                x.axis = NULL, x.cutoff = NULL, 
+                num.threads = 4,
+                print.base = FALSE,
+                verbose = FALSE){
+            standardGeneric("generateReport")
+        }
+)
+
+setMethod(f = "generateReport",
+        signature(object = "EGSEAResults"),
+        definition = function(object, number = 20, sort.by = NULL, 
+                egsea.dir = NULL, kegg.dir = NULL, 
+                x.axis = NULL, x.cutoff = NULL, 
+                num.threads = 4,
+                print.base = FALSE,
+                verbose = FALSE){
+            generate.EGSEA.Report(object,  
+                    display.top = number, sort.by = sort.by, 
+                    egsea.dir = egsea.dir, kegg.dir = kegg.dir, 
+                    sum.plot.axis = x.axis, sum.plot.cutoff = x.cutoff, 
+                    num.threads = num.threads,
+                    print.base = print.base,
+                    verbose = verbose)
+        }
 )
 
 
@@ -474,7 +620,7 @@ setMethod(f = "getlimmaResults",
 #' @inheritParams gs.label character or numeric, the index/name of the gene set collection.
 #' See \code{names(object@@gs.annots)} for valid values.
 #' @inheritParams contrast character or numeric, the index/name of the contrast or 0/"comparison". 
-#' See \code{object@@contrasts} for valid values.
+#' See \code{object@@contr.names} for valid values.
 #' @param file.name character, the prefix of the output file name. 
 #' @param format character, takes "pdf" or "png".
 #' @inheritParams verbose logical, whether to print out progress messages and warnings.
@@ -519,7 +665,7 @@ setMethod(f = "getlimmaResults",
               tryCatch({            
                           if (is.numeric(contrast))
                               if (contrast != 0)
-                                  contrast = object@contrasts[contrast]
+                                  contrast = object@contr.names[contrast]
                               else
                                   contrast = "comparison"
                           if (verbose)
@@ -527,7 +673,7 @@ setMethod(f = "getlimmaResults",
                                               " from the collection \n",
                                               object@gs.annots[[gs.label]]$name, " and for the contrast ",
                                               contrast, "\n"))
-                          if (contrast %in% object@contrasts){
+                          if (contrast %in% object@contr.names){
                               if (length(object@limmaResults) > 0){
                                   t = topTable(object@limmaResults, coef=contrast, 
                                       number=Inf, sort.by="none")
@@ -546,7 +692,7 @@ setMethod(f = "getlimmaResults",
                           }else if (tolower(contrast) == "comparison"){
                               if (length(object@limmaResults) > 0){
                                   limma.tops = list()
-                                  for (c in object@contrasts){
+                                  for (c in object@contr.names){
                                      t = topTable(object@limmaResults, coef=c, 
                                           number=Inf, sort.by="none")
                                      rownames(t) = rownames(object@limmaResults)
@@ -564,7 +710,7 @@ setMethod(f = "getlimmaResults",
                                               fc.colors))
                           }else{
                               stop("Unrecognized contrast value. 
-                                              Use one of the object@contrasts or a numeric value.")
+                                              Use one of the object@contr.names or a numeric value.")
                           }
                       }, 
                       error = function(e){
@@ -590,7 +736,9 @@ setMethod(f = "getlimmaResults",
 #' See names(object@@gs.annots) for valid values.
 #' @inheritParams number integer, maximum number of gene sets to list
 #' @inheritParams sort.by character
-#' @param show.vals character, determines which EGSEA score values are shown on the map.
+#' @param hm.vals character, determines which EGSEA score values are used to draw the map.
+#' Default is NULL which implies using the sort.by score. 
+#' @param show.vals character, determines which EGSEA score values are displayed on the map.
 #' Default is NULL which does not show anything.
 #' @inheritParams file.name character, the prefix of the output file name. 
 #' @inheritParams format character, takes "pdf" or "png".
@@ -607,7 +755,7 @@ setMethod(f = "getlimmaResults",
 #' @importFrom  RColorBrewer brewer.pal
 #' 
 #' @examples
-#' # Example of plotHeatmap
+#' # Example of plotSummaryHeatmap
 #' library(EGSEAdata)
 #' data(il13.gsa)
 #' gsa = il13.gsa
@@ -619,6 +767,7 @@ setMethod(f = "getlimmaResults",
 
   setGeneric(name="plotSummaryHeatmap",
           def = function(object, gs.label=1, number = 20, sort.by = NULL,
+                  hm.vals = NULL,
                   show.vals = NULL,
                   file.name="sum_heatmap", format = "pdf",
                   verbose=TRUE){
@@ -628,109 +777,74 @@ setMethod(f = "getlimmaResults",
   
   setMethod(f = "plotSummaryHeatmap",
           signature="EGSEAResults",
-          definition = function(object, gs.label=1, number = 20, sort.by = NULL, 
+          definition = function(object, gs.label=1, number = 20, 
+                  sort.by = NULL, 
+                  hm.vals = NULL,
                   show.vals = NULL,
                   file.name="sum_heatmap", format = "pdf",
                   verbose=TRUE){  
               tryCatch({
-                  if (!is.null(sort.by))
-                    sort.by = tolower(sort.by)
-                  if (length(object@contrasts) > 1){
-                      contrast = 0
-                  }else{
-                      contrast = 1
-                  }   
-                  t = topSets(object, gs.label, contrast, sort.by, number, TRUE, FALSE)
-                  if (is.null(sort.by))
-                      sort.by = object@sort.by
-                  hm = matrix(0, length(t), length(object@contrasts))
-                  if (!is.null(show.vals)){
-                      cellvals = matrix(0, length(t), length(object@contrasts))
-                      colnames(cellvals) = object@contrasts
-                  }
-                  for (i in 1:length(object@contrasts)){
-                      hm[,i] = object@results[[gs.label]][["test.results"]][[i]][t, sort.by]
-                      if (!is.null(show.vals))
-                         cellvals[,i] = object@results[[gs.label]][["test.results"]][[i]][t, show.vals]
-                  }
-                  t1 = t
-                  for (i in 1:length(t1)){                      
-                      if (nchar(t1[i]) > 18)
-                          t1[i] = paste0(substr(t1[i], 1, 18), " ...")
-                  }
-                  rownames(hm) = t1
-                  colnames(hm) = object@contrasts
-#                  col = colorpanel(100, )
-                  colrange = colorRampPalette(rev(brewer.pal(9, "YlOrRd")))(999)
-                  colrow = rev(colorpanel(length(t), "#7FCC77", "#53AC49", "#186F0F"))
-#                  colrange = colorpanel(99, hm.colors[1], hm.colors[2], hm.colors[3])  
-                  qs = quantile(hm)
-                  if (sort.by %in% c("p.value", "p.adj"))
-                      br = seq(min(hm), max(hm), length=1000)
-                  else
-                    br = c(seq(qs[1], qs[2], length=250),
-                          seq(qs[2]+ 1, qs[3], length=250),
-                          seq(qs[3] + 1, qs[4], length=250),
-                          seq(qs[4] + 1, qs[5],length=250))
-                  sel.genes.sets = length(t)
-                  if(sel.genes.sets <= 20){
-                      cr = 0.85
-                  }else if(sel.genes.sets < 40){
-                      cr = 0.65
-                  }else if(sel.genes.sets < 70){
-                      cr = 0.35
-                  }else if(sel.genes.sets < 100){
-                      cr = 0.35
-                  }else 
-                      cr = 0.15
-                  if (is.null(format) || tolower(format) == "pdf"){
-                      pdf(paste0(file.name, ".pdf"))
-                      par(cex.main = 0.6)
-                      if (!is.null(show.vals)){
-                          if (min(cellvals) < 1)
-                              cellvals1 = round(cellvals, 4)
-                          else
-                              cellvals1 = round(cellvals, 1)
-                          heatmap.2(hm, breaks=br, col=colrange, margins=c(10,10),
-                              cexRow=0.8, cexCol=0.85, trace = "none", 
-                              Colv = FALSE, Rowv = TRUE, dendrogram = "row",
-                              key.xlab=sort.by,
-                              keysize=1, key.title="Contrast Rank", density.info="none",
-                              colRow = colrow,
-                              cellnote = cellvals1, notecol = "#6C6C6C")
-                      }else
-                          heatmap.2(hm, breaks=br, col=colrange, margins=c(10,10),
-                              cexRow=0.8, cexCol=0.85, trace = "none", 
-                              Colv = FALSE, Rowv = TRUE, dendrogram = "row",
-                              key.xlab=sort.by,
-                              keysize=1, key.title="Contrast Rank", density.info="none",
-                              colRow = colrow)
-                      legend(x=0.8, y=1.1, xpd=TRUE,   
-                              legend = c("Highly ranked", "Averagely ranked",
-                                      "Lowly ranked"),
-                              border = "#FFFFFF",
-                              fill = "#FFFFFF",
-                              col = c("#186F0F", "#53AC49", "#7FCC77"), 
-                              title = "Comparison Rank",                             
-                              lty= 1,             
-                              lwd = 5,           
-                              cex=.7
-                      )
-                      dev.off()
-                      rownames(hm) = t
-                      colnames(hm) = paste0(colnames(hm), ".", sort.by)
-                      if (!is.null(show.vals)){
-                          colnames(cellvals) = paste0(colnames(cellvals), ".", show.vals)
-                          hm = cbind(hm, cellvals)
-                      }
-                      write.csv(hm, file=paste0(file.name, ".csv"), 
-                          row.names=TRUE)
-                      
-                  }
-              }, 
-              error = function(e){
-                  cat(paste0("ERROR: plotSummaryHeatmap(...) encountered an error:\n", e ))
-              }) 
+              gsc.name = object@gs.annots[[gs.label]]$name
+              if (!is.null(sort.by))
+                  sort.by = tolower(sort.by)
+              else
+                  sort.by = object@sort.by
+              if (!is.null(hm.vals))
+                  hm.vals = tolower(hm.vals)
+              else
+                  hm.vals = sort.by
+              if (length(object@contr.names) > 1){
+                  contrast = 0
+              }else{
+                  contrast = 1
+              }   
+              if (verbose)
+                  cat(paste0("Generating summary heatmap for the collection ",
+                          gsc.name, "\n", "sort.by: ",sort.by, ", hm.vals: ",
+                          hm.vals, ", show.vals: ", show.vals, "\n"))
+      
+              t = topSets(object, gs.label, contrast, sort.by, number, TRUE, FALSE)
+              hm = matrix(0, length(t), length(object@contr.names))
+              if (!is.null(show.vals)){
+                  show.vals = tolower(show.vals)
+                  cellvals = matrix(0, length(t), length(object@contr.names))                  
+                  colnames(cellvals) = paste0(object@contr.names, ".", show.vals)
+              }else{
+                  cellvals = NULL
+              }
+              for (i in 1:length(object@contr.names)){
+                  hm[,i] = object@results[[gs.label]][["test.results"]][[i]][t, hm.vals]
+                  if (!is.null(show.vals))
+                      cellvals[,i] = object@results[[gs.label]][["test.results"]][[i]][t, show.vals]
+              }
+              if (hm.vals %in% c("p.value", "p.adj")){
+                  hm = -log10(hm)                  
+                  hm[hm == Inf] = max(hm[hm != Inf]) + 50
+                  hm[is.na(hm)] = 0 
+                  xlab = paste0("-log10(", hm.vals, ")")
+              }else
+                  xlab = hm.vals
+              
+              if (length(object@contr.names) > 1){                      
+                  colnames(hm) = object@contr.names                  
+              }else{
+                  hm = cbind(hm, hm)
+                  colnames(hm) = c(" ", " ")
+                  if (!is.null(show.vals))
+                      cellvals = cbind(cellvals, cellvals)                  
+              }
+              rownames(hm) = t
+              title = paste0(gsc.name, " (sorted by ", sort.by, ")")
+              suppressWarnings(generateSummaryHeatmaps(
+                              hm, hm.vals,                              
+                              object@contr.names,
+                              title, xlab,
+                              file.name, cellvals, format))
+              
+          }, 
+          error = function(e){
+              cat(paste0("ERROR: plotSummaryHeatmap(...) encountered an error:\n", e ))
+          }) 
           }
   
   )
@@ -748,7 +862,7 @@ setMethod(f = "getlimmaResults",
 #' @inheritParams gs.label character or numeric, the index/name of the KEGG pathways collection.
 #' See names(object@@gs.annots)[grep("^kegg", names(object@@gs.annots))] for valid values.
 #' @inheritParams contrast character or numeric, the index/name of the contrast or 0/"comparison". 
-#' See object@@contrasts for valid values.
+#' See object@@contr.names for valid values.
 #' @inheritParams file.name character, the name of the output file without an extension.
 #' @inheritParams verbose logical, whether to print out progress messages and warnings.
 #' 
@@ -789,7 +903,7 @@ setMethod(f = "getlimmaResults",
                           stopifnot(length(grep("^kegg", tolower(gs.label))) == 1)
                           if (is.numeric(contrast))
                               if (contrast != 0)
-                                  contrast = object@contrasts[contrast]
+                                  contrast = object@contr.names[contrast]
                               else
                                   contrast = "comparison"
                           if (verbose)
@@ -797,7 +911,7 @@ setMethod(f = "getlimmaResults",
                                               " from the collection \n",
                                               object@gs.annots[[gs.label]]$name, " and for the contrast ",
                                               contrast, "\n"))
-                          if (contrast %in% object@contrasts){
+                          if (contrast %in% object@contr.names){
                               suppressWarnings(generatePathway(gene.set, object@gs.annots[[gs.label]], 
                                               object@logFC[, contrast], 
                                               file.name = file.name))
@@ -808,7 +922,7 @@ setMethod(f = "getlimmaResults",
                                               file.name = file.name))
                           }else{
                               stop("Unrecognized contrast value. 
-                                              Use one of the object@contrasts or a numeric value.")
+                                              Use one of the object@contr.names or a numeric value.")
                           }
                       }, 
                       error = function(e){
@@ -827,7 +941,7 @@ setMethod(f = "getlimmaResults",
 #' @inheritParams gs.label character or numeric, the index/name of the KEGG pathways collection.
 #' See names(object@@gs.annots)[grep("^kegg", names(object@@gs.annots))] for valid values.
 #' @inheritParams contrast character or numeric, the index/name of the contrast or 0/"comparison". 
-#' See object@@contrasts for valid values.
+#' See object@@contr.names for valid values.
 #' @inheritParams file.name character, the name of the output file without an extension.
 #' @inheritParams format character, takes "pdf" or "png".
 #' @inheritParams verbose logical, whether to print out progress messages and warnings. 
@@ -863,29 +977,29 @@ setGeneric(name="plotMethods",
                   verbose = TRUE){             
               #TODO: color methods based on their null-hypothesis (competitve vs self-contained)
               tryCatch({         
-                          if (is.numeric(contrast))
-                              if (contrast != 0)
-                                  contrast = object@contrasts[contrast]
-                              else
-                                  contrast = "comparison"
-                          if (tolower(contrast) == "comparison")
-                              stop("plotMethods(...) is not supported for the comparison analysis")
-                          if (length(object@baseMethods) < 2){
-                              stop("plotMethods(...) requires at least two base methods.")
-                          }
-                          if (verbose)
-                              cat(paste0("Generating MDS plot for the collection \n",
-                                              object@gs.annots[[gs.label]]$name, " and for the contrast ",
-                                              contrast, "\n"))
-                          capture.output(generateMDSMethodsPlot(
-                                          object@results[[gs.label]][["test.results"]][[contrast]], 
-                                          object@baseMethods, 
-                                          file.name, format))
-                      }, 
-                      error = function(e){
-                          cat(paste0("ERROR: plotMethods(...) encountered an error:\n", e ))
-                      }
-              )
+                  if (is.numeric(contrast))
+                      if (contrast != 0)
+                          contrast = object@contr.names[contrast]
+                      else
+                          contrast = "comparison"
+                  if (tolower(contrast) == "comparison")
+                      stop("plotMethods(...) is not supported for the comparison analysis")
+                  if (length(object@baseMethods) < 2){
+                      stop("plotMethods(...) requires at least two base methods.")
+                  }
+                  if (verbose)
+                      cat(paste0("Generating methods plot for the collection \n",
+                                      object@gs.annots[[gs.label]]$name, " and for the contrast ",
+                                      contrast, "\n"))
+                  capture.output(generateMDSMethodsPlot(
+                                  object@results[[gs.label]][["test.results"]][[contrast]], 
+                                  object@baseMethods, 
+                                  file.name, format))
+              }, 
+              error = function(e){
+                  cat(paste0("ERROR: plotMethods(...) encountered an error:\n", e ))
+              }
+            )
               
           }
   )
@@ -911,7 +1025,7 @@ setGeneric(name="plotMethods",
 #' See names(object@@gs.annots)[grep("^kegg", names(object@@gs.annots))] for valid values.
 #' @inheritParams contrast character or numeric, the index/name of the contrast. To compare two
 #' contrasts, pass their indexes/names.
-#' See object@@contrasts for valid values.
+#' See object@@contr.names for valid values.
 #' @inheritParams file.name character, the name of the heatmap file without an extension.
 #' @inheritParams format character, takes "pdf" or "png".
 #' @param x.axis character, the x-axis of the summary plot. All the 
@@ -964,13 +1078,9 @@ setGeneric(name="plotMethods",
                   verbose = TRUE){                
               tryCatch({         
                           if (is.numeric(contrast))                            
-                              contrast = object@contrasts[contrast]                                  
-                          if (is.null(x.cutoff)){
-                              if (x.axis %in% c("p.value", "p.adj"))
-                                  x.cutoff = 1     
-                              else
-                                  x.cutoff = 10000
-                          }                        
+                              contrast = object@contr.names[contrast]
+                          if (is.null(x.axis))
+                              x.axis = object@sum.plot.axis
                           if (length(contrast) == 2){
                               if (verbose)
                                   cat(paste0("Generating Summary plots for the collection \n",
@@ -1039,7 +1149,7 @@ setGeneric(name="plotMethods",
 #' @inheritParams gs.label character or numeric, the index/name of the KEGG pathways collection.
 #' See names(object@@gs.annots)[grep("^kegg", names(object@@gs.annots))] for valid values.
 #' @inheritParams contrast character or numeric, the index/name of the contrast or 0/"comparison". 
-#' See object@@contrasts for valid values.
+#' See object@@contr.names for valid values.
 #' @inheritParams sort.by
 #' @param noSig numeric, number of significant GO terms to be displayed. A number larger than 
 #' 5 might not work due to the size of the generated graph. 
@@ -1085,7 +1195,7 @@ setGeneric(name="plotMethods",
                           stopifnot("GOID" %in% colnames(object@gs.annots[[gs.label]]@anno))
                           if (is.numeric(contrast))
                               if (contrast != 0)
-                                  contrast = object@contrasts[contrast]
+                                  contrast = object@contr.names[contrast]
                               else
                                   contrast = "comparison"
                           if (is.null(sort.by))
@@ -1096,13 +1206,13 @@ setGeneric(name="plotMethods",
                                               "\n and for the contrast ",
                                               contrast, " based on the ", sort.by, "\n"))
                         
-                          if (contrast %in% object@contrasts){
+                          if (contrast %in% object@contr.names){
                               results = object@results[[gs.label]][["test.results"]][[contrast]]
                           }else if (tolower(contrast) == "comparison"){
                               results = object@results[[gs.label]][["comparison"]][["test.results"]]
                           }else{
                               stop("Unrecognized contrast value. 
-                                              Use one of the object@contrasts or a numeric value.")
+                                              Use one of the object@contr.names or a numeric value.")
                           }
                           suppressWarnings(
                               generateGOGraphs(
@@ -1120,7 +1230,180 @@ setGeneric(name="plotMethods",
   )
   
   
+#' @title Plot a multi-dimensional scaling (MDS) plot for the gene set rankings
+#' @description \code{plotBars} generates a multi-dimensional scaling (MDS) plot
+#'  for the gene set rankings of different base GSE methods
+#' 
+#' @inheritParams object EGSEAResults object, the analysis result object from  \code{\link{egsea}}, 
+#' \code{\link{egsea.cnt}}
+#' or  \code{\link{egsea.ora}}. 
+#' @inheritParams gs.label character or numeric, the index/name of the KEGG pathways collection.
+#' See names(object@@gs.annots)[grep("^kegg", names(object@@gs.annots))] for valid values.
+#' @inheritParams contrast character or numeric, the index/name of the contrast or 0/"comparison". 
+#' See object@@contr.names for valid values.
+#' @inheritParams number integer, maximum number of gene sets to list
+#' @inheritParams sort.by character
+#' @param bar.vals character, determines which EGSEA score values are used to draw the bars.
+#' Default is NULL which implies using the sort.by score. 
+#' @inheritParams file.name character, the name of the output file without an extension.
+#' @inheritParams format character, takes "pdf" or "png".
+#' @inheritParams verbose logical, whether to print out progress messages and warnings. 
+#' 
+#' @export
+#' @return \code{plotBars} does not reutrn data but creates an image file.
+#' 
+#' 
+#' @aliases plotBars,EGSEAResults-method
+#' @rdname EGSEAResults-methods
+#'  
+#' @examples
+#' # Example of plotBars
+#' library(EGSEAdata)
+#' data(il13.gsa)
+#' gsa = il13.gsa
+#' class(gsa)
+#' plotBars(gsa)
+#' 
   
+  setGeneric(name="plotBars",
+          def = function(object, gs.label=1, contrast=1, 
+                  number = 20, 
+                  sort.by = NULL,
+                  bar.vals = "p.adj",
+                  file.name="bars_plot", format = "pdf",
+                  verbose = TRUE){
+              standardGeneric("plotBars")
+          }
+  )
+  
+  setMethod(f = "plotBars",
+          signature="EGSEAResults",
+          definition = function(object, gs.label=1, contrast=1, 
+                  number = 20, 
+                  sort.by = NULL,
+                  bar.vals = "p.adj",
+                  file.name="bars_plot", format = "pdf",
+                  verbose = TRUE){             
+              tryCatch({         
+                      if (is.numeric(gs.label))
+                          gs.label = names(object@gs.annots)[gs.label]      
+                      gsc.name = object@gs.annots[[gs.label]]$name
+                      if (is.numeric(contrast))
+                          if (contrast != 0)
+                              contrast = object@contr.names[contrast]
+                          else
+                              contrast = "comparison"
+    #                          if (tolower(contrast) == "comparison")
+    #                              stop("plotBars(...) is not supported for the comparison analysis")
+                      if (!is.null(sort.by))
+                          sort.by = tolower(sort.by)
+                      else
+                          sort.by = object@sort.by
+                      if (!is.null(bar.vals))
+                          bar.vals = tolower(bar.vals)
+                      else
+                          bar.vals = sort.by  
+                      if (verbose)
+                          cat(paste0("Generating a bar plot for the collection ",
+                                          gsc.name, " \n and the contrast ",
+                                          contrast, "\n"))                          
+                      t = topSets(object, gs.label, contrast, sort.by, number, FALSE, FALSE)
+                      t = t[nrow(t):1, ]
+                      vals = t[, bar.vals]
+                      if (bar.vals %in% c("p.value", "p.adj")){
+                          vals = -log10(vals)
+                          vals[vals == Inf] = max(vals[vals != Inf]) + 50
+                          vals[is.na(vals)] = 0 
+                          xlab = paste0("-log10(", bar.vals, ")")
+                      }else
+                          xlab = bar.vals
+                      col = rep("#67A9CF", length(vals))
+                      col[t[, "direction"] == "Up"] = "#EF8A62"
+                      col[t[, "direction"] == "Neutral"] = "#87669A"
+                      sel.genes.sets = length(vals)
+                      if(sel.genes.sets <= 20){
+                          cr = 0.7
+                      }else if(sel.genes.sets < 40){
+                          cr = 0.65
+                      }else if(sel.genes.sets < 70){
+                          cr = 0.35
+                      }else if(sel.genes.sets < 100){
+                          cr = 0.35
+                      }else 
+                          cr = 0.15
+                      title = paste0(gsc.name, " (sorted by ", sort.by, ")")
+                      t1 = rownames(t)                                                    
+                      for (i in 1:length(t1)){                      
+                          if (nchar(t1[i]) > 25)
+                              t1[i] = paste0(substr(t1[i], 1, 25), " ...")
+                      }                         
+                      if (is.null(format) || tolower(format) == "pdf"){
+                          pdf(paste0(file.name, ".pdf"))
+                          par(las=1)
+                          par(mar=c(5,12,4,2))
+                          par(cex.main = 0.8)
+                          if (abs(max(vals)) != Inf)
+                            xlim = c(0, max(vals) * 1.5)
+                          else
+                            xlim = NULL  
+                          barplot2(vals, horiz = TRUE, 
+                                  names.arg = t1,
+                                  cex.names = cr,
+                                  col = col,
+                                  xlab = xlab, 
+                                  xlim = xlim, 
+                                  main = title)   
+                          if (bar.vals %in% c("p.value", "p.adj")){
+                              abline(v = -log10(0.05), col = "red", lwd = 1, lty=2)
+                          }
+                          legend("topright", xpd=TRUE,   
+                                  legend = c("Up-regulated", 
+                                          "Neutral", 
+                                          "Down-regulated"),
+                                  border = "#FFFFFF",
+                                  fill = "#FFFFFF",
+                                  col = c("#EF8A62", "#87669A", "#67A9CF"), 
+                                  title = "Regulation Direction",                             
+                                  lty= 1,             
+                                  lwd = 5,           
+                                  cex=.7
+                          )
+                          dev.off()
+                      }
+                      if (is.null(format) || tolower(format) == "png"){
+                          png(paste0(file.name, ".png"))
+                          par(las=1)
+                          par(mar=c(5,12,4,2))
+                          par(cex.main = 0.8)
+                          barplot2(vals, horiz = TRUE, 
+                                  names.arg = t1,
+                                  cex.names = cr,
+                                  col = col,
+                                  xlab = xlab, 
+                                  main = title)   
+                          if (bar.vals %in% c("p.value", "p.adj")){
+                              abline(v = -log10(0.05), col = "red", lwd = 1, lty=2)
+                          }
+    #                              legend("topright", xpd=TRUE,   
+    #                                      legend = c("Up-regulated", "Down-regulated"),
+    #                                      border = "#FFFFFF",
+    #                                      fill = "#FFFFFF",
+    #                                      col = c("#EF8A62", "#67A9CF"), 
+    #                                      title = "Regulation Direction",                             
+    #                                      lty= 1,             
+    #                                      lwd = 5,           
+    #                                      cex=.7
+    #                              )
+                          dev.off()
+                      }
+                  }, 
+                  error = function(e){
+                      cat(paste0("ERROR: plotBars(...) encountered an error:\n", e ))
+                  }
+              )
+              
+          }
+  )
   
   
 #' @title Display the information of a given gene set name

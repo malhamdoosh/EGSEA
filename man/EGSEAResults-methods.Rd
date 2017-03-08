@@ -5,12 +5,16 @@
 \alias{$,EGSEAResults-method}
 \alias{EGSEAResults}
 \alias{EGSEAResults-class}
+\alias{generateReport}
+\alias{generateReport,EGSEAResults-method}
 \alias{getSetScores}
 \alias{getSetScores,EGSEAResults-method}
 \alias{getlimmaResults}
 \alias{getlimmaResults,EGSEAResults-method}
 \alias{limmaTopTable}
 \alias{limmaTopTable,EGSEAResults-method}
+\alias{plotBars}
+\alias{plotBars,EGSEAResults-method}
 \alias{plotGOGraph}
 \alias{plotGOGraph,EGSEAResults-method}
 \alias{plotHeatmap}
@@ -44,6 +48,10 @@ topSets(object, gs.label = 1, contrast = 1, sort.by = NULL, number = 10,
 
 limmaTopTable(object, contrast = 1)
 
+generateReport(object, number = 20, sort.by = NULL, egsea.dir = NULL,
+  kegg.dir = NULL, x.axis = NULL, x.cutoff = NULL, num.threads = 4,
+  print.base = FALSE, verbose = FALSE)
+
 getlimmaResults(object)
 
 plotHeatmap(object, gene.set, gs.label = 1, contrast = 1,
@@ -51,8 +59,8 @@ plotHeatmap(object, gene.set, gs.label = 1, contrast = 1,
   "#F7F7F7", "#EF8A62"), verbose = TRUE)
 
 plotSummaryHeatmap(object, gs.label = 1, number = 20, sort.by = NULL,
-  show.vals = NULL, file.name = "sum_heatmap", format = "pdf",
-  verbose = TRUE)
+  hm.vals = NULL, show.vals = NULL, file.name = "sum_heatmap",
+  format = "pdf", verbose = TRUE)
 
 plotPathway(object, gene.set, gs.label = 1, contrast = 1,
   file.name = "pathway", verbose = TRUE)
@@ -66,6 +74,10 @@ plotSummary(object, gs.label = 1, contrast = 1, file.name = "summary",
 
 plotGOGraph(object, gs.label = "c5", contrast = 1, sort.by = NULL,
   noSig = 5, file.name = "c5-top-", format = "pdf", verbose = TRUE)
+
+plotBars(object, gs.label = 1, contrast = 1, number = 20,
+  sort.by = NULL, bar.vals = "p.adj", file.name = "bars_plot",
+  format = "pdf", verbose = TRUE)
 
 showSetByName(object, gs.label = 1, set.name)
 
@@ -102,6 +114,28 @@ results.}
 
 \item{verbose}{logical, whether to print out progress messages and warnings.}
 
+\item{egsea.dir}{character, directory into which the analysis results are 
+written out.}
+
+\item{kegg.dir}{character, the directory of KEGG pathway data file (.xml) 
+and image file (.png). 
+Default kegg.dir=paste0(egsea.dir, "/kegg-dir/").}
+
+\item{x.axis}{character, the x-axis of the summary plot. All the 
+values accepted by the 
+\strong{sort.by} parameter can be used. Default x.axis="p.value".}
+
+\item{x.cutoff}{numeric, cut-off threshold to filter the gene sets of 
+the summary plots
+based on the values of the \strong{x.axis}. Default 
+x.cutoff=NULL.}
+
+\item{num.threads}{numeric, number of CPU cores to be used. Default 
+num.threads=4.}
+
+\item{print.base}{logical, whether to write out the analysis results of the base methods.
+Default is False.}
+
 \item{gene.set}{character, the name of the gene set. 
 See the output of \code{\link{topSets}}.}
 
@@ -114,23 +148,20 @@ Three colors of the negative, zero and positive log fold changes,
 respectively, should be assigned. Default is c( "#67A9CF", "#F7F7F7", "#EF8A62"). These 
 colors were generated using \code{rev(RColorBrewer::brewer.pal(3, "RdBu"))}}
 
-\item{show.vals}{character, determines which EGSEA score values are shown on the map.
+\item{hm.vals}{character, determines which EGSEA score values are used to draw the map.
+Default is NULL which implies using the sort.by score.}
+
+\item{show.vals}{character, determines which EGSEA score values are displayed on the map.
 Default is NULL which does not show anything.}
-
-\item{x.axis}{character, the x-axis of the summary plot. All the 
-values accepted by the 
-\strong{sort.by} parameter can be used. Default x.axis="p.value".}
-
-\item{x.cutoff}{numeric, cut-off threshold to filter the gene sets of 
-the summary plots
-based on the values of the \strong{x.axis}. Default 
-x.cutoff=NULL.}
 
 \item{use.names}{logical, determines whether to display the GeneSet IDs or GeneSet Names.
 Default is FALSE.}
 
 \item{noSig}{numeric, number of significant GO terms to be displayed. A number larger than 
 5 might not work due to the size of the generated graph.}
+
+\item{bar.vals}{character, determines which EGSEA score values are used to draw the bars.
+Default is NULL which implies using the sort.by score.}
 
 \item{set.name}{character, a vector of gene set names as they appear in \code{\link{topSets}}.}
 
@@ -149,6 +180,8 @@ names.only = FALSE.
 
 \code{limmaTopTable} returns a dataframe.
 
+\code{generateReport} does not return data but creates an HTML report.
+
 \code{getlimmaResults} returns an MArrayLM object.
 
 \code{plotHeatmap} does not return data but creates image and CSV files.
@@ -162,6 +195,8 @@ names.only = FALSE.
 \code{plotSummary} does not return data but creates an image file.
 
 \code{plotGOGraph} does not return data but creates an image file.
+
+\code{plotBars} does not reutrn data but creates an image file.
 
 \code{showSetByName} does not return data
 
@@ -186,6 +221,9 @@ stored in an EGSEAResults object
 \code{limmaTopTable} returns a dataframe of the top table of the 
 limma analysis for a given contrast.
 
+\code{generateReport} creates an HTML report for the EGSEA analysis that
+enables users to seamlessly browse the test results.
+
 \code{getlimmaResults} returns the linear model fit produced by
  \code{limma::eBayes}.
 
@@ -205,6 +243,9 @@ the gene fold changes overalid on it.
 \code{plotGOGraph} generates a graph of the top significant GO terms in 
 a GO term collection, which could be c5 from MSigDB or Gene Ontolog from the GeneSetDB.
 
+\code{plotBars} generates a multi-dimensional scaling (MDS) plot
+ for the gene set rankings of different base GSE methods
+
 \code{showSetByname} shows the details of a given gene set indicated by name.
 
 \code{showSetByID} shows the details of a given gene set indicated by ID.
@@ -218,6 +259,65 @@ The \code{EGSEAResults} class is used by \code{egsea}, \code{egsea.cnt} and
 analysis results and generating customized tables and plots.
 
 \code{limmaTopTable} output can be understood from \code{limma::topTable}.
+
+EGSEA report is an interactive HTML report that is generated to
+enable a swift navigation through the results of an EGSEA analysis. The following pages 
+are generated for each gene set collection and contrast/comparison: \cr
+1. Stats Table page shows the detailed statistics of the EGSEA analysis for the 
+\code{display.top} gene sets. It shows the EGSEA scores, individual rankings and 
+additional annotation for each gene set. Hyperlinks to the source of each gene set
+can be seen in this table when they are available. The "Direction" column shows the regulation
+direction of a gene set which is calculated based on the \code{logFC}, which is
+either calculated from the limma differential expression analysis or provided by the user. 
+The method \code{topSets} can be used to generate custom Stats Table. \cr
+2. Heatmaps page shows the heatmaps of the gene fold changes for the gene sets that are
+presented in the Stats Table page. Red indicates up-regulation
+while blue indicates down-regulation. Only genes that appear in the input expression/count 
+matrix are visualized in the heat map. Gene names are coloured based on their 
+statistical significance in the \code{limma} differential expression analysis. 
+The "Interpret Results" link below each heat map allows the user to download the 
+original heat map values along with additional statistics from \code{limma} DE analysis (
+if available) so that they can be used to perform further analysis in R, e.g., customizing 
+the heat map visualization. Additional heat maps can be generated and customized
+ using the method \code{plotHeatmap}. \cr
+3. Summary Plots page  shows the methods ranking plot along with the summary plots of 
+EGSEA analysis. The method plot uses multidimensional scaling (MDS) to visualize the 
+ranking of individual methods on a given gene set collection. The summary plots are 
+bubble plots that visualize the distribution of gene sets based on the EGSEA
+Significance Score and another EGSEA score (default, p-value). 
+Two summary plots are generated: ranking and directional plots. Each gene set is 
+reprersented with a bubble which is coloured based on the EGSEA ranking (in ranking
+plots ) or gene set regulation direction (in directional plots) and sized based on the 
+gene set cardinality (in ranking plots) or EGSEA Significance score (in directional plots).
+Since the EGSEA "Significance Score" is proportional to the p-value and the 
+absolute fold changes, it could be useful to highlight gene sets that
+have high Significance scores. The blue labels on the summary plot indicate 
+gene sets that do not appear in the top 10 list of gene sets based on the "sort.by" 
+argument (black labels) yet they appear in the top 5 list of gene sets based on 
+the EGSEA "Significance Score". If two contrasts are provided, the rank is calculated 
+based on the "comparison" analysis results and the "Significance Score" is calculated 
+as the mean. The method \code{plotSummary} can be used to customize the Summary plots by 
+changing the x-axis score
+and filtering bubbles based on the values of the x-axis. The method \code{plotMethods} can be
+used to generate Method plots. \cr
+4. Pathways page shows the KEGG pathways for the gene sets that are presented in the
+Stats Table of a KEGG gene set collection. The gene fold changes are overlaid on the 
+pathway maps and coloured based on the gene regulation direction: blue for down-regulation
+and red for up-regulation. The method \code{plotPathway} can be used to generate
+additional pathway maps. Note that this page only appears if a KEGG gene set collection
+is used in the EGSEA analysis. \cr
+5. Go Graphs page shows the Gene Ontology graphs for top 5 GO terms in each of 
+three GO categories: Biological Processes (BP), Molecular Functions (MF), 
+and Cellular Components (CC). Nodes are coloured based on the default \code{sort.by}
+score where red indicates high significance and yellow indicates low significance. 
+The method \code{plotGOGraph} can be used to customize GO graphs by 
+changing the default sorting score and the number of significance nodes that can be
+visualized. It is recommended that a small number of nodes is selected. Note that
+this page only appears if a Gene Ontology gene set collection is used, i.e., for
+the c5 collection from MSigDB or the gsdbgo collection from GeneSetDB. \cr
+\cr
+Finally, the "Interpret Results" hyperlink in the EGSEA report allows the user to download
+the fold changes and limma analysis results and thus improve the interpretation of the results.
 
 \code{getlimmaResults}'s output can be manipulated using
  \code{limma::topTable} and \code{limma::topTreat}.
@@ -250,7 +350,12 @@ is used to order gene sets.
 
 \item{\code{limmaResults}}{MArrayLM, is a limma linear fit model}
 
-\item{\code{contrasts}}{character, the contrasts defined in the analysis}
+\item{\code{contr.names}}{character, the contrasts defined in the analysis}
+
+\item{\code{contrast}}{double, an N x L matrix indicates the contrasts of the 
+linear model coefficients for which the test is required. N is the number of 
+columns of the design matrix and L is number of contrasts. Can be also a vector 
+of integers that specify the columns of the design matrix.}
 
 \item{\code{sampleSize}}{numeric, number of samples}
 
@@ -268,9 +373,20 @@ is used to order gene sets.
 
 \item{\code{logFC}}{matrix, the logFC matrix of contrasts}
 
+\item{\code{logFC.calculated}}{character, indicates whether the logFC was calculated using
+limma DE analysis.}
+
+\item{\code{sum.plot.axis}}{character, the x-axis of the summary plot}
+
+\item{\code{sum.plot.cutoff}}{numeric, the cut-off threshold for the summary plot x-axis}
+
 \item{\code{report}}{logical, whether the report was generated}
 
 \item{\code{report.dir}}{character, the directory of the EGSEA HTML report}
+
+\item{\code{egsea.version}}{character, the version of EGSEA package}
+
+\item{\code{egseaData.version}}{character, the version of EGSEAdata package}
 }}
 \examples{
 # Exampple of EGSEAResults
@@ -312,6 +428,12 @@ class(gsa)
 colnames(limmaTopTable(gsa))
 head(limmaTopTable(gsa))
 
+# Example of generateReport
+library(EGSEAdata)
+data(il13.gsa)
+gsa = il13.gsa
+# generateReport(gsa)
+
 # Example of getlimmaResults
 library(EGSEAdata)
 data(il13.gsa)
@@ -330,7 +452,7 @@ plotHeatmap(gsa, "Asthma", gs.label="kegg")
 plotHeatmap(gsa, "Asthma", gs.label="kegg", contrast = "comparison", 
 file.name = "asthma.hm.cmp")
 
-# Example of plotHeatmap
+# Example of plotSummaryHeatmap
 library(EGSEAdata)
 data(il13.gsa)
 gsa = il13.gsa
@@ -367,6 +489,13 @@ data(il13.gsa)
 gsa = il13.gsa
 class(gsa)
 plotGOGraph(gsa, sort.by="avg.rank")
+
+# Example of plotBars
+library(EGSEAdata)
+data(il13.gsa)
+gsa = il13.gsa
+class(gsa)
+plotBars(gsa)
 
 # Example of showSetByName
 library(EGSEAdata)

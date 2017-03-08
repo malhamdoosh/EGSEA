@@ -1,34 +1,59 @@
 # Wrapper function to run ROAST on different contrasts
 
-runroast <- function(voom.results, contrast, gs.annot,  ranked.gs.dir="", 
-output = TRUE,
+runroast <- function(voom.results, contrast, gs.annot, 
         num.workers=4, verbose = TRUE){     
     # run ROAST and write out ranked 'gene sets' for each 'contrast'    
-
-    file.name = paste0(ranked.gs.dir, "/roast-ranked-", gs.annot@label, 
-"-gene-sets-", 
-            sub(" - ", "-", colnames(contrast)), '.txt')        
-    roast.results = vector("list", ncol(contrast))  
-    for(i in 1:ncol(contrast)){
-        if (verbose)
-            print(paste0("   Running ROAST for ", colnames(contrast)[i]))
-        else
-            cat(".")
-        roast.results[[i]] = mroast(y=voom.results, 
-                index=gs.annot@idx, 
-                design=voom.results$design, 
-                contrast=contrast[,i], nrot=999)
-        # returns PropDown/PropUp ==> proportion of genes that are 
-# down/up-regulated
-        roast.results[[i]] = roast.results[[i]][order(roast.results[[i]][, 
-                                "PValue"]),]
-        roast.results[[i]] = cbind(Rank=seq(1, 
-nrow(roast.results[[i]])), roast.results[[i]])
-        if (!output)
-            next
-        writeResultsToHTML(colnames(contrast)[i], roast.results[[i]], 
-gs.annot, "ROAST", file.name[i])
+    if (is.matrix(contrast)){
+        contr.names = colnames(contrast)
+        contr.num = ncol(contrast)
+    }else{
+        contr.names = names(contrast)
+        contr.num = length(contrast)
     }
-    names(roast.results) = colnames(contrast)
+     
+#    roast.results = vector("list", ncol(contrast))  
+    args.all = list()
+    for(i in 1:contr.num){
+        if (is.matrix(contrast))
+            args.all[[i]] = list(voom.results = voom.results,
+                    contrast.name = contr.names[i],
+                    contrast = contrast[,i],
+                    gs.annot = gs.annot,
+                    verbose = verbose
+            )
+        else
+            args.all[[i]] = list(voom.results = voom.results,
+                    contrast.name = contr.names[i],
+                    contrast = contrast[i],
+                    gs.annot = gs.annot,                    
+                    verbose = verbose
+            )
+    }
+    names(args.all) = contr.names
+    if (Sys.info()['sysname'] == "Windows" || contr.num <= 1)
+        roast.results = lapply(args.all, runroast.contrast)
+    else
+        roast.results = mclapply(args.all, runroast.contrast, 
+                mc.cores=num.workers)
+#    names(roast.results) = colnames(contrast)
+    return(roast.results)
+}
+
+runroast.contrast <- function(args){
+    if (args$verbose)
+        print(paste0("   Running ROAST for ", args$contrast.name))
+    else
+        cat(".")
+    roast.results = mroast(y=args$voom.results, 
+            index=args$gs.annot@idx, 
+            design=args$voom.results$design, 
+            contrast=args$contrast, nrot=999)
+    # returns PropDown/PropUp ==> proportion of genes that are 
+# down/up-regulated
+    roast.results = roast.results[order(roast.results[, 
+                            "PValue"]),]
+    roast.results = cbind(Rank=seq(1, 
+                    nrow(roast.results)), roast.results)
+    colnames(roast.results)[which(colnames(roast.results) == "PValue")] = "p.value"
     return(roast.results)
 }
