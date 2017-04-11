@@ -155,7 +155,7 @@ sapply(gsets.ez, length)),
             date = dat)
     gs.annot = selectGeneSets(gs.annot, min.size=min.size)   
     if (length(gs.annot@idx) == 0)
-        print("KEGG pathway collection is empty.")
+        cat("KEGG pathway collection is empty.\n")
     ### shall you want to exclude the KEGG metabolic pathways
     if (length(exclude) > 0){
         sel = ! tolower(gs.annot@anno[, "Type"]) %in% tolower(exclude)
@@ -178,13 +178,15 @@ sapply(gsets.ez, length)),
 #' in your dataset. 
 #' The order of the Entrez Gene IDs should match those of the count/expression 
 #' matrix row names.
+#' @param species character, determine the organism of selected gene sets: 
+#' "human", "mouse" or "rat".
 #' @param geneSets character, a vector determines which gene set collections 
 #' should be used from the MSigDB.
 #' It can take values from this list: "all", "h", "c1", "c2", "c3", "c4", "c5", 
 #' "c6","c7". "c1"
-#' is human specific. If "all", all available gene set collections are loaded.  
-#' @param species character, determine the organism of selected gene sets: 
-#' "human", "mouse" or "rat". 
+#' is human specific. If "all", all available gene set collections are loaded. 
+#' @param go.part logical, whether to partition the C5 collection into the
+#' three GO domains: CC, MF and BP or use the entire collection all together.  
 #' @param min.size integer, the minium number of genes required in a testing 
 #' gene set 
 #'
@@ -208,13 +210,14 @@ sapply(gsets.ez, length)),
 #' library(EGSEAdata)
 #' data(il13.data)
 #' v = il13.data$voom
-#' gs.annots = buildMSigDBIdx(entrezIDs=rownames(v$E), geneSets=c("h", 
-#' "c2"), species="human")
+#' gs.annots = buildMSigDBIdx(entrezIDs=rownames(v$E), species="human",
+#' geneSets=c("h", "c2"))
 #' names(gs.annots)
 
 
-buildMSigDBIdx <- function(entrezIDs, geneSets="all", 
-        species="Homo sapiens", min.size=1){
+buildMSigDBIdx <- function(entrezIDs, 
+        species="Homo sapiens", geneSets="all", 
+        go.part = FALSE, min.size=1){
     geneSets = tolower(geneSets)
     stopifnot(geneSets %in% c("all", "h", "c1", "c2", "c3", "c4", "c5", 
                 "c6","c7"))
@@ -282,18 +285,18 @@ buildMSigDBIdx <- function(entrezIDs, geneSets="all",
 					" ..."))
         gs.annot@idx = ids2indices(gs.annot@original, entrezIDs, 
                 remove.empty=TRUE) # pathways
-        if (length(gs.annot@idx) == 0){
-            print(paste0("None of the genes in ", geneSet, 
-                            " are mapped to your gene IDs"))          
-        }
-        else{
-            print(paste0("Indexed the collection ", geneSet, 
-                " ..."))            
-            gsc.small = gsc.small[names(gs.annot@idx)] # remove 
+        gsc.small = gsc.small[names(gs.annot@idx)] # remove 
+        gs.annot@original = 
+                gs.annot@original[names(gs.annot@idx)] 
 #empty sets
-            gs.annot@original = 
-                gs.annot@original[names(gs.annot@idx)]
-            
+        print(paste0("Indexed the collection ", geneSet, 
+                        " ..."))  
+        if (length(gs.annot@idx) == 0){
+            cat(paste0("None of the genes in ", geneSet, 
+                            " are mapped to your gene IDs\n"))          
+        }        
+        # create annotation frame
+        if (length(gs.annot@idx) > 0){                       
             tmp = rep(NA, length(gs.annot@idx)) 
             gs.annot@anno = data.frame(ID=tmp, 
                 GeneSet=names(gs.annot@idx), BroadUrl=tmp, Description=tmp,
@@ -317,45 +320,49 @@ buildMSigDBIdx <- function(entrezIDs, geneSets="all",
                 function(x) x["CONTRIBUTOR"])   # KEGG      
             rownames(gs.annot@anno) = names(gs.annot@original)
             print(paste0("Created annotation for the collection ", geneSet, 
-                " ..."))            
-        }
-        
+                " ..."))
+            gs.annot = selectGeneSets(gs.annot, min.size=min.size)   
+            if (length(gs.annot@idx) == 0)
+                cat(paste0("MSigDB ", gs.annot@label, " gene set ", 
+                                "collection is empty.\n"))
+        }        
         gs.annot@label = geneSet    
         gs.annot@featureIDs = entrezIDs
         gs.annot@species = species
-        gs.annot@name = msigdb.gs.names[[gs.annot@label]]       
+        gs.annot@name = msigdb.gs.names[[gs.annot@label]]     
+        
         if (geneSet == "c5" && length(gs.annot@idx) > 0){
-#           print(colnames(gs.annot$anno))
             external.urls = sapply(gsc.small, 
                     function(x) x["EXTERNAL_DETAILS_URL"])
             goID = gsub(".*(GO:[0-9]+).*$","\\1", 
                     external.urls)
             ontology = sapply(gsc.small, 
                     function(x) x["SUB_CATEGORY_CODE"])
-#            xx = GOTERM
-#            ontology = character(0)
-#            sel.gsets = character(0)
-#            goID = character(0)
-#            for (i in 1:length(go.terms)){              
-#                temp = xx[[go.terms[i]]]
-#                if (!is.null(temp)){
-#                    ontology = c(ontology, Ontology(temp))
-#                    sel.gsets = c (sel.gsets, 
-#                        as.character(gs.annot@anno[i, "GeneSet"]))
-#                    goID = c(goID, go.terms[i])
-#                }
-#            }
-#            gs.annot = selectGeneSets(gs.annot, sel.gsets)
             gs.annot@anno = cbind(gs.annot@anno, Ontology=ontology, 
                 GOID=goID)
-            gs.annot@anno = droplevels(gs.annot@anno)       
-    
-        }
-        gs.annot = selectGeneSets(gs.annot, min.size=min.size)   
-        if (length(gs.annot@idx) == 0)
-            print(paste0("MSigDB ", gs.annot@label, " gene set ", 
-				"collection is empty."))        
-        gs.annots[[geneSet]] = gs.annot
+            gs.annot@anno = droplevels(gs.annot@anno)
+            if (go.part){
+                new.labels = c()
+                for (domain in c("BP", "CC", "MF")){                
+                    gs.annot.tmp = selectGeneSets(gs.annot,
+                            gs.names = gs.annot@anno[
+                                    gs.annot@anno[, "Ontology"] == domain ,
+                                    "GeneSet"])
+                    gs.annot.tmp@label = paste0(gs.annot@label, domain)
+                    gs.annot.tmp@name = paste0(gs.annot@name, " (", domain, ")")
+                    gs.annots[[gs.annot.tmp@label]] = gs.annot.tmp
+                    if (length(gs.annot.tmp@idx) == 0)
+                        cat(paste0("MSigDB ", gs.annot.tmp@label, " gene set ", 
+                                        "collection is empty.\n"))  
+                    new.labels = c(new.labels, gs.annot.tmp@label)
+                }
+                cat(paste0("MSigDB ", gs.annot@label, " gene set ", 
+                                "collection has been partitioned into \n",
+                                paste(new.labels, collapse=", "), "\n"))
+            }else
+                gs.annots[[geneSet]] = gs.annot
+        }else
+            gs.annots[[geneSet]] = gs.annot
     }
     return(gs.annots)
     
@@ -383,6 +390,8 @@ buildMSigDBIdx <- function(entrezIDs, geneSets="all",
 #'  "gsdbdrug" to load the drug/chemical collection, 
 #' "gsdbpath" to load the pathways collection and "gsdbreg" to load the gene regulation
 #' collection. 
+#' @param go.part logical, whether to partition the C5 collection into the
+#' three GO domains: CC, MF and BP or use the entire collection all together.
 #' @param min.size integer, the minium number of genes required in a testing 
 #' gene set
 #'
@@ -413,7 +422,7 @@ buildMSigDBIdx <- function(entrezIDs, geneSets="all",
 
 
 buildGeneSetDBIdx <- function(entrezIDs, species, geneSets="all", 
-min.size=1){
+        go.part = FALSE, min.size=1){
     geneSets = tolower(geneSets)
     stopifnot(geneSets %in% c("all", "gsdbdis", "gsdbgo", "gsdbdrug", 
                     "gsdbpath" , "gsdbreg"))
@@ -441,39 +450,70 @@ min.size=1){
     genesetdb.gs.labels = loadGeneSetDBCategoryLabels()
     for (cat in categories){
         label = genesetdb.gs.labels[[cat]]
-        tmp.gs.annot = selectGeneSets(gs.annot, 
+        gs.annot.cat = selectGeneSets(gs.annot, 
             gs.names = as.character(gs.annot@anno[
                 gs.annot@anno[,"Category"] == cat,"GeneSet"]),  
             min.size=min.size)
-        if (length(tmp.gs.annot@idx) == 0){
-            print(paste0("GeneSetDB ", label," gene set 
-				collection is empty."))             
+        if (length(gs.annot.cat@idx) == 0){
+            cat(paste0("GeneSetDB ", label," gene set 
+				collection is empty.\n"))             
         }
        
-        tmp.gs.annot@label = label
-        tmp.gs.annot@name = cat
-        tmp.gs.annot@anno = tmp.gs.annot@anno[, 
+        gs.annot.cat@label = label
+        gs.annot.cat@name = cat
+        gs.annot.cat@anno = gs.annot.cat@anno[, 
             -c(match("Category", names(gs.annot@anno)))]
-        if (label == "gsdbgo"){
+        if (label == "gsdbgo" && length(gs.annot.cat@idx) > 0){
             go.terms = gsub(".*(GO:[0-9]+).*$","\\1", 
-                    tmp.gs.annot@anno[, "GeneSet"]) 
+                    gs.annot.cat@anno[, "GeneSet"]) 
             xx = GOTERM                
             sel.gsets = character(0)
             goID = character(0)
+            ontology = character(0)
+            no.term = 0 # no GO term found
             for (i in 1:length(go.terms)){              
                 temp = xx[[go.terms[i]]]
                 if (!is.null(temp)){                        
                     sel.gsets = c (sel.gsets, 
-                            as.character(tmp.gs.annot@anno[i, "GeneSet"]))
+                            as.character(gs.annot.cat@anno[i, "GeneSet"]))
+                    ontology = c(ontology, Ontology(temp))
                     goID = c(goID, go.terms[i])
+                }else{
+                    no.term = no.term + 1
                 }
-            }
-            tmp.gs.annot = selectGeneSets(tmp.gs.annot, sel.gsets)
-            tmp.gs.annot@anno = cbind(tmp.gs.annot@anno,  
-                    GOID=goID)
-            tmp.gs.annot@anno = droplevels(tmp.gs.annot@anno) 
-        }
-        gs.annots[[label]] = tmp.gs.annot
+            }            
+            if (no.term > 0){
+                cat(paste0(no.term, " gene sets from the GeneSetDB ",
+                    label, " collection do not have valid GO ID.\n",
+                    "They will be removed. \n"))
+                gs.annot.cat = selectGeneSets(gs.annot.cat, sel.gsets)
+            }            
+            gs.annot.cat@anno = cbind(gs.annot.cat@anno,  
+                    Ontology = ontology, GOID = goID)
+            gs.annot.cat@anno = droplevels(gs.annot.cat@anno) 
+#            print(head(gs.annot.cat@anno))
+            if (go.part){
+                new.labels = c()
+                for (domain in c("BP", "CC", "MF")){                
+                    gs.annot.tmp = selectGeneSets(gs.annot.cat,
+                            gs.names = gs.annot.cat@anno[
+                                    gs.annot.cat@anno[, "Ontology"] == domain ,
+                                    "GeneSet"])
+                    gs.annot.tmp@label = paste0(gs.annot.cat@label, domain)
+                    gs.annot.tmp@name = paste0(gs.annot.cat@name, " (", domain, ")")
+                    gs.annots[[gs.annot.tmp@label]] = gs.annot.tmp
+                    if (length(gs.annot.tmp@idx) == 0)
+                        cat(paste0("GeneSetDB ", gs.annot.tmp@label, " gene set ", 
+                                        "collection is empty.\n"))
+                    new.labels = c(new.labels, gs.annot.tmp@label)
+                }
+                cat(paste0("GeneSetDB ", gs.annot.cat@label, " gene set ", 
+                                "collection has been partitioned into \n",
+                                paste(new.labels, collapse=", "), "\n"))
+            }else
+                gs.annots[[label]] = gs.annot.cat
+        }else
+            gs.annots[[label]] = gs.annot.cat
     }
     if (length(geneSets) == 1 && geneSets == "all")        
         return(gs.annots)
@@ -578,7 +618,7 @@ buildCustomIdx <- function(entrezIDs, gsets, anno=NULL,label="custom",
             date = date())
     gs.annot = selectGeneSets(gs.annot, min.size=min.size)   
     if (length(gs.annot@idx) == 0)
-        print(paste0("The cutsom gene set collection is empty."))
+        cat(paste0("The cutsom gene set collection is empty.\n"))
     print(paste0("Created the ", name, " collection ... "))
     return(gs.annot)
 }
@@ -616,6 +656,8 @@ buildCustomIdx <- function(entrezIDs, gsets, anno=NULL,label="custom",
 #'  "gsdbdrug" to load the drug/chemical collection, 
 #' "gsdbpath" to load the pathways collection and "gsdbreg" to load the gene regulation
 #' collection. 
+#' @param go.part logical, whether to partition the GO term collections into the
+#' three GO domains: CC, MF and BP or use the entire collection all together. 
 #' @param kegg.updated logical, set to TRUE if you want to download the most 
 #' recent KEGG pathways.
 #' @param kegg.exclude character, vector used to exclude KEGG pathways of 
@@ -646,24 +688,29 @@ buildCustomIdx <- function(entrezIDs, gsets, anno=NULL,label="custom",
 #' data(il13.data)
 #' v = il13.data$voom
 #' gs.annots = buildIdx(entrezIDs=rownames(v$E), species="human",
-#'          msigdb.gsets = c("h", "c2"),
+#'          msigdb.gsets = c("h", "c5"),
+#' 			go.part = TRUE,
 #'          kegg.exclude = c("Metabolism"))
 #' names(gs.annots)
 
 buildIdx <- function(entrezIDs, species="human", 
-        msigdb.gsets="all",
+        msigdb.gsets="all",        
         gsdb.gsets = "none",
+        go.part = FALSE,
         kegg.updated=FALSE, kegg.exclude=c(), 
         min.size = 1){
     if (length(msigdb.gsets) == 1 && tolower(msigdb.gsets[1]) == "none")
         gs.annots = list()
     else
-        gs.annots = buildMSigDBIdx(entrezIDs=entrezIDs, 
-            geneSets=msigdb.gsets,
-            species = species,  min.size = min.size)
+        gs.annots = buildMSigDBIdx(entrezIDs=entrezIDs,            
+            species = species,  
+            geneSets = msigdb.gsets,
+            go.part = go.part,
+            min.size = min.size)
     if (!is.null(gsdb.gsets) && tolower(gsdb.gsets[1]) != "none")
         gs.annots = c(gs.annots, buildGeneSetDBIdx(entrezIDs = entrezIDs, 
-                        species = species, geneSets=gsdb.gsets, 
+                        species = species, geneSets = gsdb.gsets, 
+                        go.part = go.part,
                 min.size=min.size))
     if (length(kegg.exclude) == 1 && tolower(kegg.exclude[1]) == "all")
         return(gs.annots)

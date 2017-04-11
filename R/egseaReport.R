@@ -93,7 +93,8 @@ generate.EGSEA.Report <- function(egseaResults, limma.tops = list(),
                     contr.names,"-allPathways.html")
         }
         
-        if ((gs.annot@label == "c5" || gs.annot@label == "gsdbgo") && 
+        if ((length(grep("^c5", gs.annot@label)) == 1 || 
+                length(grep("^gsdbgo", gs.annot@label)) == 1) && 
                 "GOID" %in% colnames(gs.annot@anno)){
             plotGOGraphs(egsea.results=egsea.results,
                     gs.annot=gs.annot, gsa.dir=egsea.dir, sort.by=sort.by,
@@ -148,7 +149,8 @@ generate.EGSEA.Report <- function(egseaResults, limma.tops = list(),
                 generateAllPathwaysPage(contr.names[i], temp, 
                         gs.annot, file.name.pv[i])
             }
-            if ((gs.annot@label == "c5" || gs.annot@label == "gsdbgo") 
+            if ((length(grep("^c5", gs.annot@label)) == 1 || 
+                    length(grep("^gsdbgo", gs.annot@label)) == 1) 
                     && "GOID" %in% colnames(gs.annot@anno) ){
                 generateAllGOgraphsPage(contr.names[i], gs.annot, sort.by,
                         file.name.go[i])
@@ -211,7 +213,8 @@ generate.EGSEA.Report <- function(egseaResults, limma.tops = list(),
                         egsea.comparison, 
                         gs.annot, file.name.pv, comparison=TRUE)
             }   
-            if ((gs.annot@label == "c5" || gs.annot@label == "gsdbgo")  && 
+            if ((length(grep("^c5", gs.annot@label)) == 1 || 
+                    length(grep("^gsdbgo", gs.annot@label)) == 1)  && 
                     "GOID" %in% colnames(gs.annot@anno)){
                 plotGOGraphs.comparison(egsea.results=egsea.comparison.all,
                         gs.annot=gs.annot, gsa.dir=egsea.dir, sort.by=sort.by)

@@ -16,7 +16,7 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
     stopifnot((class(voom.results) == "list" && 
                         "ids" %in% names(voom.results)) 
                     || class(voom.results) == "EList")  
-    stopifnot(!is.null(contrast))
+    #stopifnot(!is.null(contrast))
     stopifnot(!is.null(gs.annots))
     stopifnot(length(baseGSEAs) > 0 && length(setdiff(baseGSEAs, egsea.base())) == 0)
     stopifnot(combineMethod %in% egsea.combine())

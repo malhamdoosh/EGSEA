@@ -105,10 +105,17 @@ setMethod(f = "selectGeneSets",
                 gs.names = gs.names[sapply(object@idx[gs.names], function(x) 
                                     length(x)) >= min.size]
             }
-            sel = match(gs.names, object@anno[, "GeneSet"])
-            gs.annot.top@original = object@original[sel]
-            gs.annot.top@idx = object@idx[sel]
-            gs.annot.top@anno = object@anno[sel,]
+            if ("GeneSet" %in% colnames(object@anno)){
+                sel = match(gs.names, object@anno[, "GeneSet"])
+                gs.annot.top@original = object@original[sel]
+                gs.annot.top@idx = object@idx[sel]
+                gs.annot.top@anno = object@anno[sel,]
+                gs.annot.top@anno = droplevels(gs.annot.top@anno)
+            }else{
+                cat("WARNING: the 'GeneSet' column was not found in 'anno'.")
+                gs.annot.top@original = object@original
+                gs.annot.top@idx = object@idx
+            }
             gs.annot.top@label = object@label
             gs.annot.top@featureIDs = object@featureIDs
             gs.annot.top@species = object@species

@@ -1,5 +1,10 @@
 bibentry(bibtype = "Article",
-         title = "Combining multiple tools outperforms individual methods in gene set enrichment analyses",
+		header = "To cite EGSEA:",
+		footer = "This work is a collaboration between industry 
+		(CSL Limited) and academia (Walter and Eliza Hall Institute of Medical Research) in
+		 Melbourne, Australia. If you find it useful, please cite the listed articles in your publications", 
+         title = "Combining multiple tools outperforms individual methods in gene set enrichment 
+         analyses",
          author = c(person("Monther", "Alhamdoosh"),
                     person("Milica", "Ng"),
                     person("Nicholas", "Wilson"),
@@ -12,5 +17,9 @@ bibentry(bibtype = "Article",
          volume = 33,
          number = 3,
          year = 2017,
-         doi = "10.1093/bioinformatics/btw623")
+         doi = "10.1093/bioinformatics/btw623",
+         textVersion=paste0("Alhamdoosh M, Ng M, Wilson N, Sheridan J, Huynh H, Wilson M and ",
+						"Ritchie M (2017). Combining multiple tools outperforms ",
+						"individual methods in gene set enrichment analyses. ",
+						"Bioinformatics, 33 (3)."))
         

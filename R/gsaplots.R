@@ -103,99 +103,102 @@ generateGOGraphs <- function(egsea.results, gs.annot, sort.by,
                             gs.annot@anno[, "GeneSet"]), 
                     "GOID"])       
     # Generate the BP graph
-    tryCatch({
-            scores.sub = rep(max.score, 
-                    length(topGOdata[["BP"]]@graph@nodes))
-            names(scores.sub) = topGOdata[["BP"]]@graph@nodes
-            scores.sub[go.subsets[["BP"]]] = 
-                    scores[go.subsets[["BP"]]]
-            if (is.null(format) || tolower(format) == "pdf"){
-                pdf(paste0(file.name, "BP.pdf"))     
-                showSigOfNodes(topGOdata[["BP"]], scores.sub, 
-                        firstSigNodes=noSig, 
-                        useInfo='def', sigForAll=FALSE) # or 
-                # use printGraph to write out plot to file
+    if (length(go.subsets[["BP"]]) > 0)
+        tryCatch({
+                scores.sub = rep(max.score, 
+                        length(topGOdata[["BP"]]@graph@nodes))
+                names(scores.sub) = topGOdata[["BP"]]@graph@nodes
+                scores.sub[go.subsets[["BP"]]] = 
+                        scores[go.subsets[["BP"]]]
+                if (is.null(format) || tolower(format) == "pdf"){
+                    pdf(paste0(file.name, "BP.pdf"))     
+                    showSigOfNodes(topGOdata[["BP"]], scores.sub, 
+                            firstSigNodes=noSig, 
+                            useInfo='def', sigForAll=FALSE) # or 
+                    # use printGraph to write out plot to file
+                    dev.off()
+                }
+                if (is.null(format) || tolower(format) == "png"){
+                    png(paste0(file.name, "BP.png"), width=800, 
+                            height=800)
+                    showSigOfNodes(topGOdata[["BP"]], scores.sub, 
+                            firstSigNodes=noSig, 
+                            useInfo='def', sigForAll=FALSE) # or 
+                    # use printGraph to write out plot to file
+                    dev.off()
+                }
+            }, error=function(err){
+                print(paste("MY_ERROR:  ",err))
                 dev.off()
+                file.remove(paste0(file.name, "BP.pdf"))
+                file.remove(paste0(file.name, "BP.png"))
             }
-            if (is.null(format) || tolower(format) == "png"){
-                png(paste0(file.name, "BP.png"), width=800, 
-                        height=800)
-                showSigOfNodes(topGOdata[["BP"]], scores.sub, 
-                        firstSigNodes=noSig, 
-                        useInfo='def', sigForAll=FALSE) # or 
-                # use printGraph to write out plot to file
-                dev.off()
-            }
-        }, error=function(err){
-            print(paste("MY_ERROR:  ",err))
-            dev.off()
-            file.remove(paste0(file.name, "BP.pdf"))
-            file.remove(paste0(file.name, "BP.png"))
-        }
-    )
+        )
 #       stop("here")
     # write the MF graph
-    tryCatch({
-            scores.sub = rep(max.score, 
-                    length(topGOdata[["MF"]]@graph@nodes))
-            names(scores.sub) = topGOdata[["MF"]]@graph@nodes
-            scores.sub[go.subsets[["MF"]]] = 
-                    scores[go.subsets[["MF"]]]
-            if (is.null(format) || tolower(format) == "pdf"){
-                pdf(paste0(file.name, "MF.pdf"))
-                showSigOfNodes(topGOdata[["MF"]], scores.sub, 
-                        firstSigNodes=noSig, 
-                        sigForAll=FALSE, useInfo='def') # or 
-    # use printGraph to write out plot to file
+    if (length(go.subsets[["MF"]]) > 0)
+        tryCatch({
+                scores.sub = rep(max.score, 
+                        length(topGOdata[["MF"]]@graph@nodes))
+                names(scores.sub) = topGOdata[["MF"]]@graph@nodes
+                scores.sub[go.subsets[["MF"]]] = 
+                        scores[go.subsets[["MF"]]]
+                if (is.null(format) || tolower(format) == "pdf"){
+                    pdf(paste0(file.name, "MF.pdf"))
+                    showSigOfNodes(topGOdata[["MF"]], scores.sub, 
+                            firstSigNodes=noSig, 
+                            sigForAll=FALSE, useInfo='def') # or 
+        # use printGraph to write out plot to file
+                    dev.off()
+                }
+                if (is.null(format) || tolower(format) == "png"){
+                    png(paste0(file.name, "MF.png"), width=800, 
+                            height=800)
+                    showSigOfNodes(topGOdata[["MF"]], scores.sub, 
+                            firstSigNodes=noSig, 
+                            sigForAll=FALSE, useInfo='def') # or 
+        # use printGraph to write out plot to file
+                    dev.off()
+                }
+            }, error=function(err){
+                print(paste("MY_ERROR:  ",err))
                 dev.off()
+                file.remove(paste0(file.name, "MF.pdf"))
+                file.remove(paste0(file.name, "MF.png"))
             }
-            if (is.null(format) || tolower(format) == "png"){
-                png(paste0(file.name, "MF.png"), width=800, 
-                        height=800)
-                showSigOfNodes(topGOdata[["MF"]], scores.sub, 
-                        firstSigNodes=noSig, 
-                        sigForAll=FALSE, useInfo='def') # or 
-    # use printGraph to write out plot to file
-                dev.off()
-            }
-        }, error=function(err){
-            print(paste("MY_ERROR:  ",err))
-            dev.off()
-            file.remove(paste0(file.name, "MF.pdf"))
-            file.remove(paste0(file.name, "MF.png"))
-        }
-    )       
+        )       
     # write the CC graph
-    tryCatch({
-            scores.sub = rep(max.score, 
-                    length(topGOdata[["CC"]]@graph@nodes))
-            names(scores.sub) = topGOdata[["CC"]]@graph@nodes
-            scores.sub[go.subsets[["CC"]]] = 
-                    scores[go.subsets[["CC"]]]
-            if (is.null(format) || tolower(format) == "pdf"){
-                pdf(paste0(file.name, "CC.pdf"))
-                showSigOfNodes(topGOdata[["CC"]], scores.sub, 
-                        firstSigNodes=noSig, 
-                        sigForAll=FALSE, useInfo='def') # or 
-                # use printGraph to write out plot to file
+    if (length(go.subsets[["CC"]]) > 0)
+        tryCatch({
+                scores.sub = rep(max.score, 
+                        length(topGOdata[["CC"]]@graph@nodes))
+                names(scores.sub) = topGOdata[["CC"]]@graph@nodes
+                scores.sub[go.subsets[["CC"]]] = 
+                        scores[go.subsets[["CC"]]]
+                if (is.null(format) || tolower(format) == "pdf"){
+                    pdf(paste0(file.name, "CC.pdf"))
+                    showSigOfNodes(topGOdata[["CC"]], scores.sub, 
+                            firstSigNodes=noSig, 
+                            sigForAll=FALSE, useInfo='def') # or 
+                    # use printGraph to write out plot to file
+                    dev.off()
+                }
+                if (is.null(format) || tolower(format) == "png"){
+                    png(paste0(file.name, "CC.png"), width=800, 
+                            height=800)
+                    showSigOfNodes(topGOdata[["CC"]], scores.sub, 
+                            firstSigNodes=noSig, 
+                            sigForAll=FALSE, useInfo='def') # or 
+                    # use printGraph to write out plot to file
+                    dev.off()
+                }
+            }, error=function(err){
+                print(paste("MY_ERROR:  ",err))
                 dev.off()
+                file.remove(paste0(file.name, "CC.pdf"))
+                file.remove(paste0(file.name, "CC.png"))
             }
-            if (is.null(format) || tolower(format) == "png"){
-                png(paste0(file.name, "CC.png"), width=800, 
-                        height=800)
-                showSigOfNodes(topGOdata[["CC"]], scores.sub, 
-                        firstSigNodes=noSig, 
-                        sigForAll=FALSE, useInfo='def') # or 
-                # use printGraph to write out plot to file
-                dev.off()
-            }
-        }, error=function(err){
-            print(paste("MY_ERROR:  ",err))
-            dev.off()
-            file.remove(paste0(file.name, "CC.pdf"))
-            file.remove(paste0(file.name, "CC.png"))
-        }
-    )
+        )
 }
 
 topDiffGenes <- function (allScore) {
@@ -952,8 +955,8 @@ createSummaryHeatmap <- function(hm, contrasts, colrange,
                 main = title)
     if (showLegend){ 
         legend(x=0.73, y=1.1, xpd=TRUE,   
-                legend = c("Highly ranked", "Averagely ranked",
-                        "Lowly ranked"),
+                legend = c("High", "Medium",
+                        "Low"),
                 border = "#FFFFFF",
                 fill = "#FFFFFF",
                 #col = c("#186F0F", "#53AC49", "#7FCC77"), # GREEN

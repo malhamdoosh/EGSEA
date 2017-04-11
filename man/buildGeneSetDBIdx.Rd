@@ -4,7 +4,8 @@
 \alias{buildGeneSetDBIdx}
 \title{Gene Set Collection Indexes from the GeneSetDB Database}
 \usage{
-buildGeneSetDBIdx(entrezIDs, species, geneSets = "all", min.size = 1)
+buildGeneSetDBIdx(entrezIDs, species, geneSets = "all", go.part = FALSE,
+  min.size = 1)
 }
 \arguments{
 \item{entrezIDs}{character, a vector that stores the Entrez Gene IDs tagged 
@@ -23,6 +24,9 @@ It takes "all", "gsdbdis", "gsdbgo", "gsdbdrug", "gsdbpath" or "gsdbreg".
  "gsdbdrug" to load the drug/chemical collection, 
 "gsdbpath" to load the pathways collection and "gsdbreg" to load the gene regulation
 collection.}
+
+\item{go.part}{logical, whether to partition the C5 collection into the
+three GO domains: CC, MF and BP or use the entire collection all together.}
 
 \item{min.size}{integer, the minium number of genes required in a testing 
 gene set}

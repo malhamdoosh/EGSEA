@@ -25,6 +25,11 @@ gs.annot@anno[,"GeneSet"]),]
         annot.frame[, "BroadUrl"] = hmakeTag("a", "Go to Broad", 
 href=annot.frame[, "BroadUrl"]) 
     }
+    if (length(grep("^gsdbgo", gs.annot@label)) == 1){
+        annot.frame[, "SourceDB"] = "Go to AmiGO"
+        annot.frame[, "SourceURL"] = paste0("http://amigo.geneontology.org/amigo/term/",
+                annot.frame[, "GOID"])
+    }
     if ("SourceURL" %in% colnames(annot.frame)){
         annot.frame[, "SourceDB"] = hmakeTag("a", annot.frame[, 
 "SourceDB"], href=annot.frame[, "SourceURL"])
@@ -35,7 +40,12 @@ colnames(annot.frame)]
     if ("Rank"  %in% colnames(table.data) ){
         table.data[, "Rank"] = as.numeric(table.data[, "Rank"])
     }
-
+    if ("p.value" %in% colnames(table.data)){
+        table.data[, "p.value"] = as.character(table.data[, "p.value"])
+    }
+    if ("p.adj" %in% colnames(table.data)){
+        table.data[, "p.adj"] = as.character(table.data[, "p.adj"])
+    }
     
     capture.output(HTMLsortedTable(table.data, title, title, file=file, path=path))
     
@@ -146,6 +156,11 @@ gs.annot@anno[,"GeneSet"]),],
                 href=table.data[, "BroadUrl"], 
 'target'='_blank')  
     }
+    if (length(grep("^gsdbgo", gs.annot@label)) == 1){
+        table.data[, "SourceDB"] = "Go to AmiGO"
+        table.data[, "SourceURL"] = paste0("http://amigo.geneontology.org/amigo/term/",
+                table.data[, "GOID"])
+    }
     if ("SourceURL" %in% colnames(table.data)){
         table.data[, "SourceDB"] = hmakeTag("a", table.data[, 
 "SourceDB"], href=table.data[, "SourceURL"])
@@ -179,6 +194,13 @@ as.character(lapply(as.numeric(table.data[, "direction"]),
     if ("Rank"  %in% colnames(table.data) ){
         table.data[, "Rank"] = as.numeric(table.data[, "Rank"])
     }
+    if ("p.value" %in% colnames(table.data)){
+        table.data[, "p.value"] = as.character(table.data[, "p.value"])
+    }
+    if ("p.adj" %in% colnames(table.data)){
+        table.data[, "p.adj"] = as.character(table.data[, "p.adj"])
+    }
+    
     capture.output(HTMLsortedTable(table.data, title, title, file=file, path=path))
     
 }
@@ -292,31 +314,36 @@ href=pdf.files)
 
 generateAllGOgraphsPage.comparison <- function(contrast.names, gs.annot, 
         sort.by, file.name){
-    title = paste0("Gene Set Enrichment Analysis on ", gs.annot@name, " 
-using EGSEA (Comparison Analysis)")   
-  
-    img.files = paste0("./comparison-", gs.annot@label, "-top-", 
-            sort.by, "-",  c("BP", "MF", "CC"), ".png")
-    plot.titles =c("Top GO Biological Processes ", "Top GO Molecular Functions", 
-        "Top GO Cellular Components ")
-    
-    pdf.files = sub(".png", ".pdf", img.files)
-    
-    images = hmakeTag("a", hmakeTag("img", src=img.files, width=500), 
-        href=pdf.files)
-    pdfs = hmakeTag("a", "Download pdf file", href=pdf.files)
-        
-    content = paste(images, plot.titles, pdfs, sep="<br/>")
-    if (length(content) %% 2 != 0){     
-        content = c(content, "")# to make sure there are multiple of 2s
-    }   
-    content = matrix(content, ncol=2, byrow = TRUE)
-    
     path = strsplit(file.name, "/")[[1]]    
     file = path[length(path)]
     file = gsub(".txt", ".html", file)
     path = paste0(paste(path[1:length(path) -1], collapse = "/"), "/")
     
+    title = paste0("Gene Set Enrichment Analysis on ", gs.annot@name, " 
+using EGSEA (Comparison Analysis)")   
+    check.files = file.exists(paste0(path, 
+                    "comparison-", gs.annot@label, "-top-", 
+            sort.by, "-",  c("BP", "MF", "CC"), ".png"))
+    if (sum(check.files) == 0 )
+        content = hmakeTag("h3", "GO graphs could not be generated!")
+    else{
+        img.files = paste0("./comparison-", gs.annot@label, "-top-", 
+                sort.by, "-",  c("BP", "MF", "CC"), ".png")[check.files]
+        plot.titles =c("Top GO Biological Processes ", "Top GO Molecular Functions", 
+            "Top GO Cellular Components ")[check.files]
+        
+        pdf.files = sub(".png", ".pdf", img.files)
+        
+        images = hmakeTag("a", hmakeTag("img", src=img.files, width=500), 
+            href=pdf.files)
+        pdfs = hmakeTag("a", "Download pdf file", href=pdf.files)
+            
+        content = paste(images, plot.titles, pdfs, sep="<br/>")
+        if (length(content) %% 2 != 0){     
+            content = c(content, "")# to make sure there are multiple of 2s
+        }   
+        content = matrix(content, ncol=2, byrow = TRUE)
+    }
     p = openPage(file, dirname=path, title=title)
     hwrite(title, heading=1, br=TRUE, page=p)
     hwrite(content, align="center", border=0, page=p)
@@ -624,7 +651,7 @@ href=file.name))
 hmakeTag("a", "Pathways" , href=file.name))
         }
         
-        go.idx = which(gs.labels %in% c("c5", "gsdbgo"))
+        go.idx = c(grep("^c5", gs.labels), grep("^gsdbgo", gs.labels))
         if (length(go.idx) !=0 ){
             file.name = paste0(go.dir, 
                     sub(" - ", "-", contr.names[i]), 
@@ -672,7 +699,7 @@ href=file.name))
 hmakeTag("a", "Pathways" , href=file.name))
         }
         
-        go.idx = which(gs.labels %in% c("c5", "gsdbgo"))
+        go.idx = c(grep("^c5", gs.labels), grep("^gsdbgo", gs.labels))
         if (length(go.idx) !=0 ){
             file.name = paste0(go.dir, gs.labels[go.idx], '-allGOgraphs.html')  
             temp[go.idx] = paste0(temp[go.idx], ", ", hmakeTag("a", 

@@ -6,8 +6,8 @@
 Databases}
 \usage{
 buildIdx(entrezIDs, species = "human", msigdb.gsets = "all",
-  gsdb.gsets = "none", kegg.updated = FALSE, kegg.exclude = c(),
-  min.size = 1)
+  gsdb.gsets = "none", go.part = FALSE, kegg.updated = FALSE,
+  kegg.exclude = c(), min.size = 1)
 }
 \arguments{
 \item{entrezIDs}{character, a vector that stores the Entrez Gene IDs tagged 
@@ -35,6 +35,9 @@ It takes "none", "all", "gsdbdis", "gsdbgo", "gsdbdrug", "gsdbpath" or "gsdbreg"
  "gsdbdrug" to load the drug/chemical collection, 
 "gsdbpath" to load the pathways collection and "gsdbreg" to load the gene regulation
 collection.}
+
+\item{go.part}{logical, whether to partition the GO term collections into the
+three GO domains: CC, MF and BP or use the entire collection all together.}
 
 \item{kegg.updated}{logical, set to TRUE if you want to download the most 
 recent KEGG pathways.}
@@ -75,7 +78,8 @@ library(EGSEAdata)
 data(il13.data)
 v = il13.data$voom
 gs.annots = buildIdx(entrezIDs=rownames(v$E), species="human",
-         msigdb.gsets = c("h", "c2"),
+         msigdb.gsets = c("h", "c5"),
+			go.part = TRUE,
          kegg.exclude = c("Metabolism"))
 names(gs.annots)
 }

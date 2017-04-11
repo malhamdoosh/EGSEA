@@ -4,8 +4,8 @@
 \alias{buildMSigDBIdx}
 \title{Gene Set Collection Indexes from the MSigDB Database}
 \usage{
-buildMSigDBIdx(entrezIDs, geneSets = "all", species = "Homo sapiens",
-  min.size = 1)
+buildMSigDBIdx(entrezIDs, species = "Homo sapiens", geneSets = "all",
+  go.part = FALSE, min.size = 1)
 }
 \arguments{
 \item{entrezIDs}{character, a vector that stores the Entrez Gene IDs tagged 
@@ -13,14 +13,17 @@ in your dataset.
 The order of the Entrez Gene IDs should match those of the count/expression 
 matrix row names.}
 
+\item{species}{character, determine the organism of selected gene sets: 
+"human", "mouse" or "rat".}
+
 \item{geneSets}{character, a vector determines which gene set collections 
 should be used from the MSigDB.
 It can take values from this list: "all", "h", "c1", "c2", "c3", "c4", "c5", 
 "c6","c7". "c1"
 is human specific. If "all", all available gene set collections are loaded.}
 
-\item{species}{character, determine the organism of selected gene sets: 
-"human", "mouse" or "rat".}
+\item{go.part}{logical, whether to partition the C5 collection into the
+three GO domains: CC, MF and BP or use the entire collection all together.}
 
 \item{min.size}{integer, the minium number of genes required in a testing 
 gene set}
@@ -51,8 +54,8 @@ It indexes the MSigDB gene sets and loads gene set annotation.
 library(EGSEAdata)
 data(il13.data)
 v = il13.data$voom
-gs.annots = buildMSigDBIdx(entrezIDs=rownames(v$E), geneSets=c("h", 
-"c2"), species="human")
+gs.annots = buildMSigDBIdx(entrezIDs=rownames(v$E), species="human",
+geneSets=c("h", "c2"))
 names(gs.annots)
 }
 

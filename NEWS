@@ -92,5 +92,9 @@ EGSEA 1.3.1 (2017-01-28)
 - Improved: the colour of summary heatmaps. 
 - Modified: buildMSigDBIdx to work with C5 collection of version 5.2 
 
+EGSEA 1.3.2 (2017-03-16)
+------------------------
+- Added: features to allow partitioning GO collections into GO domains 
+
 
 

@@ -214,7 +214,7 @@ setGeneric(name="addSymbolsMap",
                               top.gs = object@results[[gs.label]][["test.results"]][[contrast]]
                           if (! is.null(sort.by)){
                               top.gs = top.gs[order(top.gs[,sort.by],
-                                              decreasing=(sort.by == "Significance")), ]
+                                              decreasing=(sort.by == "significance")), ]
                           }   
                           top.gs = cbind(Rank=seq(1, nrow(top.gs)), top.gs)
                           

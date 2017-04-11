@@ -6,7 +6,7 @@
 \usage{
 egsea.cnt(counts, group, design = NULL, contrasts = NULL, logFC = NULL,
   gs.annots, symbolsMap = NULL, baseGSEAs = egsea.base(), minSize = 2,
-  display.top = 20, combineMethod = "fisher", combineWeights = NULL,
+  display.top = 20, combineMethod = "wilkinson", combineWeights = NULL,
   sort.by = "p.adj", egsea.dir = NULL, kegg.dir = NULL,
   logFC.cutoff = 0, fdr.cutoff = 0.05, sum.plot.axis = "p.adj",
   sum.plot.cutoff = NULL, vote.bin.width = 5, num.threads = 4,
