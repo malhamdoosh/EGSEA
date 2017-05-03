@@ -65,6 +65,7 @@ runsafe.contrast <- function(args){
     safe.results = cbind(Rank = seq(1, 
                     nrow(safe.results)), safe.results)
     colnames(safe.results)[which(colnames(safe.results) == "P.value")] = "p.value"
+    colnames(safe.results)[which(colnames(safe.results) == "Adj.p.value")] = "p.adj"
     return(safe.results)
 }
 

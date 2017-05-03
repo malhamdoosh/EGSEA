@@ -51,18 +51,23 @@ runglobaltest.contrast <- function(args){
             rep("c", length(args$group1)))
     colnames(data.log.sel) = group
     # perform the globaltest
-    globaltest.results = result(gt(factor(group), 
-                    data.log.sel, subsets=args$gs.annot@idx, 
-                    permutations=10000))
-    
+    gtobject = gt(factor(group), 
+            data.log.sel, subsets=args$gs.annot@idx, 
+            permutations=10000)
+#    print("heregt")
+    globaltest.results = result(gtobject)
+#    print(head( globaltest.results))
     globaltest.results = globaltest.results[
             order(globaltest.results[,"p-value"],
                     -globaltest.results[,"Statistic"]),]
     globaltest.results = cbind(
-            Rank=seq(1, nrow(globaltest.results)), 
+            Rank=seq(1, nrow(globaltest.results)),             
             globaltest.results)
     colnames(globaltest.results)[which(
                     colnames(globaltest.results) == "p-value")] = "p.value"
+    padog.results = cbind(globaltest.results,
+            p.adj=p.adjust(globaltest.results[, "p.value"], method="BH"))
+#    print(head( globaltest.results))
     return(globaltest.results)
 }
 

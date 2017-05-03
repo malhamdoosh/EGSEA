@@ -2,39 +2,39 @@
 % Please edit documentation in R/EGSEAclass.R
 \docType{class}
 \name{EGSEAResults}
-\alias{$,EGSEAResults-method}
 \alias{EGSEAResults}
 \alias{EGSEAResults-class}
-\alias{generateReport}
-\alias{generateReport,EGSEAResults-method}
-\alias{getSetScores}
-\alias{getSetScores,EGSEAResults-method}
-\alias{getlimmaResults}
-\alias{getlimmaResults,EGSEAResults-method}
-\alias{limmaTopTable}
-\alias{limmaTopTable,EGSEAResults-method}
-\alias{plotBars}
-\alias{plotBars,EGSEAResults-method}
-\alias{plotGOGraph}
-\alias{plotGOGraph,EGSEAResults-method}
-\alias{plotHeatmap}
-\alias{plotHeatmap,EGSEAResults-method}
-\alias{plotMethods}
-\alias{plotMethods,EGSEAResults-method}
-\alias{plotPathway}
-\alias{plotPathway,EGSEAResults-method}
-\alias{plotSummary}
-\alias{plotSummary,EGSEAResults-method}
-\alias{plotSummaryHeatmap}
-\alias{plotSummaryHeatmap,EGSEAResults-method}
-\alias{show,EGSEAResults-method}
-\alias{showSetByID}
-\alias{showSetByID,EGSEAResults-method}
-\alias{showSetByName}
-\alias{showSetByName,EGSEAResults-method}
-\alias{summary,EGSEAResults-method}
+\alias{$,EGSEAResults-method}
 \alias{topSets}
 \alias{topSets,EGSEAResults-method}
+\alias{show,EGSEAResults-method}
+\alias{summary,EGSEAResults-method}
+\alias{limmaTopTable}
+\alias{limmaTopTable,EGSEAResults-method}
+\alias{generateReport}
+\alias{generateReport,EGSEAResults-method}
+\alias{getlimmaResults}
+\alias{getlimmaResults,EGSEAResults-method}
+\alias{plotHeatmap}
+\alias{plotHeatmap,EGSEAResults-method}
+\alias{plotSummaryHeatmap}
+\alias{plotSummaryHeatmap,EGSEAResults-method}
+\alias{plotPathway}
+\alias{plotPathway,EGSEAResults-method}
+\alias{plotMethods}
+\alias{plotMethods,EGSEAResults-method}
+\alias{plotSummary}
+\alias{plotSummary,EGSEAResults-method}
+\alias{plotGOGraph}
+\alias{plotGOGraph,EGSEAResults-method}
+\alias{plotBars}
+\alias{plotBars,EGSEAResults-method}
+\alias{showSetByName}
+\alias{showSetByName,EGSEAResults-method}
+\alias{showSetByID}
+\alias{showSetByID,EGSEAResults-method}
+\alias{getSetScores}
+\alias{getSetScores,EGSEAResults-method}
 \title{The EGSEAResults class}
 \usage{
 \S4method{$}{EGSEAResults}(x, name)
@@ -388,6 +388,7 @@ limma DE analysis.}
 
 \item{\code{egseaData.version}}{character, the version of EGSEAdata package}
 }}
+
 \examples{
 # Exampple of EGSEAResults
 library(EGSEAdata)
@@ -519,4 +520,3 @@ class(gsa)
 head(getSetScores(gsa, "kegg"))
 
 }
-

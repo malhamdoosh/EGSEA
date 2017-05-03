@@ -1252,6 +1252,7 @@ setGeneric(name="plotMethods",
 #' @export
 #' @return \code{plotBars} does not reutrn data but creates an image file.
 #' 
+#' @importFrom graphics abline
 #' 
 #' @aliases plotBars,EGSEAResults-method
 #' @rdname EGSEAResults-methods

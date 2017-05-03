@@ -260,10 +260,11 @@ setMethod(f = "getSetByName",
                 gset[[x]] = list()
                 for (col in cols){
                     cat(paste0(col, ": ", object@anno[x, col], "\n"))
-                    gset[[col]] = object@anno[x, col]
+                    gset[[x]][[col]] = object@anno[x, col]
                 }
                 cat("\n")                
             }
+            names(gset) = set.name
             return(gset)
         }
 
@@ -318,10 +319,11 @@ setMethod(f = "getSetByID",
                 gset[[x]] = list()
                 for (col in cols){
                     cat(paste0(col, ": ", object@anno[x, col], "\n"))
-                    gset[[col]] = object@anno[x, col]
+                    gset[[x]][[col]] = object@anno[x, col]
                 }
                 cat("\n")
             }
+            names(gset) = id
             return(gset)
         }
 

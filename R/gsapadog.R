@@ -56,6 +56,8 @@ runpadog.contrast <- function(args){
             Rank = seq(1, nrow(padog.results)), 
             padog.results)
     colnames(padog.results)[which(colnames(padog.results) == "Ppadog")] = "p.value"  
+    padog.results = cbind(padog.results,
+            p.adj=p.adjust(padog.results[, "p.value"], method="BH"))
     return(padog.results)
 }
 

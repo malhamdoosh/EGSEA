@@ -54,6 +54,7 @@ rungage.contrast <- function(args){
     gage.results = cbind(Rank=seq(1, nrow(gage.results)), 
             gage.results)    
     colnames(gage.results)[which(colnames(gage.results) == "p.val")] = "p.value"
+    colnames(gage.results)[which(colnames(gage.results) == "q.val")] = "p.adj"
     return(gage.results)
 }
 

@@ -47,12 +47,13 @@ loadKeggData <- function(){
 }
 
 
-#' @title Gene Set Collection Index from the KEGG Database
+#' @title Functions to create gene set collection indexes for EGSEA
 #' 
-#' @description It prepares the KEGG pathway collection to be used for the 
-#' EGSEA analysis. 
+#' @description \code{buildIdx} indexes the MSigDB, KEGG  
+#' and GeneSetDB collections to be used for the EGSEA analysis. 
 #' 
-#' @details It indexes the KEGG pathway gene sets and loads gene set annotation.
+#' @details \code{buildIdx} indexes the MSigDB, KEGG 
+#' and GeneSetDB gene set collections, and loads gene set annotation.
 #'   
 #' @param entrezIDs character, a vector that stores the Entrez Gene IDs tagged 
 #' in your dataset. 
@@ -60,30 +61,110 @@ loadKeggData <- function(){
 #' matrix row names.
 #' @param species character, determine the organism of selected gene sets: 
 #' "human", "mouse" or "rat".
+#' @param msigdb.gsets character, a vector determines which gene set 
+#' collections should be used from MSigDB.
+#' It can take values from this list: "h", "c1", "c2", "c3", "c4", "c5", 
+#' "c6","c7". "h" and "c1"
+#' are human specific. If "all", all available gene set collections are loaded. 
+#' If "none", 
+#' MSigDB collections are excluded.
+#' @param gsdb.gsets character, a vector determines which gene set collections
+#' are loaded from the GeneSetDB.
+#' It takes "none", "all", "gsdbdis", "gsdbgo", "gsdbdrug", "gsdbpath" or "gsdbreg". 
+#' "none" excludes the GeneSetDB collections.
+#' "all" includes all the GeneSetDB collections.  
+#' "gsdbdis" to load the disease collection, "gsdbgo" to load the GO terms collection,
+#'  "gsdbdrug" to load the drug/chemical collection, 
+#' "gsdbpath" to load the pathways collection and "gsdbreg" to load the gene regulation
+#' collection. 
+#' @param go.part logical, whether to partition the GO term collections into the
+#' three GO domains: CC, MF and BP or use the entire collection all together. 
+#' @param kegg.updated logical, set to TRUE if you want to download the most 
+#' recent KEGG pathways.
+#' @param kegg.exclude character, vector used to exclude KEGG pathways of 
+#' specific type(s): 
+#' Disease, Metabolism, Signaling. If "all", none fo the KEGG collections is 
+#' included.  
 #' @param min.size integer, the minium number of genes required in a testing 
 #' gene set
+#'
+#' @return \code{buildIdx} returns a list of gene set collection indexes, where
+#' each element of the list is an object of the class GSCollectionIndex. 
+#' 
+#' @import EGSEAdata
+#' @export 
+#' 
+#' @name buildIdx
+#' @aliases buildIdx,egsea-index
+#' @rdname egsea-index
+#' 
+#' @examples 
+#' # example of buildIdx
+#' library(EGSEAdata)
+#' data(il13.data)
+#' v = il13.data$voom
+#' gs.annots = buildIdx(entrezIDs=rownames(v$E), species="human",
+#'          msigdb.gsets = c("h", "c5"),
+#' 			go.part = TRUE,
+#'          kegg.exclude = c("Metabolism"))
+#' names(gs.annots)
+
+buildIdx <- function(entrezIDs, species="human", 
+        msigdb.gsets="all",        
+        gsdb.gsets = "none",
+        go.part = FALSE,
+        kegg.updated=FALSE, kegg.exclude=c(), 
+        min.size = 1){
+    if (length(msigdb.gsets) == 1 && tolower(msigdb.gsets[1]) == "none")
+        gs.annots = list()
+    else
+        gs.annots = buildMSigDBIdx(entrezIDs=entrezIDs,            
+                species = species,  
+                geneSets = msigdb.gsets,
+                go.part = go.part,
+                min.size = min.size)
+    if (!is.null(gsdb.gsets) && tolower(gsdb.gsets[1]) != "none")
+        gs.annots = c(gs.annots, buildGeneSetDBIdx(entrezIDs = entrezIDs, 
+                        species = species, geneSets = gsdb.gsets, 
+                        go.part = go.part,
+                        min.size=min.size))
+    if (length(kegg.exclude) == 1 && tolower(kegg.exclude[1]) == "all")
+        return(gs.annots)
+    gs.annot = buildKEGGIdx(entrezIDs=entrezIDs,species = species,  
+            min.size= min.size, updated = kegg.updated, exclude=kegg.exclude) 
+    gs.annots[["kegg"]] = gs.annot
+    rm(gs.annot)
+    return(gs.annots)
+}
+
+
+#' @title Gene Set Collection Index from the KEGG Database
+#' 
+#' @description \code{buildKEGGIdx} prepares the KEGG pathway collection to 
+#' be used for the EGSEA analysis. 
+#' 
+#' @details \code{buildKEGGIdx} indexes the KEGG pathway gene sets and 
+#' loads gene set annotation.
+#'   
+#' @inheritParams entrezIDs 
+#' @inheritParams species 
+#' @inheritParams min.size 
 #' @param updated logical, set to TRUE if you want to download the most recent 
 #' KEGG pathways.
 #' @param exclude character, vector used to exclude KEGG pathways of 
 #' specific category. Accepted values are "Disease", "Metabolism", or "Signaling".
 #'
-#' @return indexed gene set annotation that can be used with other functions in 
-#' the package.
-#' Each annotation is a list of seven elements: \code{original} stores the 
-#' original gene sets, 
-#' \code{idx} stores the indexed gene sets,  \code{anno} that stores detailed 
-#' annotation for each 
-#' gene set, \code{label} a unique id that identifies the collection of gene 
-#' sets, 
-#' \code{featureIDs} stores the entrezIDs used in building the annotation, 
-#' \code{species}
-#'  stores that organism name of gene sets and \code{name}  stores the 
-#' collection name 
-#' to be used in the EGSEA report.
+#' @return \code{buildKEGGIdx} returns an object of the class GSCollectionIndex. 
 #' 
 #' @import EGSEAdata
 #' @export 
+#' 
+#' @name buildKEGGIdx
+#' @aliases buildKEGGIdx,egsea-index
+#' @rdname egsea-index
+#' 
 #' @examples 
+#' # example of buildKEGGIdx
 #' library(EGSEAdata)
 #' data(il13.data)
 #' v = il13.data$voom
@@ -169,44 +250,38 @@ sapply(gsets.ez, length)),
 
 #' @title Gene Set Collection Indexes from the MSigDB Database
 #' 
-#' @description It prepares the MSigDB gene set collections to be used for the 
-#' EGSEA analysis. 
+#' @description \code{buildMSigDBIdx} prepares the MSigDB gene set collections
+#'  to be used for the EGSEA analysis. 
 #' 
-#' @details It indexes the MSigDB gene sets and loads gene set annotation.
+#' @details \code{buildMSigDBIdx} indexes the MSigDB gene sets and loads gene 
+#' set annotation.
 #'   
-#' @param entrezIDs character, a vector that stores the Entrez Gene IDs tagged 
-#' in your dataset. 
-#' The order of the Entrez Gene IDs should match those of the count/expression 
-#' matrix row names.
-#' @param species character, determine the organism of selected gene sets: 
-#' "human", "mouse" or "rat".
+#' @inheritParams entrezIDs 
+#' @inheritParams species 
 #' @param geneSets character, a vector determines which gene set collections 
-#' should be used from the MSigDB.
-#' It can take values from this list: "all", "h", "c1", "c2", "c3", "c4", "c5", 
-#' "c6","c7". "c1"
-#' is human specific. If "all", all available gene set collections are loaded. 
-#' @param go.part logical, whether to partition the C5 collection into the
-#' three GO domains: CC, MF and BP or use the entire collection all together.  
-#' @param min.size integer, the minium number of genes required in a testing 
-#' gene set 
+#' should be used. For MSigDB, it can take values from this list: 
+#' "all", "h", "c1", "c2", "c3", "c4", "c5", "c6","c7". "c1"
+#' is human specific. For GeneSetDB, it takes 
+#' "all", "gsdbdis", "gsdbgo", "gsdbdrug", "gsdbpath" or "gsdbreg".
+#' "gsdbdis" is to load the disease collection, "gsdbgo" to load the GO terms collection,
+#'  "gsdbdrug" to load the drug/chemical collection, 
+#' "gsdbpath" to load the pathways collection and "gsdbreg" to load the gene regulation
+#' collection.  If "all", all available gene set collections are loaded. 
+#' @inheritParams go.part 
+#' @inheritParams min.size 
 #'
-#'@return indexed gene set annotation that can be used with other functions in 
-#' the package.
-#' Each annotation is a list of seven elements: \code{original} stores the 
-#' original gene sets, 
-#' \code{idx} stores the indexed gene sets,  \code{anno} that stores detailed 
-#' annotation for each 
-#' gene set, \code{label} a unique id that identifies the collection of gene 
-#' sets, 
-#' \code{featureIDs} stores the entrezIDs used in building the annotation, 
-#' \code{species}
-#'  stores that organism name of gene sets and \code{name}  stores the 
-#' collection name 
-#' to be used in the EGSEA report.
+#' @return \code{buildMSigDBIdx} returns a list of gene set collection indexes, where
+#' each element of the list is an object of the class GSCollectionIndex. 
 #' 
 #' @import EGSEAdata
 #' @export 
+#' 
+#' @name buildMSigDBIdx
+#' @aliases buildMSigDBIdx,egsea-index
+#' @rdname egsea-index
+#' 
 #' @examples 
+#' # example of buildMSigDBIdx
 #' library(EGSEAdata)
 #' data(il13.data)
 #' v = il13.data$voom
@@ -371,47 +446,30 @@ buildMSigDBIdx <- function(entrezIDs,
 
 #' @title Gene Set Collection Indexes from the GeneSetDB Database
 #' 
-#' @description It prepares the GeneSetDB gene set collections to be used for 
-#' the EGSEA analysis. 
+#' @description \code{buildGeneSetDBIdx} prepares the GeneSetDB gene set 
+#' collections to be used for the EGSEA analysis. 
 #' 
-#' @details It indexes the GeneSetDB gene sets and loads gene set annotation.
+#' @details \code{buildGeneSetDBIdx} indexes the GeneSetDB gene sets and 
+#' loads gene set annotation.
 #'   
-#' @param entrezIDs character, a vector that stores the Entrez Gene IDs tagged 
-#' in your dataset. 
-#' The order of the Entrez Gene IDs should match those of the count/expression 
-#' matrix row names.
-#' @param species character, determine the organism of selected gene sets: 
-#' "human", "mouse" or "rat".
-#' @param geneSets character, a vector determines which gene set collections
-#' are loaded from the GeneSetDB.
-#' It takes "all", "gsdbdis", "gsdbgo", "gsdbdrug", "gsdbpath" or "gsdbreg". 
-#' "all" includes all the GeneSetDB collections.  
-#' "gsdbdis" is to load the disease collection, "gsdbgo" to load the GO terms collection,
-#'  "gsdbdrug" to load the drug/chemical collection, 
-#' "gsdbpath" to load the pathways collection and "gsdbreg" to load the gene regulation
-#' collection. 
-#' @param go.part logical, whether to partition the C5 collection into the
-#' three GO domains: CC, MF and BP or use the entire collection all together.
-#' @param min.size integer, the minium number of genes required in a testing 
-#' gene set
+#' @inheritParams entrezIDs 
+#' @inheritParams species 
+#' @inheritParams geneSets
+#' @inheritParams go.part 
+#' @inheritParams min.size 
 #'
-#' @return indexed gene set annotation that can be used with other functions in 
-#' the package.
-#' Each annotation is a list of seven elements: \code{original} stores the 
-#' original gene sets, 
-#' \code{idx} stores the indexed gene sets,  \code{anno} that stores detailed 
-#' annotation for each 
-#' gene set, \code{label} a unique id that identifies the collection of gene 
-#' sets, 
-#' \code{featureIDs} stores the entrezIDs used in building the annotation, 
-#' \code{species}
-#'  stores that organism name of gene sets and \code{name}  stores the 
-#' collection name 
-#' to be used in the EGSEA report.
+#' @return \code{buildGeneSetDBIdx} returns a list of gene set collection indexes, where
+#' each element of the list is an object of the class GSCollectionIndex. 
 #' 
 #' @import EGSEAdata
 #' @export 
+#' 
+#' @name buildGeneSetDBIdx
+#' @aliases buildGeneSetDBIdx,egsea-index
+#' @rdname egsea-index
+#' 
 #' @examples 
+#' # example of buildGeneSetDBIdx
 #' library(EGSEAdata)
 #' data(il13.data)
 #' v = il13.data$voom
@@ -526,17 +584,13 @@ buildGeneSetDBIdx <- function(entrezIDs, species, geneSets="all",
 
 #' @title Custom Gene Set Collection Index 
 #' 
-#' @description It creates gene set collections from a given list of gene sets 
-#' to be used 
-#' for the EGSEA analysis. 
+#' @description \code{buildCustomIdx} creates a gene set collection from a 
+#' given list of gene sets to be used for the EGSEA analysis. 
 #' 
-#' @details It indexes newly created gene sets and attach gene set annotation 
-#' if provided.
+#' @details \code{buildCustomIdx} indexes newly created gene sets and 
+#' attach gene set annotation if provided.
 #'   
-#' @param entrezIDs character, a vector that stores the Entrez Gene IDs tagged 
-#' in your dataset. 
-#' The order of the Entrez Gene IDs should match those of the count/expression 
-#' matrix row names.
+#' @inheritParams entrezIDs
 #' @param gsets list, list of gene sets. Each gene set is character vector of 
 #' Enterz IDs. 
 #' The names of the list should match the GeneSet column in the \code{anno} 
@@ -549,29 +603,21 @@ buildGeneSetDBIdx <- function(entrezIDs, species, geneSets="all",
 #' @param label character,a unique id that identifies the collection of gene 
 #' sets
 #' @param name character,the collection name to be used in the EGSEA report
-#' @param species character, determine the organism of selected gene sets: 
-#' "human", "mouse" or "rat".
-#' @param min.size integer, the minium number of genes required in a testing 
-#' gene set 
+#' @inheritParams species 
+#' @inheritParams min.size 
 #'
-#' @return indexed gene set annotation that can be used with other functions in 
-#' the package.
-#' Each annotation is a list of seven elements: \code{original} stores the 
-#' original gene sets, 
-#' \code{idx} stores the indexed gene sets,  \code{anno} that stores detailed 
-#' annotation for each 
-#' gene set, \code{label} a unique id that identifies the collection of gene 
-#' sets, 
-#' \code{featureIDs} stores the entrezIDs used in building the annotation, 
-#' \code{species}
-#'  stores that organism name of gene sets and \code{name}  stores the 
-#' collection name 
-#' to be used in the EGSEA report.
+#' @return \code{buildCustomIdx} returns an object of the class GSCollectionIndex.
 #' 
 #' @importFrom limma ids2indices
 #' @import EGSEAdata
 #' @export 
+#' 
+#' @name buildCustomIdx
+#' @aliases buildCustomIdx,egsea-index
+#' @rdname egsea-index
+#' 
 #' @examples
+#' # example of buildCustomIdx
 #' library(EGSEAdata) 
 #' data(il13.data)
 #' v = il13.data$voom
@@ -601,6 +647,7 @@ buildCustomIdx <- function(entrezIDs, gsets, anno=NULL,label="custom",
             GeneSet=gsets.names)
         rownames(anno) = gsets.names
     }else{
+        stopifnot("GeneSet" %in% colnames(anno))
         anno = anno[match(gsets.names, anno[, "GeneSet"]), ]        
     }
     anno[, "NumGenes"] = paste0(sapply(gsets.idx, length), 
@@ -623,100 +670,70 @@ buildCustomIdx <- function(entrezIDs, gsets, anno=NULL,label="custom",
     return(gs.annot)
 }
 
-
-
-#' @title Generate Gene Set Collection Indexes from the MSigDB and KEGG 
-#' Databases
+#' @title Gene Set Collection Index from a GMT file
 #' 
-#' @description It prepares the MSigDB and KEGG gene set collections to be used 
-#' for the EGSEA analysis. 
+#' @description \code{buildCustomIdx} creates a gene set collection from a 
+#' given GMT file to be used for the EGSEA analysis. 
 #' 
-#' @details It indexes the MSigDB and KEGG gene sets and loads gene set 
-#' annotation.
+#' @details \code{buildCustomIdx} indexes newly created gene sets and 
+#' attach gene set annotation if provided.
 #'   
-#' @param entrezIDs character, a vector that stores the Entrez Gene IDs tagged 
-#' in your dataset. 
-#' The order of the Entrez Gene IDs should match those of the count/expression 
-#' matrix row names.
-#' @param species character, determine the organism of selected gene sets: 
-#' "human", "mouse" or "rat".
-#' @param msigdb.gsets character, a vector determines which gene set 
-#' collections should be used from MSigDB.
-#' It can take values from this list: "h", "c1", "c2", "c3", "c4", "c5", 
-#' "c6","c7". "h" and "c1"
-#' are human specific. If "all", all available gene set collections are loaded. 
-#' If "none", 
-#' MSigDB collections are excluded.
-#' @param gsdb.gsets character, a vector determines which gene set collections
-#' are loaded from the GeneSetDB.
-#' It takes "none", "all", "gsdbdis", "gsdbgo", "gsdbdrug", "gsdbpath" or "gsdbreg". 
-#' "none" excludes the GeneSetDB collections.
-#' "all" includes all the GeneSetDB collections.  
-#' "gsdbdis" to load the disease collection, "gsdbgo" to load the GO terms collection,
-#'  "gsdbdrug" to load the drug/chemical collection, 
-#' "gsdbpath" to load the pathways collection and "gsdbreg" to load the gene regulation
-#' collection. 
-#' @param go.part logical, whether to partition the GO term collections into the
-#' three GO domains: CC, MF and BP or use the entire collection all together. 
-#' @param kegg.updated logical, set to TRUE if you want to download the most 
-#' recent KEGG pathways.
-#' @param kegg.exclude character, vector used to exclude KEGG pathways of 
-#' specific type(s): 
-#' Disease, Metabolism, Signaling. If "all", none fo the KEGG collections is 
-#' included.  
-#' @param min.size integer, the minium number of genes required in a testing 
-#' gene set
+#' @inheritParams entrezIDs
+#' @param gmt.file character, the path and name of the GMT file
+#' @param anno.cols integer, number of columns in the GMT file that are 
+#' used for annotation. These columns should be inserted immediately after
+#' the second column. 
+#' @param anno.col.names character, vector of the names of the annotation
+#' columns. 
+#' @inheritParams label 
+#' @inheritParams name 
+#' @inheritParams species 
+#' @inheritParams min.size 
 #'
-#' @return indexed gene set annotation that can be used with other functions in 
-#' the package.
-#' Each annotation is a list of seven elements: \code{original} stores the 
-#' original gene sets, 
-#' \code{idx} stores the indexed gene sets,  \code{anno} that stores detailed 
-#' annotation for each 
-#' gene set, \code{label} a unique id that identifies the collection of gene 
-#' sets, 
-#' \code{featureIDs} stores the entrezIDs used in building the annotation, 
-#' \code{species}
-#'  stores that organism name of gene sets and \code{name}  stores the 
-#' collection name 
-#' to be used in the EGSEA report.
+#' @return \code{buildGMTIdx} returns an object of the class GSCollectionIndex.
 #' 
-#' @import EGSEAdata
 #' @export 
-#' @examples 
-#' library(EGSEAdata)
+#' 
+#' @name buildGMTIdx
+#' @aliases buildGMTIdx,egsea-index
+#' @rdname egsea-index
+#' 
+#' @examples
+#' # example of buildGMTIdx
+#' library(EGSEAdata) 
 #' data(il13.data)
 #' v = il13.data$voom
-#' gs.annots = buildIdx(entrezIDs=rownames(v$E), species="human",
-#'          msigdb.gsets = c("h", "c5"),
-#' 			go.part = TRUE,
-#'          kegg.exclude = c("Metabolism"))
-#' names(gs.annots)
-
-buildIdx <- function(entrezIDs, species="human", 
-        msigdb.gsets="all",        
-        gsdb.gsets = "none",
-        go.part = FALSE,
-        kegg.updated=FALSE, kegg.exclude=c(), 
-        min.size = 1){
-    if (length(msigdb.gsets) == 1 && tolower(msigdb.gsets[1]) == "none")
-        gs.annots = list()
-    else
-        gs.annots = buildMSigDBIdx(entrezIDs=entrezIDs,            
-            species = species,  
-            geneSets = msigdb.gsets,
-            go.part = go.part,
-            min.size = min.size)
-    if (!is.null(gsdb.gsets) && tolower(gsdb.gsets[1]) != "none")
-        gs.annots = c(gs.annots, buildGeneSetDBIdx(entrezIDs = entrezIDs, 
-                        species = species, geneSets = gsdb.gsets, 
-                        go.part = go.part,
-                min.size=min.size))
-    if (length(kegg.exclude) == 1 && tolower(kegg.exclude[1]) == "all")
-        return(gs.annots)
-    gs.annot = buildKEGGIdx(entrezIDs=entrezIDs,species = species,  
-            min.size= min.size, updated = kegg.updated, exclude=kegg.exclude) 
-    gs.annots[["kegg"]] = gs.annot
-    rm(gs.annot)
-    return(gs.annots)
+#' #gs.annot = buildGMTIdx(entrezIDs=rownames(v$E), gsets= gmt.file, 
+#' #species="human")
+#' #class(gs.annot)
+#' 
+#' 
+buildGMTIdx <- function(entrezIDs, gmt.file, anno.cols = 0, 
+        anno.col.names = NULL, label="gmtcustom", 
+        name="User-Defined GMT Gene Sets", species="Human", min.size=1){
+    fc <- file(gmt.file)
+    gsets.raw <- strsplit(readLines(fc), "\t")
+    close(fc)
+    
+    gsets = lapply(gsets.raw, function(x) x[-(1:(anno.cols + 2))])
+    gsets.names = sapply(gsets.raw, function(x) x[1])
+    desc = sapply(gsets.raw, function(x) x[2])
+    names(gsets) = gsets.names
+    anno = data.frame(ID=paste0(label, seq(1, length(gsets.names))), 
+            GeneSet=gsets.names, Description=desc)
+    if (anno.cols > 0){
+        if (is.null(anno.col.names))
+            anno.col.names = paste0("Anno", seq(1, anno.cols))        
+        stopifnot(length(anno.col.names) == anno.cols)
+        
+        for (cl in 3:(3+anno.cols-1)){
+            annocol = sapply(gsets.raw, function(x) x[cl])
+            anno = cbind(anno, annocol)        
+        }        
+        colnames(anno)[4:(4+anno.cols-1)] = anno.col.names        
+    }
+    rownames(anno) = gsets.names
+    
+    return(buildCustomIdx(entrezIDs, gsets,
+                    anno, label, name, species, min.size))
 }

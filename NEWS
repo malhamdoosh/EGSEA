@@ -96,5 +96,11 @@ EGSEA 1.3.2 (2017-03-16)
 ------------------------
 - Added: features to allow partitioning GO collections into GO domains 
 
+EGSEA 1.5.1 (2017-04-11)
+------------------------
+- Merged: the documentation of relevenat functions into one help page
+- Added: a function buildGMTIdx to build gene set collection index from a GMT file
+- Added: a new function named egsea.ma to work with Microarray dataset 
+- Modified: egsea functions to generate all the pairwise comparisons (contrasts) when the contrast parameter is NULL. This is mainly done based on the primary factor of the design matrix that is defined by 'group' parameter or column in voom.results$targets$group. 
 
 

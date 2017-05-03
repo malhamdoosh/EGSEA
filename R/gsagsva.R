@@ -53,6 +53,8 @@ rungsva <- function(method, voom.results, contrast, gs.annot,
         
         colnames(gsva.results[[i]])[which(
                         colnames(gsva.results[[i]]) == "P.Value")] = "p.value"
+        colnames(gsva.results[[i]])[which(
+                        colnames(gsva.results[[i]]) == "adj.P.Val")] = "p.adj"
     }
     names(gsva.results) = contr.names
     return(gsva.results)

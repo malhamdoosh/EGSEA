@@ -13,6 +13,7 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
     start.time <- proc.time()
     timestamp()
     # check arguments are valid    
+#    print(class(voom.results))
     stopifnot((class(voom.results) == "list" && 
                         "ids" %in% names(voom.results)) 
                     || class(voom.results) == "EList")  
@@ -43,7 +44,17 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
     }  
     # format the contrast matrix/vector and create contrast names
     if (is.null(contrast)){
-        contrast = 2        
+        if (is.null(voom.results$targets) || 
+                is.null(voom.results$targets$group))
+            stop(paste0("The data frame 'targets' of the object 'voom.results' ",
+                            "must have a column named 'group'."))
+        group.levels = levels(factor(voom.results$targets$group))
+        if (all(group.levels %in% colnames(voom.results$design))){
+            contrast = makeContrastPairs(
+                    colnames(voom.results$design),
+                    group.levels)
+        }else
+            contrast = 2:length(group.levels)        
     }
     if (!is.matrix(contrast)){
         stopifnot(max(contrast) <= ncol(voom.results$design))
@@ -348,11 +359,11 @@ runbaseGSEAParallelWorker <- function(args){
                 #)
                 #print(paste0(args$baseGSEA, " ", args$gs.annot$name, " ", t[3]))
                 if (args$verbose)
-                    cat(paste0("Running ", toupper(args$baseGSEA), " on all ", 
-							"contrasts ... COMPLETED \n"))
+                    message(paste0("Running ", toupper(args$baseGSEA), " on all ", 
+							"contrasts ... COMPLETED"))
                 else{
-                    cat(args$baseGSEA)
-                    cat("*")
+                    message(args$baseGSEA, appendLF = FALSE)
+                    message("*", appendLF = FALSE)
                 }
                 return(temp.result)
             }, 
@@ -370,6 +381,11 @@ runegsea <- function(voom.results, contrast, limma.tops,
             vote.bin.width, keep.base=TRUE, 
             num.workers=8, verbose=FALSE){     
     stopifnot(class(gs.annot) == "GSCollectionIndex")
+    if (!is.null(voom.results$E))
+        geneIDs = rownames(voom.results$E)
+    else 
+        geneIDs = voom.results$ids
+    stopifnot(identical(geneIDs, gs.annot@featureIDs))
     if (is.matrix(contrast)){
         contr.names = colnames(contrast)        
     }else{
@@ -402,9 +418,9 @@ length(baseGSEAs) == 1)
         temp.results = mclapply(args.all, runbaseGSEAParallelWorker, 
 mc.cores=num.workers)   
     if (!verbose)
-        cat("\n")
+        message("")
     # collect results   
-#    print(baseGSEAs)
+    #print(names(temp.results))
     for (baseGSEA in baseGSEAs){
         for (i in 1:length(contr.names)){
             # order is important when combine
@@ -415,8 +431,8 @@ more information.")
                 stop(err)
             }
 #            print(paste0(baseGSEA, colnames(contrast)[i]))
-#            if (baseGSEA == "gage")
-#                print(head(temp.results[[baseGSEA]][[i]]))
+#            if (baseGSEA == "globaltest")
+#                print(temp.results[[baseGSEA]][[i]])
             egsea.results.details[[i]][[baseGSEA]] = 
 temp.results[[baseGSEA]][[i]][names(gs.annot@idx),]         
         }
@@ -546,7 +562,7 @@ combinePvalues <- function(data, combineMethod, combineWeights = NULL){
 
 combineBaseGSEAs <- function(results.multi, combineMethod, combineWeights=NULL, 
                     bin.width=5){
-    if (length(results.multi[[1]]) == 1 && names(results.multi[[1]]) == "ora"){
+    if (length(results.multi[[1]]) == 1 || names(results.multi[[1]]) == "ora"){
         results.multi[[1]] = results.multi[[1]][[1]]
         results.multi[[1]] = results.multi[[1]][, 
                 colnames(results.multi[[1]]) != "Rank"]
@@ -637,39 +653,15 @@ extractAdjPvaluesRanks <- function(results.multi){
         colnames(results.ranked[[i]]) = colnames(results.comp[[i]])
         j = 1
         #print(names(results.comp)[i])
-        for (method in names(results.multi[[i]])){ # j is over base methods
-            #print(method)
-            #print(summary(results.multi[[i]][[j]]))
-            if (method %in% c("camera", "roast", "fry")){
-                results.comp[[i]][,j] = as.numeric(results.multi[[i]][[j]][, 
-                                "FDR"])  
-            }else if (method == "gage"){
-                results.comp[[i]][,j] = as.numeric(results.multi[[i]][[j]][, 
-                                "q.val"])
-            }else if (method == "padog"){
-                results.comp[[i]][,j] = as.numeric(results.multi[[i]][[j]][, 
-                                "Ppadog"])
-            }else if (method %in% c("plage","zscore", "gsva", "ssgsea")){
-                results.comp[[i]][,j] = as.numeric(results.multi[[i]][[j]][, 
-                                "adj.P.Val"]) 
-            }else if (method == "globaltest"){
-                results.comp[[i]][,j] = as.numeric(results.multi[[i]][[j]][, 
-                                "p-value"])
-            }else if (method == "ora"){
-                results.comp[[i]][,j] = as.numeric(results.multi[[i]][[j]][, 
-                                "p.adj"])
-            }else if (method == "safe"){
-                results.comp[[i]][,j] = as.numeric(results.multi[[i]][[j]][, 
-                                "Adj.p.value"]) 
-            }else if (method == "spia"){
-                results.comp[[i]][,j] = as.numeric(results.multi[[i]][[j]][, 
-                                "pG"])
-            }
+        for (method in names(results.multi[[i]])){ # j is over base methods           
+            results.comp[[i]][,j] = as.numeric(results.multi[[i]][[j]][, 
+                        "p.adj"])           
             results.ranked[[i]][,j] = as.numeric(results.multi[[i]][[j]][, 
                             "Rank"])
             if (max(results.comp[[i]][,j], na.rm = TRUE) < 0.000001)
-                print(paste0("WARNING: ", method, " produces very low p-values 
-                                        on ", names(results.comp)[i]))
+                print(paste0("WARNING: ", method, 
+                    " produces very low p-values on ", 
+                    names(results.comp)[i]))
             j = j + 1
         }
     }
@@ -880,3 +872,27 @@ getlogFCFromLMFit <- function(voom.results, contrast,
     
     return(list(logFC=logFC, limma.results=ebayes.results, limma.tops=limma.tops))
 }
+
+# Adapted from Gordon Smyth https://support.bioconductor.org/p/9228/
+makeContrastPairs <- function(
+        design.cols,
+        group.levels){
+    n = length(group.levels)
+    stopifnot(identical(group.levels, design.cols[1:n]))
+    contr = matrix(0, length(design.cols), choose(n, 2))
+    rownames(contr) = design.cols    
+    colnames(contr) = 1:choose(n,2)
+    k = 0
+    for (i in 1:(n-1)){
+        for (j in (i+1):n){
+            k = k + 1
+            contr[j, k] = 1
+            contr[i, k] = -1
+#            print(contr)
+            colnames(contr)[k] = paste0(group.levels[j],
+                            "vs", group.levels[i])          
+        }
+    }        
+    return(contr)
+}
+

@@ -55,5 +55,6 @@ runroast.contrast <- function(args){
     roast.results = cbind(Rank=seq(1, 
                     nrow(roast.results)), roast.results)
     colnames(roast.results)[which(colnames(roast.results) == "PValue")] = "p.value"
+    colnames(roast.results)[which(colnames(roast.results) == "FDR")] = "p.adj"
     return(roast.results)
 }

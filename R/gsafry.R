@@ -55,6 +55,7 @@ runfry.contrast <- function(args){
     fry.results = cbind(Rank=seq(1, 
                     nrow(fry.results)), fry.results)
     colnames(fry.results)[which(colnames(fry.results) == "PValue")] = "p.value"
+    colnames(fry.results)[which(colnames(fry.results) == "FDR")] = "p.adj"
     return(fry.results)
 }
 

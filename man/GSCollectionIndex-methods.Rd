@@ -2,15 +2,15 @@
 % Please edit documentation in R/GSCollectionIndexclass.R
 \docType{class}
 \name{GSCollectionIndex}
-\alias{$,GSCollectionIndex-method}
 \alias{GSCollectionIndex}
 \alias{GSCollectionIndex-class}
-\alias{getSetByID}
-\alias{getSetByID,GSCollectionIndex-method}
+\alias{$,GSCollectionIndex-method}
+\alias{summary,GSCollectionIndex-method}
+\alias{show,GSCollectionIndex-method}
 \alias{getSetByName}
 \alias{getSetByName,GSCollectionIndex-method}
-\alias{show,GSCollectionIndex-method}
-\alias{summary,GSCollectionIndex-method}
+\alias{getSetByID}
+\alias{getSetByID,GSCollectionIndex-method}
 \title{The GSCollectionIndex class}
 \usage{
 \S4method{$}{GSCollectionIndex}(x, name)
@@ -94,6 +94,7 @@ used in the indexing procedure}
 \item{\code{date}}{character, the update/download date of the database
 from other collections}
 }}
+
 \examples{
 # Example of GSCollectionIndex
 library(EGSEAdata)
@@ -141,4 +142,3 @@ gs.annots = buildIdx(entrezIDs=rownames(v$E), species="human",
 getSetByID(gs.annots[[1]], "hsa04060")
 
 }
-

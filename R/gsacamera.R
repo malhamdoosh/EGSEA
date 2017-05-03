@@ -55,6 +55,7 @@ runcamera.contrast <- function(args){
     
     camera.results = cbind(Rank=seq(1, 
                     nrow(camera.results)), camera.results)
-    colnames(camera.results)[which(colnames(camera.results) == "PValue")] = "p.value" 
+    colnames(camera.results)[which(colnames(camera.results) == "PValue")] = "p.value"
+    colnames(camera.results)[which(colnames(camera.results) == "FDR")] = "p.adj"
     return(camera.results)
 }
