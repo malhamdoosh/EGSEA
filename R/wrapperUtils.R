@@ -15,7 +15,7 @@ prepareTwoGroupsData <- function(voom.results, contrast, gs.annot,
                          "must have a column named 'group'."))
         ref.group = levels(factor(voom.results$targets$group))[1]  
         if (verbose)
-            cat(paste0("   Reference group is identified as ", ref.group, "\n"))
+            message("   Reference group is identified as ", ref.group)
         cnt.sam.indx = which(voom.results$targets$group == ref.group)
     }
     # use gene indexes instead of gene IDs

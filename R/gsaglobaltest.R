@@ -39,10 +39,10 @@ runglobaltest <- function(voom.results, contrast, gs.annot,
 
 runglobaltest.contrast <- function(args){
     if (args$verbose)
-        print(paste0("   Running GLOBALTEST for ", 
-                        args$contrast))
+        message("   Running GLOBALTEST for ", 
+                        args$contrast)
     else
-        cat(".")
+        message(".", appendLF = FALSE)
     
     groupIndx = c(args$group2, 
             args$group1)

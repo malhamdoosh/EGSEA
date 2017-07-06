@@ -112,7 +112,7 @@ setMethod(f = "selectGeneSets",
                 gs.annot.top@anno = object@anno[sel,]
                 gs.annot.top@anno = droplevels(gs.annot.top@anno)
             }else{
-                cat("WARNING: the 'GeneSet' column was not found in 'anno'.")
+                warning("The 'GeneSet' column was not found in 'anno'.")
                 gs.annot.top@original = object@original
                 gs.annot.top@idx = object@idx
             }

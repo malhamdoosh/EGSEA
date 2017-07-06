@@ -358,7 +358,7 @@ function as follows
 # set display.top = 20 to display more gene sets. It takes longer time to run.
 gsa = egsea(voom.results=v, contrasts=contrasts,  gs.annots=gs.annots, 
  			symbolsMap=v$genes, baseGSEAs=baseMethods,
-            egsea.dir="./il13-egsea-report",
+            report.dir="./il13-egsea-report",
  			 sort.by="avg.rank", num.threads = 4, report=FALSE)
 @
 
@@ -955,7 +955,7 @@ gs.annots = buildIdx(entrezIDs=deGenes, species="human", msigdb.gsets="none",
 gsa = egsea.ora(entrezIDs=deGenes, universe= as.character(voom.results$genes[,1]),
 				logFC =logFC, title="X24IL13-X24",  gs.annots=gs.annots, 
   			    symbolsMap=top.Table[, c(1,2)], display.top = 5,          
-  			    egsea.dir="./il13-egsea-ora-report", num.threads = 4, report=FALSE)
+  			    report.dir="./il13-egsea-ora-report", num.threads = 4, report=FALSE)
 
 @
 

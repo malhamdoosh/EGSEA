@@ -149,7 +149,7 @@ collections to be used for the EGSEA analysis.
 \code{buildCustomIdx} creates a gene set collection from a 
 given list of gene sets to be used for the EGSEA analysis.
 
-\code{buildCustomIdx} creates a gene set collection from a 
+\code{buildGMTIdx} creates a gene set collection from a 
 given GMT file to be used for the EGSEA analysis.
 }
 \details{
@@ -168,7 +168,7 @@ loads gene set annotation.
 \code{buildCustomIdx} indexes newly created gene sets and 
 attach gene set annotation if provided.
 
-\code{buildCustomIdx} indexes newly created gene sets and 
+\code{buildGMTIdx} indexes newly created gene sets and 
 attach gene set annotation if provided.
 }
 \examples{

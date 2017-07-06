@@ -48,9 +48,9 @@ topSets(object, gs.label = 1, contrast = 1, sort.by = NULL, number = 10,
 
 limmaTopTable(object, contrast = 1)
 
-generateReport(object, number = 20, sort.by = NULL, egsea.dir = NULL,
+generateReport(object, number = 20, sort.by = NULL, report.dir = NULL,
   kegg.dir = NULL, x.axis = NULL, x.cutoff = NULL, num.threads = 4,
-  print.base = FALSE, verbose = FALSE)
+  print.base = FALSE, interactive = FALSE, verbose = FALSE)
 
 getlimmaResults(object)
 
@@ -70,7 +70,7 @@ plotMethods(object, gs.label = 1, contrast = 1, file.name = "methods.mds",
 
 plotSummary(object, gs.label = 1, contrast = 1, file.name = "summary",
   format = "pdf", x.axis = "p.adj", x.cutoff = NULL, sort.by = NULL,
-  use.names = FALSE, verbose = TRUE)
+  use.names = FALSE, interactive = FALSE, verbose = TRUE)
 
 plotGOGraph(object, gs.label = "c5", contrast = 1, sort.by = NULL,
   noSig = 5, file.name = "c5-top-", format = "pdf", verbose = TRUE)
@@ -114,12 +114,12 @@ results.}
 
 \item{verbose}{logical, whether to print out progress messages and warnings.}
 
-\item{egsea.dir}{character, directory into which the analysis results are 
+\item{report.dir}{character, directory into which the analysis results are 
 written out.}
 
 \item{kegg.dir}{character, the directory of KEGG pathway data file (.xml) 
 and image file (.png). 
-Default kegg.dir=paste0(egsea.dir, "/kegg-dir/").}
+Default kegg.dir=paste0(report.dir, "/kegg-dir/").}
 
 \item{x.axis}{character, the x-axis of the summary plot. All the 
 values accepted by the 
@@ -135,6 +135,9 @@ num.threads=4.}
 
 \item{print.base}{logical, whether to write out the analysis results of the base methods.
 Default is False.}
+
+\item{interactive}{logical, whether to generate interactive tables and plots. 
+Note this might dramatically increase the size of the EGSEA report.}
 
 \item{gene.set}{character, the name of the gene set. 
 See the output of \code{\link{topSets}}.}

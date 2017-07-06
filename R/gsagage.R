@@ -37,9 +37,9 @@ rungage <- function(voom.results, contrast, gs.annot,
 
 rungage.contrast <- function(args){
     if (args$verbose)
-        print(paste0("   Running GAGE for ", args$contrast))
+        message("   Running GAGE for ", args$contrast)
     else
-        cat(".")
+        message(".", appendLF = FALSE)
     groupData = args$groupData
     # same.dir=FALSE ==> Two directional test
     gage.results = gage(exprs=args$logCPM, 

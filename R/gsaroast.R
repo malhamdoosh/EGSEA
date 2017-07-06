@@ -41,9 +41,9 @@ runroast <- function(voom.results, contrast, gs.annot,
 
 runroast.contrast <- function(args){
     if (args$verbose)
-        print(paste0("   Running ROAST for ", args$contrast.name))
+        message("   Running ROAST for ", args$contrast.name)
     else
-        cat(".")
+        message(".", appendLF = FALSE)
     roast.results = mroast(y=args$voom.results, 
             index=args$gs.annot@idx, 
             design=args$voom.results$design, 

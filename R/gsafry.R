@@ -1,4 +1,5 @@
 # Wrapper function to run FRY on different contrasts
+# statmod package required for FRY
 
 runfry <- function(voom.results, contrast, gs.annot,
         num.workers=4, verbose = TRUE){     
@@ -41,9 +42,9 @@ runfry <- function(voom.results, contrast, gs.annot,
 
 runfry.contrast <- function(args){
     if (args$verbose)
-        print(paste0("   Running FRY for ", args$contrast.name))
+        message("   Running FRY for ", args$contrast.name)
     else
-        cat(".")
+        message(".", appendLF = FALSE)
     capture.output(fry.results <- fry(y=args$voom.results, 
                     index=args$gs.annot@idx, 
                     design=args$voom.results$design, 

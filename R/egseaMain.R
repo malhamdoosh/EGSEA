@@ -197,11 +197,11 @@ NULL
 #' the stats table. Type  
 #' \code{\link{egsea.sort}}() to see all available options.
 #' For \code{egsea.ora}, it takes "p.value", "p.adj" or "Significance". 
-#' @param egsea.dir character, directory into which the analysis results are 
+#' @param report.dir character, directory into which the analysis results are 
 #' written out. 
 #' @param kegg.dir character, the directory of KEGG pathway data file (.xml) 
 #' and image file (.png). 
-#' Default kegg.dir=paste0(egsea.dir, "/kegg-dir/").
+#' Default kegg.dir=paste0(report.dir, "/kegg-dir/").
 #' @param logFC.cutoff numeric, cut-off threshold of logFC and is used for 
 #' the calculation of Sginificance Score 
 #' and Regulation Direction. Default logFC.cutoff=0.
@@ -222,6 +222,8 @@ NULL
 #' @param report logical, whether to generate the EGSEA interactive report. It 
 #' takes longer time
 #' to run. Default is True.
+#' @param interactive logical, whether to generate interactive tables and plots. 
+#' Note this might dramatically increase the size of the EGSEA report.
 #' @param keep.base logical, whether to write out the results of the 
 #' individual GSE methods.
 #'  Default FALSE.  
@@ -230,6 +232,7 @@ NULL
 #' in the EGSEAResults object.
 #' @param keep.set.scores logical, whether to calculate the gene set enrichment scores
 #' per sample for the methods that support this option, i.e., "ssgsea".
+
 #' 
 #' @return \code{egsea} returns an object of the class EGSEAResults, which
 #' stores the top gene sets and the detailed analysis
@@ -280,7 +283,7 @@ NULL
 #' gsa = egsea(voom.results=v, contrasts=contrasts,  gs.annots=gs.annots, 
 #'          symbolsMap=v$genes, baseGSEAs=egsea.base()[-c(2,5,6,9,12)], 
 #' 			display.top = 5, sort.by="avg.rank", 
-#' 			egsea.dir="./il13-egsea-report", 
+#' 			report.dir="./il13-egsea-report", 
 #'          num.threads = 2, report = FALSE)
 #' topSets(gsa) 
 #' 
@@ -292,33 +295,35 @@ egsea <- function(voom.results, contrasts = NULL, logFC=NULL,
         minSize=2, display.top=20, 
         combineMethod="wilkinson", combineWeights = NULL,      
         sort.by="p.adj", 
-        egsea.dir=NULL, kegg.dir=NULL, 
+        report.dir=NULL, kegg.dir=NULL, 
         logFC.cutoff = 0, fdr.cutoff = 0.05, 
         sum.plot.axis="p.adj", sum.plot.cutoff=NULL, 
         vote.bin.width=5,
         num.threads=4, report = TRUE,
+        interactive = FALSE,
         keep.base = FALSE, 
         verbose=FALSE,
-        keep.limma=TRUE, keep.set.scores=FALSE){
+        keep.limma=TRUE, keep.set.scores=FALSE
+        ){
 
     set.seed(581986) # to guarantee reproducibility of results
     if (verbose)    
         return(egsea.main(voom.results, contrasts, gs.annots, baseGSEAs, 
-            combineMethod, combineWeights,sort.by,  egsea.dir, 
+            combineMethod, combineWeights,sort.by,  report.dir, 
             kegg.dir, logFC, symbolsMap, minSize, display.top, 
             logFC.cutoff, fdr.cutoff, sum.plot.cutoff, sum.plot.axis, 
             vote.bin.width, keep.base, verbose, num.threads, 
-            report, keep.limma, keep.set.scores))
+            report, keep.limma, keep.set.scores, interactive))
     else
         suppressWarnings(
             return(egsea.main(voom.results, contrasts, gs.annots, 
                 baseGSEAs, combineMethod, combineWeights, sort.by, 
-                egsea.dir, kegg.dir, logFC, symbolsMap, minSize, 
+                report.dir, kegg.dir, logFC, symbolsMap, minSize, 
                 display.top, logFC.cutoff, fdr.cutoff,
                 sum.plot.cutoff, 
                 sum.plot.axis, vote.bin.width,keep.base, 
                 verbose, num.threads, report, keep.limma, 
-                keep.set.scores)))    
+                keep.set.scores, interactive)))    
 }
 
 #' @title Ensemble of Gene Set Enrichment Analyses Function
@@ -348,7 +353,7 @@ egsea <- function(voom.results, contrasts = NULL, logFC=NULL,
 #' @inheritParams combineMethod 
 #' @inheritParams combineWeights 
 #' @inheritParams sort.by 
-#' @inheritParams egsea.dir 
+#' @inheritParams report.dir 
 #' @inheritParams kegg.dir 
 #' @inheritParams logFC.cutoff 
 #' @inheritParams fdr.cutoff 
@@ -357,6 +362,7 @@ egsea <- function(voom.results, contrasts = NULL, logFC=NULL,
 #' @inheritParams vote.bin.width 
 #' @inheritParams num.threads 
 #' @inheritParams report 
+#' @inheritParams interactive
 #' @inheritParams keep.base 
 #' @inheritParams verbose 
 #' @inheritParams keep.limma 
@@ -394,7 +400,7 @@ egsea <- function(voom.results, contrasts = NULL, logFC=NULL,
 #'          symbolsMap=genes, baseGSEAs=egsea.base()[-c(2,5,6,9,12)], 
 #' display.top = 5,
 #'           sort.by="avg.rank", 
-#' egsea.dir="./il13-egsea-cnt-report", 
+#' report.dir="./il13-egsea-cnt-report", 
 #'          num.threads = 2, report = FALSE)
 #' topSets(gsa) 
 #' 
@@ -405,10 +411,11 @@ egsea.cnt <- function(counts, group, design = NULL, contrasts = NULL, logFC=NULL
         minSize=2, display.top=20, 
         combineMethod="wilkinson", combineWeights = NULL,      
         sort.by="p.adj", 
-        egsea.dir=NULL, kegg.dir=NULL, 
+        report.dir=NULL, kegg.dir=NULL, 
         logFC.cutoff=0, fdr.cutoff = 0.05, sum.plot.axis="p.adj", sum.plot.cutoff=NULL, 
         vote.bin.width=5,
         num.threads=4, report = TRUE,
+        interactive = FALSE,
         keep.base = FALSE, 
         verbose=FALSE, keep.limma=TRUE, keep.set.scores=FALSE){
     stopifnot(!is.null(counts))
@@ -430,13 +437,14 @@ egsea.cnt <- function(counts, group, design = NULL, contrasts = NULL, logFC=NULL
                     minSize, display.top, 
                     combineMethod, combineWeights,      
                     sort.by, 
-                    egsea.dir, kegg.dir, 
+                    report.dir, kegg.dir, 
                     logFC.cutoff, fdr.cutoff, 
                     sum.plot.axis, sum.plot.cutoff, 
                     vote.bin.width,
-                    num.threads, report,
+                    num.threads, report, interactive,
                     keep.base , 
-                    verbose, keep.limma, keep.set.scores))
+                    verbose, keep.limma, keep.set.scores
+                    ))
     
 }
 
@@ -464,12 +472,13 @@ egsea.cnt <- function(counts, group, design = NULL, contrasts = NULL, logFC=NULL
 #' @inheritParams minSize 
 #' @inheritParams display.top 
 #' @inheritParams sort.by 
-#' @inheritParams egsea.dir 
+#' @inheritParams report.dir 
 #' @inheritParams kegg.dir 
 #' @inheritParams sum.plot.axis 
 #' @inheritParams sum.plot.cutoff 
 #' @inheritParams num.threads
 #' @inheritParams report 
+#' @inheritParams interactive
 #' @inheritParams verbose 
 #' 
 #' @return \code{egsea.ora} returns an object of the class EGSEAResults, which
@@ -509,7 +518,7 @@ egsea.cnt <- function(counts, group, design = NULL, contrasts = NULL, logFC=NULL
 #'              logFC =logFC, title="X24IL13-X24",  
 #' gs.annots=gs.annots, 
 #'              symbolsMap=top.Table[, c(1,2)], display.top = 5,
-#'               egsea.dir="./il13-egsea-ora-report", num.threads = 2, 
+#'               report.dir="./il13-egsea-ora-report", num.threads = 2, 
 #' 				report = FALSE)
 #' topSets(gsa) 
 #' 
@@ -517,9 +526,10 @@ egsea.cnt <- function(counts, group, design = NULL, contrasts = NULL, logFC=NULL
 egsea.ora <- function(entrezIDs, universe=NULL, logFC=NULL, title=NULL, 
         gs.annots, symbolsMap=NULL, 
         minSize=2, display.top=20, sort.by = "p.adj",   
-        egsea.dir=NULL, kegg.dir=NULL, 
+        report.dir=NULL, kegg.dir=NULL, 
         sum.plot.axis="p.adj", sum.plot.cutoff=NULL,
-        num.threads=4, report = TRUE,        
+        num.threads=4, report = TRUE,    
+        interactive = FALSE,
         verbose=FALSE){
     voom.results = list(ids=as.character(entrezIDs))
     if (!is.null(universe))
@@ -551,11 +561,11 @@ egsea.ora <- function(entrezIDs, universe=NULL, logFC=NULL, title=NULL,
                     minSize, display.top, 
                     combineMethod = "average", combineWeights = NULL,       
                     sort.by, 
-                    egsea.dir, kegg.dir, 
+                    report.dir, kegg.dir, 
                     logFC.cutoff = 0, fdr.cutoff = 1, 
                     sum.plot.axis, sum.plot.cutoff, 
                     vote.bin.width = 5,
-                    num.threads, report,
+                    num.threads, report, interactive,
                     keep.base = FALSE, 
                     verbose))
 
@@ -599,7 +609,7 @@ egsea.ora <- function(entrezIDs, universe=NULL, logFC=NULL, title=NULL,
 #' @inheritParams combineMethod 
 #' @inheritParams combineWeights 
 #' @inheritParams sort.by 
-#' @inheritParams egsea.dir 
+#' @inheritParams report.dir 
 #' @inheritParams kegg.dir 
 #' @inheritParams logFC.cutoff 
 #' @inheritParams fdr.cutoff 
@@ -608,6 +618,7 @@ egsea.ora <- function(entrezIDs, universe=NULL, logFC=NULL, title=NULL,
 #' @inheritParams vote.bin.width 
 #' @inheritParams num.threads 
 #' @inheritParams report 
+#' @inheritParams interactive
 #' @inheritParams keep.base 
 #' @inheritParams verbose 
 #' @inheritParams keep.limma 
@@ -656,7 +667,7 @@ egsea.ora <- function(entrezIDs, universe=NULL, logFC=NULL, title=NULL,
 #'          baseGSEAs=egsea.base()[-c(2,5,6,9,12)], 
 #' 			display.top = 5,
 #'           sort.by="avg.rank", 
-#' 			egsea.dir="./ezh2-egsea-ma-report", 
+#' 			report.dir="./ezh2-egsea-ma-report", 
 #'          num.threads = 2, report = FALSE)
 #' topSets(gsa) 
 #' 
@@ -668,10 +679,11 @@ egsea.ma <- function(expr, group, probe.annot, probeMap.method = "avg",
         minSize=2, display.top=20, 
         combineMethod="wilkinson", combineWeights = NULL,      
         sort.by="p.adj", 
-        egsea.dir=NULL, kegg.dir=NULL, 
+        report.dir=NULL, kegg.dir=NULL, 
         logFC.cutoff=0, fdr.cutoff = 0.05, sum.plot.axis="p.adj", sum.plot.cutoff=NULL, 
         vote.bin.width=5,
         num.threads=4, report = TRUE,
+        interactive = FALSE,
         keep.base = FALSE, 
         verbose=FALSE, keep.limma=TRUE, keep.set.scores=FALSE){
     stopifnot(!is.null(group))
@@ -696,27 +708,28 @@ egsea.ma <- function(expr, group, probe.annot, probeMap.method = "avg",
     elist$genes = probe.annot
     elist.filtered  = mapProbesIntoEntrezIDs(elist, probe.annot, probeMap.method)
     if (ncol(probe.annot) > 2){
-        symbolsMap = unique(probe.annot[, c(2,3)])
+        ezs = unique(probe.annot[, 2])
+        symbolsMap = probe.annot[match(ezs, probe.annot[, 2]), c(2,3)]
     }else
         symbolsMap = NULL
     set.seed(581986) # to guarantee reproducibility of results
     if (verbose)    
         return(egsea.main(elist.filtered, contrasts, gs.annots, baseGSEAs, 
-                        combineMethod, combineWeights,sort.by,  egsea.dir, 
+                        combineMethod, combineWeights,sort.by,  report.dir, 
                         kegg.dir, logFC, symbolsMap, minSize, display.top, 
                         logFC.cutoff, fdr.cutoff, sum.plot.cutoff, sum.plot.axis, 
                         vote.bin.width, keep.base, verbose, num.threads, 
-                        report, keep.limma, keep.set.scores))
+                        report, keep.limma, keep.set.scores, interactive))
     else
         suppressWarnings(
                 return(egsea.main(elist.filtered, contrasts, gs.annots, 
                                 baseGSEAs, combineMethod, combineWeights, sort.by, 
-                                egsea.dir, kegg.dir, logFC, symbolsMap, minSize, 
+                                report.dir, kegg.dir, logFC, symbolsMap, minSize, 
                                 display.top, logFC.cutoff, fdr.cutoff,
                                 sum.plot.cutoff, 
                                 sum.plot.axis, vote.bin.width,keep.base, 
                                 verbose, num.threads, report, keep.limma, 
-                                keep.set.scores)))       
+                                keep.set.scores, interactive)))       
 }
 
 mapProbesIntoEntrezIDs <- function(elist, probe.annot, probeMap.method){

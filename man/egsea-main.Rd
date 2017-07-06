@@ -15,35 +15,36 @@
 egsea(voom.results, contrasts = NULL, logFC = NULL, gs.annots,
   symbolsMap = NULL, baseGSEAs = egsea.base(), minSize = 2,
   display.top = 20, combineMethod = "wilkinson", combineWeights = NULL,
-  sort.by = "p.adj", egsea.dir = NULL, kegg.dir = NULL,
+  sort.by = "p.adj", report.dir = NULL, kegg.dir = NULL,
   logFC.cutoff = 0, fdr.cutoff = 0.05, sum.plot.axis = "p.adj",
   sum.plot.cutoff = NULL, vote.bin.width = 5, num.threads = 4,
-  report = TRUE, keep.base = FALSE, verbose = FALSE, keep.limma = TRUE,
-  keep.set.scores = FALSE)
+  report = TRUE, interactive = FALSE, keep.base = FALSE,
+  verbose = FALSE, keep.limma = TRUE, keep.set.scores = FALSE)
 
 egsea.cnt(counts, group, design = NULL, contrasts = NULL, logFC = NULL,
   gs.annots, symbolsMap = NULL, baseGSEAs = egsea.base(), minSize = 2,
   display.top = 20, combineMethod = "wilkinson", combineWeights = NULL,
-  sort.by = "p.adj", egsea.dir = NULL, kegg.dir = NULL,
+  sort.by = "p.adj", report.dir = NULL, kegg.dir = NULL,
   logFC.cutoff = 0, fdr.cutoff = 0.05, sum.plot.axis = "p.adj",
   sum.plot.cutoff = NULL, vote.bin.width = 5, num.threads = 4,
-  report = TRUE, keep.base = FALSE, verbose = FALSE, keep.limma = TRUE,
-  keep.set.scores = FALSE)
+  report = TRUE, interactive = FALSE, keep.base = FALSE,
+  verbose = FALSE, keep.limma = TRUE, keep.set.scores = FALSE)
 
 egsea.ora(entrezIDs, universe = NULL, logFC = NULL, title = NULL,
   gs.annots, symbolsMap = NULL, minSize = 2, display.top = 20,
-  sort.by = "p.adj", egsea.dir = NULL, kegg.dir = NULL,
+  sort.by = "p.adj", report.dir = NULL, kegg.dir = NULL,
   sum.plot.axis = "p.adj", sum.plot.cutoff = NULL, num.threads = 4,
-  report = TRUE, verbose = FALSE)
+  report = TRUE, interactive = FALSE, verbose = FALSE)
 
 egsea.ma(expr, group, probe.annot, probeMap.method = "avg", design = NULL,
   contrasts = NULL, logFC = NULL, gs.annots, baseGSEAs = egsea.base(),
   minSize = 2, display.top = 20, combineMethod = "wilkinson",
-  combineWeights = NULL, sort.by = "p.adj", egsea.dir = NULL,
+  combineWeights = NULL, sort.by = "p.adj", report.dir = NULL,
   kegg.dir = NULL, logFC.cutoff = 0, fdr.cutoff = 0.05,
   sum.plot.axis = "p.adj", sum.plot.cutoff = NULL, vote.bin.width = 5,
-  num.threads = 4, report = TRUE, keep.base = FALSE, verbose = FALSE,
-  keep.limma = TRUE, keep.set.scores = FALSE)
+  num.threads = 4, report = TRUE, interactive = FALSE,
+  keep.base = FALSE, verbose = FALSE, keep.limma = TRUE,
+  keep.set.scores = FALSE)
 }
 \arguments{
 \item{voom.results}{list, an EList object generated using the
@@ -119,12 +120,12 @@ the stats table. Type
 \code{\link{egsea.sort}}() to see all available options.
 For \code{egsea.ora}, it takes "p.value", "p.adj" or "Significance".}
 
-\item{egsea.dir}{character, directory into which the analysis results are 
+\item{report.dir}{character, directory into which the analysis results are 
 written out.}
 
 \item{kegg.dir}{character, the directory of KEGG pathway data file (.xml) 
 and image file (.png). 
-Default kegg.dir=paste0(egsea.dir, "/kegg-dir/").}
+Default kegg.dir=paste0(report.dir, "/kegg-dir/").}
 
 \item{logFC.cutoff}{numeric, cut-off threshold of logFC and is used for 
 the calculation of Sginificance Score 
@@ -152,6 +153,9 @@ num.threads=2.}
 \item{report}{logical, whether to generate the EGSEA interactive report. It 
 takes longer time
 to run. Default is True.}
+
+\item{interactive}{logical, whether to generate interactive tables and plots. 
+Note this might dramatically increase the size of the EGSEA report.}
 
 \item{keep.base}{logical, whether to write out the results of the 
 individual GSE methods.
@@ -358,7 +362,7 @@ msigdb.gsets="none",
 gsa = egsea(voom.results=v, contrasts=contrasts,  gs.annots=gs.annots, 
          symbolsMap=v$genes, baseGSEAs=egsea.base()[-c(2,5,6,9,12)], 
 			display.top = 5, sort.by="avg.rank", 
-			egsea.dir="./il13-egsea-report", 
+			report.dir="./il13-egsea-report", 
          num.threads = 2, report = FALSE)
 topSets(gsa) 
 
@@ -379,7 +383,7 @@ gsa = egsea.cnt(counts=cnt, group=group, design=design, contrasts=contrasts,
          symbolsMap=genes, baseGSEAs=egsea.base()[-c(2,5,6,9,12)], 
 display.top = 5,
           sort.by="avg.rank", 
-egsea.dir="./il13-egsea-cnt-report", 
+report.dir="./il13-egsea-cnt-report", 
          num.threads = 2, report = FALSE)
 topSets(gsa) 
 
@@ -405,7 +409,7 @@ as.character(voom.results$genes[,1]),
              logFC =logFC, title="X24IL13-X24",  
 gs.annots=gs.annots, 
              symbolsMap=top.Table[, c(1,2)], display.top = 5,
-              egsea.dir="./il13-egsea-ora-report", num.threads = 2, 
+              report.dir="./il13-egsea-ora-report", num.threads = 2, 
 				report = FALSE)
 topSets(gsa) 
 
@@ -436,7 +440,7 @@ gsa = egsea.ma(expr=expr, group=group,
          baseGSEAs=egsea.base()[-c(2,5,6,9,12)], 
 			display.top = 5,
           sort.by="avg.rank", 
-			egsea.dir="./ezh2-egsea-ma-report", 
+			report.dir="./ezh2-egsea-ma-report", 
          num.threads = 2, report = FALSE)
 topSets(gsa) 
 

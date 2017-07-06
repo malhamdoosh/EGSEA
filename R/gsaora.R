@@ -52,9 +52,9 @@ runora <- function(voom.results, contrast, gs.annot,
     ora.results = vector("list", contr.num)    
     for(i in 1:contr.num){     
         if (verbose)
-            print(paste0("   Running ORA for ", contr.names[i]))
+            message("   Running ORA for ", contr.names[i])
         else
-            cat(".")
+            message(".", appendLF = FALSE)
         if (!is.null(voom.results$E)){
             deGenes = rownames(topTable(vfit, coef=coefs[i], number=Inf, 
                         p.value=pvalue.cut, 
@@ -64,7 +64,7 @@ runora <- function(voom.results, contrast, gs.annot,
                                 p.value=pvalue.cut, 
                                 lfc=0))
                 if (verbose)
-                    print("ORA used a cut-off logFC = 0")
+                    message("ORA used a cut-off logFC = 0")
             }
                 
         }else{

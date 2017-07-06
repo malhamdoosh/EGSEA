@@ -77,7 +77,7 @@ EGSEAResults <- setClass(
                     sum.plot.axis = "p.adj",
                     sum.plot.cutoff = NULL,
                     report = TRUE,
-                    report.dir = "./",
+                    report.dir = "",
                     egsea.version = "Unknown",
                     egseaData.version = "Unknown")           
         )
@@ -203,17 +203,17 @@ setGeneric(name="addSymbolsMap",
                               else
                                   contrast = "comparison"
                           if (verbose)
-                              cat(paste0("Extracting the top gene sets of the collection \n",
-                                              object@gs.annots[[gs.label]]$name, " for the contrast ",
-                                              contrast, "\n Sorted by ", 
-                                              ifelse(is.null(sort.by), object@sort.by, sort.by)
-                                              , "\n"))
+                              message("Extracting the top gene sets of the collection \n",
+                                object@gs.annots[[gs.label]]$name, " for the contrast ",
+                                contrast, "\n Sorted by ", 
+                                ifelse(is.null(sort.by), object@sort.by, sort.by)
+                                )
                           if (tolower(contrast) == "comparison") 
                               top.gs = object@results[[gs.label]][["comparison"]][["test.results"]]
                           else
                               top.gs = object@results[[gs.label]][["test.results"]][[contrast]]
                           if (! is.null(sort.by)){
-                              top.gs = top.gs[order(top.gs[,sort.by],
+                              top.gs = top.gs[order(top.gs[, sort.by],
                                               decreasing=(sort.by == "significance")), ]
                           }   
                           top.gs = cbind(Rank=seq(1, nrow(top.gs)), top.gs)
@@ -234,7 +234,7 @@ setGeneric(name="addSymbolsMap",
                           }
                       }, 
                       error = function(e){
-                          cat(paste0("ERROR: topSets(...) encountered an error:\n", e ))
+                          stop("topSets(...) encountered an error:\n", e )
                       })
               return(NULL)
           }
@@ -426,8 +426,8 @@ setMethod(f = "limmaTopTable",
                   rownames(t) = t[,1]
                   return(t[order(t[, "adj.P.Val"]), ])
               }else{
-                  cat("Limma analysis results are not available. \n")
-                  cat("Try to re-run EGSEA analysis with keep.limma = TRUE. \n")
+                  warning("Limma analysis results are not available. \n",
+                    "Try to re-run EGSEA analysis with keep.limma = TRUE. ")
                   return(NULL)
               }
           }
@@ -501,18 +501,23 @@ setMethod(f = "limmaTopTable",
 #' or  \code{\link{egsea.ora}}. 
 #' @inheritParams number
 #' @inheritParams sort.by
-#' @param egsea.dir character, directory into which the analysis results are 
+#' @param report.dir character, directory into which the analysis results are 
 #' written out. 
 #' @param kegg.dir character, the directory of KEGG pathway data file (.xml) 
 #' and image file (.png). 
-#' Default kegg.dir=paste0(egsea.dir, "/kegg-dir/").
+#' Default kegg.dir=paste0(report.dir, "/kegg-dir/").
 #' @inheritParams x.axis
 #' @inheritParams x.cutoff
 #' @param num.threads numeric, number of CPU cores to be used. Default 
 #' num.threads=4.
 #' @param print.base logical, whether to write out the analysis results of the base methods.
 #' Default is False.
+#' @param interactive logical, whether to generate interactive tables and plots. 
+#' Note this might dramatically increase the size of the EGSEA report.
 #' @inheritParams verbose
+#' @importFrom plotly ggplotly
+#' @importFrom  htmlwidgets saveWidget
+#' @importFrom DT datatable
 #' 
 #' @export
 #' @return  \code{generateReport} does not return data but creates an HTML report.
@@ -531,10 +536,11 @@ setMethod(f = "limmaTopTable",
 
 setGeneric(name="generateReport",
         def = function(object, number = 20, sort.by = NULL, 
-                egsea.dir = NULL, kegg.dir = NULL, 
+                report.dir = NULL, kegg.dir = NULL, 
                 x.axis = NULL, x.cutoff = NULL, 
                 num.threads = 4,
                 print.base = FALSE,
+                interactive=FALSE,
                 verbose = FALSE){
             standardGeneric("generateReport")
         }
@@ -543,18 +549,20 @@ setGeneric(name="generateReport",
 setMethod(f = "generateReport",
         signature(object = "EGSEAResults"),
         definition = function(object, number = 20, sort.by = NULL, 
-                egsea.dir = NULL, kegg.dir = NULL, 
+                report.dir = NULL, kegg.dir = NULL, 
                 x.axis = NULL, x.cutoff = NULL, 
                 num.threads = 4,
                 print.base = FALSE,
+                interactive=FALSE,
                 verbose = FALSE){
-            generate.EGSEA.Report(object,  
+            generateMainReport(object,  
                     display.top = number, sort.by = sort.by, 
-                    egsea.dir = egsea.dir, kegg.dir = kegg.dir, 
+                    report.dir = report.dir, kegg.dir = kegg.dir, 
                     sum.plot.axis = x.axis, sum.plot.cutoff = x.cutoff, 
                     num.threads = num.threads,
                     print.base = print.base,
-                    verbose = verbose)
+                    verbose = verbose,
+                    interactive=interactive)
         }
 )
 
@@ -599,8 +607,8 @@ setMethod(f = "getlimmaResults",
             if (length(object@limmaResults) > 0 ){               
                 return(object@limmaResults)
             }else{
-                cat("Limma analysis results are not available. \n")
-                cat("Try to re-run EGSEA analysis with keep.limma = TRUE. \n")
+                warning("Limma analysis results are not available. \n", 
+                  "Try to re-run EGSEA analysis with keep.limma = TRUE.")
                 return(NULL)
             }
         }
@@ -669,10 +677,10 @@ setMethod(f = "getlimmaResults",
                               else
                                   contrast = "comparison"
                           if (verbose)
-                              cat(paste0("Generating heatmap for ", gene.set, 
+                              message("Generating heatmap for ", gene.set, 
                                               " from the collection \n",
                                               object@gs.annots[[gs.label]]$name, " and for the contrast ",
-                                              contrast, "\n"))
+                                              contrast)
                           if (contrast %in% object@contr.names){
                               if (length(object@limmaResults) > 0){
                                   t = topTable(object@limmaResults, coef=contrast, 
@@ -680,7 +688,7 @@ setMethod(f = "getlimmaResults",
                                   rownames(t) = rownames(object@limmaResults)
                                   limma.tops = list(contrast = t)
                               }else{
-                                  cat("WARNING: limma analysis results are not available.")
+                                  warning("limma analysis results are not available.")
                                   limma.tops = list()
                               }
                               suppressWarnings(generateHeatMap(gene.set, object@gs.annots[[gs.label]], 
@@ -699,7 +707,7 @@ setMethod(f = "getlimmaResults",
                                      limma.tops[[c]] = t
                                   }
                               }else{
-                                  cat("WARNING: limma analysis results are not available.")
+                                  warning("limma analysis results are not available.")
                                   limma.tops = list()
                               }
                               suppressWarnings(generateHeatMap(gene.set, object@gs.annots[[gs.label]], 
@@ -714,7 +722,7 @@ setMethod(f = "getlimmaResults",
                           }
                       }, 
                       error = function(e){
-                          cat(paste0("ERROR: plotHeatmap(...) encountered an error:\n", e ))
+                          stop("plotHeatmap(...) encountered an error:\n", e )
                       })            
           }
   )
@@ -799,9 +807,9 @@ setMethod(f = "getlimmaResults",
                   contrast = 1
               }   
               if (verbose)
-                  cat(paste0("Generating summary heatmap for the collection ",
+                  message("Generating summary heatmap for the collection ",
                           gsc.name, "\n", "sort.by: ",sort.by, ", hm.vals: ",
-                          hm.vals, ", show.vals: ", show.vals, "\n"))
+                          hm.vals, ", show.vals: ", show.vals)
       
               t = topSets(object, gs.label, contrast, sort.by, number, TRUE, FALSE)
               hm = matrix(0, length(t), length(object@contr.names))
@@ -843,7 +851,7 @@ setMethod(f = "getlimmaResults",
               
           }, 
           error = function(e){
-              cat(paste0("ERROR: plotSummaryHeatmap(...) encountered an error:\n", e ))
+              stop("plotSummaryHeatmap(...) encountered an error:\n", e )
           }) 
           }
   
@@ -907,10 +915,10 @@ setMethod(f = "getlimmaResults",
                               else
                                   contrast = "comparison"
                           if (verbose)
-                              cat(paste0("Generating pathway map for ", gene.set, 
+                              message("Generating pathway map for ", gene.set, 
                                               " from the collection \n",
                                               object@gs.annots[[gs.label]]$name, " and for the contrast ",
-                                              contrast, "\n"))
+                                              contrast)
                           if (contrast %in% object@contr.names){
                               suppressWarnings(generatePathway(gene.set, object@gs.annots[[gs.label]], 
                                               object@logFC[, contrast], 
@@ -926,7 +934,7 @@ setMethod(f = "getlimmaResults",
                           }
                       }, 
                       error = function(e){
-                          cat(paste0("ERROR: plotPathway(...) encountered an error:\n", e ))
+                          stop("plotPathway(...) encountered an error:\n", e )
                       })            
           }
   )
@@ -988,16 +996,16 @@ setGeneric(name="plotMethods",
                       stop("plotMethods(...) requires at least two base methods.")
                   }
                   if (verbose)
-                      cat(paste0("Generating methods plot for the collection \n",
+                      message("Generating methods plot for the collection \n",
                                       object@gs.annots[[gs.label]]$name, " and for the contrast ",
-                                      contrast, "\n"))
+                                      contrast)
                   capture.output(generateMDSMethodsPlot(
                                   object@results[[gs.label]][["test.results"]][[contrast]], 
                                   object@baseMethods, 
                                   file.name, format))
               }, 
               error = function(e){
-                  cat(paste0("ERROR: plotMethods(...) encountered an error:\n", e ))
+                  stop("plotMethods(...) encountered an error:\n", e )
               }
             )
               
@@ -1038,6 +1046,7 @@ setGeneric(name="plotMethods",
 #' @inheritParams sort.by
 #' @param use.names logical, determines whether to display the GeneSet IDs or GeneSet Names.
 #' Default is FALSE.
+#' @inheritParams interactive
 #' @inheritParams verbose logical, whether to print out progress messages and warnings. 
 #' 
 #' @export
@@ -1063,6 +1072,7 @@ setGeneric(name="plotMethods",
                   x.axis = "p.adj", x.cutoff = NULL,
                   sort.by = NULL,
                   use.names = FALSE,
+                  interactive = FALSE,
                   verbose = TRUE){
               standardGeneric("plotSummary")
           }
@@ -1075,6 +1085,7 @@ setGeneric(name="plotMethods",
                   x.axis = "p.adj", x.cutoff = NULL,
                   sort.by = NULL,
                   use.names = FALSE,
+                  interactive = FALSE,
                   verbose = TRUE){                
               tryCatch({         
                           if (is.numeric(contrast))                            
@@ -1083,9 +1094,9 @@ setGeneric(name="plotMethods",
                               x.axis = object@sum.plot.axis
                           if (length(contrast) == 2){
                               if (verbose)
-                                  cat(paste0("Generating Summary plots for the collection \n",
+                                  message("Generating Summary plots for the collection \n",
                                                   object@gs.annots[[gs.label]]$name, " and for the comparison ",
-                                                  paste(contrast, collapse=" vs "), "\n"))                        
+                                                  paste(contrast, collapse=" vs "))                        
                               ordered.data = object@results[[gs.label]][["comparison"]][["test.results"]]
                               if (!is.null(sort.by))
                                 ordered.data = ordered.data[order(ordered.data[, sort.by]), ]
@@ -1096,21 +1107,23 @@ setGeneric(name="plotMethods",
                                       x.axis, x.cutoff,
                                       use.names)
                               if (x.axis %in% c("p.value", "p.adj")){
-                                  generateSummaryPlots(plot.data, file.name,
+                                  generateSummaryPlots(plot.data, file.name, "./",
                                           paste0("-log10(p-value) for ", contrast[1]),
                                           paste0("-log10(p-value) for ", contrast[2]),
-                                          format = format)
+                                          format = format,
+                                          interactive = interactive)
                               }else{
-                                  generateSummaryPlots(plot.data, file.name,
+                                  generateSummaryPlots(plot.data, file.name, "./",
                                           paste0("-", x.axis, " for ", contrast[1]),
                                           paste0("-", x.axis, " for ", contrast[2]),
-                                          format = format)
+                                          format = format, 
+                                          interactive = interactive)
                               }
                           }else if (length(contrast) == 1){
                               if (verbose)
-                                  cat(paste0("Generating Summary plots for the collection \n",
+                                  message("Generating Summary plots for the collection \n",
                                                   object@gs.annots[[gs.label]]$name, " and for the contrast ",
-                                                  contrast, "\n"))
+                                                  contrast)
                               ordered.data = object@results[[gs.label]][["test.results"]][[contrast]]
                               if (!is.null(sort.by))
                                   ordered.data = ordered.data[order(ordered.data[, sort.by]), ]
@@ -1120,18 +1133,20 @@ setGeneric(name="plotMethods",
                                       x.cutoff, x.axis,
                                       use.names)
                               if (x.axis %in% c("p.value", "p.adj"))
-                                  generateSummaryPlots(plot.data, file.name, 
-                                          format = format)
+                                  generateSummaryPlots(plot.data, file.name, "./",
+                                          format = format,
+                                          interactive = interactive)
                               else
-                                  generateSummaryPlots(plot.data, file.name, 
+                                  generateSummaryPlots(plot.data, file.name, "./",
                                           Xlab = paste0("-", x.axis),
-                                          format = format)
+                                          format = format,
+                                          interactive = interactive)
                           }else{
                               stop("Wrong number of contrasts. Max is 2.")
                           }                 
                       }, 
                       error = function(e){
-                          cat(paste0("ERROR: plotSummary(...) encountered an error:\n", e ))
+                          stop("ERROR: plotSummary(...) encountered an error:\n", e )
                       }
               )
               
@@ -1201,10 +1216,10 @@ setGeneric(name="plotMethods",
                           if (is.null(sort.by))
                               sort.by = object@sort.by
                           if (verbose)
-                              cat(paste0("Generating GO Graphs for the collection ",
+                              message("Generating GO Graphs for the collection ",
                                               object@gs.annots[[gs.label]]$name, 
                                               "\n and for the contrast ",
-                                              contrast, " based on the ", sort.by, "\n"))
+                                              contrast, " based on the ", sort.by)
                         
                           if (contrast %in% object@contr.names){
                               results = object@results[[gs.label]][["test.results"]][[contrast]]
@@ -1224,7 +1239,7 @@ setGeneric(name="plotMethods",
                             )
                       }, 
                       error = function(e){
-                          cat(paste0("ERROR: plotPathway(...) encountered an error:\n", e ))
+                          stop("plotPathway(...) encountered an error:\n", e )
                       })            
           }
   )
@@ -1305,9 +1320,9 @@ setGeneric(name="plotMethods",
                       else
                           bar.vals = sort.by  
                       if (verbose)
-                          cat(paste0("Generating a bar plot for the collection ",
+                          message("Generating a bar plot for the collection ",
                                           gsc.name, " \n and the contrast ",
-                                          contrast, "\n"))                          
+                                          contrast)                          
                       t = topSets(object, gs.label, contrast, sort.by, number, FALSE, FALSE)
                       t = t[nrow(t):1, ]
                       vals = t[, bar.vals]
@@ -1399,7 +1414,7 @@ setGeneric(name="plotMethods",
                       }
                   }, 
                   error = function(e){
-                      cat(paste0("ERROR: plotBars(...) encountered an error:\n", e ))
+                      stop("plotBars(...) encountered an error:\n", e )
                   }
               )
               
@@ -1552,9 +1567,9 @@ setMethod(f = "showSetByName",
                   stopifnot(method %in% object@baseMethods)
                   return(object@results[[gs.label]][["set.scores"]][[method]])
               }else{
-                  cat("set.scores are not available for this EGSEAResults object.\n")
-                  cat("Try to re-run EGSEA analysis with cal.set.scores = TRUE \n")
-                  cat("and use one of the set scoring methods, i.e., ssgsea.")
+                  warning("set.scores are not available for this EGSEAResults object.\n",
+                    "Try to re-run EGSEA analysis with cal.set.scores = TRUE \n",
+                    "and use one of the set scoring methods, i.e., ssgsea.")
                   return(NULL)
               }
           }

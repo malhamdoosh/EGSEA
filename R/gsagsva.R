@@ -20,10 +20,10 @@ rungsva <- function(method, voom.results, contrast, gs.annot,
     names(gsets) = names(gs.annot@idx)
 
     if (verbose)
-        print(paste0("   Calculating gene set-level stats using ", 
-                        toupper(method)))
+        message("   Calculating gene set-level stats using ", 
+                        toupper(method))
     else
-        cat(".")
+        message(".", appendLF = FALSE)
     # transform scores in gene set space using parallel computing
     data.log = voom.results$E
     rownames(data.log) = as.character(seq(1, nrow(data.log)))
@@ -40,10 +40,10 @@ rungsva <- function(method, voom.results, contrast, gs.annot,
     gsva.results = vector("list", contr.num)
     for(i in 1:contr.num){
         if (verbose)
-            print(paste0("   Running ", toupper(method)," for ", 
-                            contr.names[i]))
+            message("   Running ", toupper(method)," for ", 
+                            contr.names[i])
         else
-            cat(".")        
+            message(".", appendLF = FALSE)        
         gsva.results[[i]] =  topTable(gs.fit, coef=coefs[i], , number=Inf, sort.by="p", 
                 adjust.method="BH") 
         gsva.results[[i]] = gsva.results[[i]][order(gsva.results[[i]][, "P.Value"], 

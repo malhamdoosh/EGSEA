@@ -4,11 +4,11 @@
 ###############################################################################
 # Plot GO graphs using topGO package
 
-plotGOGraphs <- function(egsea.results, gs.annot, gsa.dir, sort.by, 
+plotGOGraphs <- function(egsea.results, gs.annot, report.dir, sort.by, 
         verbose){
-    cat(paste0("   GO graphs are being generated for top-ranked GO terms\n",  
-			"based on ", sort.by, " ... \n"))
-    go.dir = paste0(gsa.dir, "/go-graphs/") 
+    message("   GO graphs are being generated for top-ranked GO terms\n",  
+			"based on ", sort.by, " ... ")
+    go.dir = paste0(report.dir, "/go-graphs/") 
     if (!dir.exists(go.dir))
         dir.create(file.path(go.dir), showWarnings = FALSE)
     contrast.names = names(egsea.results)
@@ -20,7 +20,7 @@ plotGOGraphs <- function(egsea.results, gs.annot, gsa.dir, sort.by,
     noSig = 5 
     for (i in 1:length(contrast.names)){   
         if (verbose)
-            print(contrast.names[i])
+            message(contrast.names[i])
         generateGOGraphs(egsea.results[[i]], gs.annot, sort.by,
                 file.name[i], topGOdata, noSig)
         
@@ -28,10 +28,10 @@ plotGOGraphs <- function(egsea.results, gs.annot, gsa.dir, sort.by,
     
 }
 
-plotGOGraphs.comparison <- function(egsea.results, gs.annot, gsa.dir, sort.by){
-    cat(paste0("   GO graphs are being generated for top-ranked COMPARISON\n",  
-		"GO terms based on ", sort.by, " ... \n"))
-    go.dir = paste0(gsa.dir, "/go-graphs/") 
+plotGOGraphs.comparison <- function(egsea.results, gs.annot, report.dir, sort.by){
+    message("   GO graphs are being generated for top-ranked COMPARISON\n",  
+		"GO terms based on ", sort.by, " ... ")
+    go.dir = paste0(report.dir, "/go-graphs/") 
     if (!dir.exists(go.dir))
         dir.create(file.path(go.dir), showWarnings = FALSE)   
     file.name = paste0(go.dir, "comparison-", 
@@ -99,9 +99,8 @@ generateGOGraphs <- function(egsea.results, gs.annot, sort.by,
     scores = scores + 0.001
     names(scores) = as.character(
             gs.annot@anno[match(rownames(
-                                    egsea.results), 
-                            gs.annot@anno[, "GeneSet"]), 
-                    "GOID"])       
+              egsea.results), 
+              gs.annot@anno[, "GeneSet"]), "GOID"])       
     # Generate the BP graph
     if (length(go.subsets[["BP"]]) > 0)
         tryCatch({
@@ -128,10 +127,10 @@ generateGOGraphs <- function(egsea.results, gs.annot, sort.by,
                     dev.off()
                 }
             }, error=function(err){
-                print(paste("MY_ERROR:  ",err))
                 dev.off()
                 file.remove(paste0(file.name, "BP.pdf"))
                 file.remove(paste0(file.name, "BP.png"))
+                warning("EGSEA_ERROR:  ",err)
             }
         )
 #       stop("here")
@@ -161,10 +160,10 @@ generateGOGraphs <- function(egsea.results, gs.annot, sort.by,
                     dev.off()
                 }
             }, error=function(err){
-                print(paste("MY_ERROR:  ",err))
                 dev.off()
                 file.remove(paste0(file.name, "MF.pdf"))
                 file.remove(paste0(file.name, "MF.png"))
+                warning("EGSEA_ERROR:  ",err)
             }
         )       
     # write the CC graph
@@ -193,10 +192,10 @@ generateGOGraphs <- function(egsea.results, gs.annot, sort.by,
                     dev.off()
                 }
             }, error=function(err){
-                print(paste("MY_ERROR:  ",err))
                 dev.off()
                 file.remove(paste0(file.name, "CC.pdf"))
                 file.remove(paste0(file.name, "CC.png"))
+                warning("EGSEA_ERROR:  ",err)
             }
         )
 }
@@ -207,11 +206,11 @@ topDiffGenes <- function (allScore) {
 
 # Plot summary plots for each contrast and comparisons
 
-generateSumPlots <- function(egsea.results, baseGSEAs, gs.annot, gsa.dir,
-        sum.plot.cutoff=1, sum.plot.axis="p.value"){
-    cat("   Summary plots are being generated ... \n")
+generateSumPlots <- function(egsea.results, baseGSEAs, gs.annot, report.dir,
+        sum.plot.cutoff=1, sum.plot.axis="p.value",interactive=FALSE){
+    message("   Summary plots are being generated ... ")
     
-    summary.dir = paste0(gsa.dir, "/summary/")    
+    summary.dir = paste0(report.dir, "/summary/")    
     contrast.names = names(egsea.results)   
     
     for(i in 1:length(egsea.results)){      
@@ -223,10 +222,11 @@ generateSumPlots <- function(egsea.results, baseGSEAs, gs.annot, gsa.dir,
             plot.data = generatePlotData(egsea.results[[i]], 
                      gs.annot, sum.plot.cutoff, sum.plot.axis)
             if (sum.plot.axis %in% c("p.value", "p.adj"))
-                generateSummaryPlots(plot.data, file.name)
+              generateSummaryPlots(plot.data, file.name, summary.dir,
+                                   interactive=interactive)
             else
-                generateSummaryPlots(plot.data, file.name, 
-                        Xlab = paste0("-", sum.plot.axis))
+                generateSummaryPlots(plot.data, file.name, summary.dir,
+                        Xlab = paste0("-", sum.plot.axis),interactive=interactive)
         }
         file.name = paste0(summary.dir, sub(" - ", "-", 
                     contrast.names[i]), "-", gs.annot@label, "-methods")
@@ -239,11 +239,11 @@ generateSumPlots <- function(egsea.results, baseGSEAs, gs.annot, gsa.dir,
 }
 
 generateSumPlots.comparison <- function(egsea.results, egsea.comparison, gs.annot, 
-gsa.dir,         
-        sum.plot.cutoff=1, sum.plot.axis="p.value"){
-    cat("   Comparison summary plots are being generated  ...\n")
+report.dir,         
+        sum.plot.cutoff=1, sum.plot.axis="p.value",interactive=FALSE){
+    message("   Comparison summary plots are being generated  ...")
     
-    summary.dir = paste0(gsa.dir, "/summary/")
+    summary.dir = paste0(report.dir, "/summary/")
     dir.create(file.path(summary.dir), showWarnings = FALSE)
     contrast.names = names(egsea.results)
     
@@ -251,17 +251,17 @@ gsa.dir,
         generateSummaryPlots.comparison(egsea.results, 
                 egsea.comparison, gs.annot, 
                 sum.plot.axis, sum.plot.cutoff,
-                file.prefix="", summary.dir)
+                file.prefix="", summary.dir,interactive=interactive)
     } 
     else if (length(contrast.names) > 2){
-        cat("   There are more than 2 contrasts!\n")
+        message("   There are more than 2 contrasts!")
         for (i in 1:(length(contrast.names)-1)){
             for (j in (i+1):length(contrast.names)){
                 egsea.results.sub = egsea.results[c(i,j)]  
                 generateSummaryPlots.comparison(egsea.results.sub, 
                         egsea.comparison, gs.annot, 
                         sum.plot.axis, sum.plot.cutoff, file.prefix = 
-                        paste0('-', i,j), summary.dir)
+                        paste0('-', i,j), summary.dir,interactive=interactive)
             }
         }
     }
@@ -269,7 +269,7 @@ gsa.dir,
 
 generateSummaryPlots.comparison <- function(egsea.results, egsea.comparison, 
                         gs.annot, sum.plot.axis, sum.plot.cutoff,
-                        file.prefix, summary.dir){
+                        file.prefix, summary.dir,interactive=FALSE){
     file.name = paste0(summary.dir, gs.annot@label, file.prefix, 
             "-summary-", sum.plot.axis)
     if (!file.exists(paste0(file.name, ".dir.png"))){
@@ -278,17 +278,17 @@ generateSummaryPlots.comparison <- function(egsea.results, egsea.comparison,
                 egsea.comparison, gs.annot, 
                 sum.plot.axis, sum.plot.cutoff)
         if (sum.plot.axis %in% c("p.value", "p.adj")){
-            generateSummaryPlots(plot.data, file.name,
+            generateSummaryPlots(plot.data, file.name, summary.dir,
                     paste0("-log10(p-value) for ", 
                     contrast.names[1]),
                     paste0("-log10(p-value) for ", 
-                    contrast.names[2]))
+                    contrast.names[2]),interactive=interactive)
         }else{
-            generateSummaryPlots(plot.data, file.name,
+            generateSummaryPlots(plot.data, file.name, summary.dir,
                     paste0("-", sum.plot.axis, " for ", 
                         contrast.names[1]),
                     paste0("-", sum.plot.axis, " for ", 
-                        contrast.names[2]))
+                        contrast.names[2]),interactive=interactive)
         }
         
     }
@@ -412,8 +412,8 @@ generateMDSMethodsPlot <- function(egsea.results, baseGSEAs, file.name, format=N
 
 # Generate summary plots based on regulation direction and gene set ranking.
  
-generateSummaryPlots <- function(plot.data, file.name, Xlab="-log10(p-value)",
-        Ylab="Average Absolute logFC", format = NULL){     
+generateSummaryPlots <- function(plot.data, file.name, file.dir, Xlab="-log10(p-value)",
+        Ylab="Average Absolute logFC", format = NULL, interactive=FALSE){     
     tryCatch({
         plot.data.sig = plot.data[plot.data[, "rank"] <= 10, ]
         sig.cols = rep("black", nrow(plot.data.sig))
@@ -464,6 +464,14 @@ high="#000000",
     colour=sig.cols, vjust=-1, hjust=1) )   
             dev.off()
         }
+        # print("here")
+        if(interactive){
+          saveWidget(widget=ggplotly(p), selfcontained=FALSE, 
+                     libdir=file.path(file.dir,"lib"), 
+                     file=paste0(file.name, ".rank.html"),
+                     list(fig.width = 800, fig.height = 800)) #  htmlwidgets::saveWidget
+        }
+        # print("here1")
         # plot direction-based coloured bubbles
         top.10.ids = as.character(plot.data[plot.data[, "rank"] <= 10, 
 "id"])
@@ -501,10 +509,16 @@ name="Regulation Direction") # low="#5FE377"
                             colour=sig.cols, vjust=-1, hjust=1) )       
             dev.off()
         }
+        if(interactive){
+          saveWidget(widget=ggplotly(p), selfcontained=FALSE, 
+                     libdir=file.path(file.dir,"lib"), 
+                     file=paste0(file.name, ".dir.html")) #  htmlwidgets::saveWidget
+        }
+        
     }, 
     error = function(e){
-        print(paste0("WARNING: summary plots were not generated for ", 
-file.name))
+        warning("Summary plots were not generated for ", 
+file.name)
     })
 }
 # Plot top KEGG pathways using the pathview package 
@@ -513,23 +527,23 @@ file.name))
 # data on them.
  
 
-plotPathways = function(gene.sets, fc, gs.annot, gsa.dir, kegg.dir, 
+plotPathways = function(gene.sets, fc, gs.annot, report.dir, kegg.dir, 
 verbose=FALSE){
     #TODO: adjust the limit of the expression values 
     
-    cat(paste0("   Pathway maps are being generated for top-ranked \n pathways based ", 
-                "on logFC ... \n"))
+    message("   Pathway maps are being generated for top-ranked \n pathways based ", 
+                "on logFC ... ")
     current = getwd()   
     contrast.names = colnames(fc)
     if (is.null(kegg.dir))
-        kegg.dir = paste0(gsa.dir, "/kegg-dir/")
+        kegg.dir = paste0(report.dir, "/kegg-dir/")
     dir.create(file.path(kegg.dir), showWarnings = FALSE)
     kegg.dir = normalizePath(kegg.dir)  
 
     for(i in 1:ncol(fc)){   
         if (verbose)
-            cat(paste0("  ", contrast.names[i], "\n"))
-        pv.dir = paste0(gsa.dir, "/pv-top-gs-", gs.annot@label, "/", 
+            message("  ", contrast.names[i])
+        pv.dir = paste0(report.dir, "/pv-top-gs-", gs.annot@label, "/", 
                 sub(" - ", "-", contrast.names[i]))     
     
         dir.create(file.path(pv.dir), showWarnings = FALSE, recursive = 
@@ -585,16 +599,16 @@ generatePathway <- function(gene.set, gs.annot, fc, kegg.dir="./",
     }
 }
 
-plotPathways.comparison <- function(gene.sets, fc, gs.annot, gsa.dir, kegg.dir, 
+plotPathways.comparison <- function(gene.sets, fc, gs.annot, report.dir, kegg.dir, 
 verbose=FALSE){
-    cat(paste0("   Pathway maps are being generated for top-ranked comparative\n", 
-            "pathways based on logFC ... \n"))
+    message("   Pathway maps are being generated for top-ranked comparative\n", 
+            "pathways based on logFC ... ")
     current = getwd()
     if (is.null(kegg.dir))
-        kegg.dir = paste0(gsa.dir, "/kegg-dir/")
+        kegg.dir = paste0(report.dir, "/kegg-dir/")
     dir.create(file.path(kegg.dir), showWarnings = FALSE)
     kegg.dir = normalizePath(kegg.dir)
-    pv.dir = paste0(gsa.dir, "/pv-top-gs-", gs.annot@label, "/")    
+    pv.dir = paste0(report.dir, "/pv-top-gs-", gs.annot@label, "/")    
     setwd(pv.dir)
     for (gene.set in gene.sets){
         id = gs.annot@anno[match(gene.set, gs.annot@anno[, "GeneSet"]), "ID"]
@@ -641,8 +655,8 @@ generateComparisonPathway <- function(gene.set, gs.annot, fc, kegg.dir="./",
 }
 
 plotHeatMapsLogFC.comparison <- function(gene.sets, fc, limma.tops, gs.annot,  symbolsMap, 
-gsa.dir){   
-    hm.dir = paste0(gsa.dir, "/hm-top-gs-", gs.annot@label, "/")        
+report.dir){   
+    hm.dir = paste0(report.dir, "/hm-top-gs-", gs.annot@label, "/")        
     for (gene.set in gene.sets){
         id = gs.annot@anno[match(gene.set, gs.annot@anno[, "GeneSet"]), 
 "ID"]
@@ -660,17 +674,16 @@ gsa.dir){
 
 #Plot heat maps for each gene set in a gene sets annotation object 
 
-plotHeatMapsLogFC = function(gene.sets, fc, limma.tops, gs.annot,  symbolsMap, gsa.dir){
+plotHeatMapsLogFC = function(gene.sets, fc, limma.tops, gs.annot,  symbolsMap, 
+                             report.dir){
     # create output directory for heatmaps
-    cat(paste0("   Heat maps are being generated for top-ranked gene sets \n",
-               "based on logFC ... \n"))
+    message("   Heat maps are being generated for top-ranked gene sets \n",
+               "based on logFC ... ")
     if (!identical(rownames(fc), gs.annot@featureIDs)){     
         fc = fc[match(gs.annot@featureIDs, rownames(fc)) , ]    
         if (!identical(rownames(fc), gs.annot@featureIDs)){
-            print(rownames(fc)[1:10])       
-            print(gs.annot@featureIDs[1:10])
-            stop("The row names of the fold change matrix should 
-match the featureIDs vector in the gs.annot list")          
+            stop("The row names of the fold change matrix should ", 
+                "match the featureIDs vector in the gs.annot list")          
         }
     }   
     if (nrow(symbolsMap) > 0 && !identical(as.character(symbolsMap[,1]), 
@@ -686,7 +699,7 @@ match the featureIDs vector in the gs.annot list")
     contrast.names = colnames(fc)       
     
     for(i in 1:ncol(fc)){       
-        hm.dir = paste0(gsa.dir, "/hm-top-gs-", gs.annot@label, "/", 
+        hm.dir = paste0(report.dir, "/hm-top-gs-", gs.annot@label, "/", 
             sub(" - ", "-", contrast.names[i]))
         dir.create(file.path(hm.dir), showWarnings = FALSE, 
             recursive = TRUE)       
@@ -798,7 +811,9 @@ generateHeatMap <- function(gene.set, gs.annot, fc, limma.tops, symbolsMap,
         heatmap.2(hm, col = colrange, breaks=br, 
                 margins=c(10,10), cexRow=cr, 
                 cexCol=0.85, trace = "none", 
-                Colv = FALSE,  dendrogram="row", 
+                Colv = ifelse(is.matrix(fc) && ncol(fc) > 2, 
+                              TRUE, FALSE),   
+                dendrogram="row", 
                 density.info = "histogram",
                 denscol = "black",
                 #key.title = "",
@@ -824,7 +839,9 @@ generateHeatMap <- function(gene.set, gs.annot, fc, limma.tops, symbolsMap,
         png(paste0(file.name, ".png")) # , width=800, height=800
         heatmap.2(hm, col = colrange, breaks=br, margins=c(10,10), 
                     cexRow=cr, cexCol=0.85, trace = "none", 
-                    Colv = FALSE, Rowv=TRUE, dendrogram="none",
+                    Colv = ifelse(is.matrix(fc) && ncol(fc) > 2, 
+                                TRUE, FALSE),
+                    Rowv=TRUE, dendrogram="none",
                     colRow = sig.color,
                     key=FALSE#, lmat=lmat, lwid = lwid, lhei = lhei 
                 ) #,main = paste0(gene.set, " (logFC)"), colsep=c(3,6,9)) 
@@ -933,7 +950,7 @@ createSummaryHeatmap <- function(hm, contrasts, colrange,
         heatmap.2(hm, lmat=mylmat, lwid=mylwid, lhei=mylhei,
                 breaks=br, col=colrange, margins=c(10,10),
                 cexRow=cr, cexCol=0.85, trace = "none", 
-                Colv = FALSE, 
+                Colv = ifelse(length(contrasts) > 1, TRUE, FALSE), 
                 Rowv = ifelse(length(contrasts) > 1, TRUE, FALSE), 
                 dendrogram = "none",
                 key.xlab=xlab,
@@ -946,7 +963,7 @@ createSummaryHeatmap <- function(hm, contrasts, colrange,
         heatmap.2(hm, lmat=mylmat, lwid=mylwid, lhei=mylhei,
                 breaks=br, col=colrange, margins=c(10,10),
                 cexRow=cr, cexCol=0.85, trace = "none", 
-                Colv = FALSE, , 
+                Colv = ifelse(length(contrasts) > 1, TRUE, FALSE), , 
                 Rowv = ifelse(length(contrasts) > 1, TRUE, FALSE),
                 dendrogram = "none",
                 key.xlab=xlab,

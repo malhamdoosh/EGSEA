@@ -37,9 +37,9 @@ runpadog <- function(voom.results, contrast, gs.annot,
 
 runpadog.contrast <- function(args){
     if (args$verbose)
-        print(paste0("   Running PADOG for ", args$contrast))
+        message("   Running PADOG for ", args$contrast)
     else
-        cat(".")
+        message(".", appendLF = FALSE)
     
     group = c(rep("c", length(args$group1)), 
             rep("d", length(args$group2)))

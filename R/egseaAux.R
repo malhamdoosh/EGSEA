@@ -17,8 +17,8 @@
 #' 
 
 egsea.sort <-function(){
-    return(c(c("p.value", "p.adj", "avg.rank", "med.rank", "min.rank", 
-                            "min.pvalue", "vote.rank", "avg.logfc.dir", "avg.logfc", "direction",
+    return(c(c("p.value", "p.adj", "vote.rank", "avg.rank", "med.rank", 
+                            "min.pvalue", "min.rank",  "avg.logfc", "avg.logfc.dir", "direction",
                             "significance"),egsea.base()))
 }
 
@@ -39,7 +39,7 @@ egsea.sort <-function(){
 
 egsea.combine <- function(){
     return(c("fisher", "wilkinson", "average", "logitp", 
-                    "sump", "sumz", "median"))
+                    "sump", "sumz", "votep", "median"))
 }
 
 

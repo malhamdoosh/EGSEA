@@ -4,12 +4,12 @@
 
 
 egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs, 
-                combineMethod, combineWeights, sort.by, egsea.dir, 
+                combineMethod, combineWeights, sort.by, report.dir, 
                 kegg.dir, logFC, symbolsMap, minSize, display.top, 
                 logFC.cutoff, fdr.cutoff, sum.plot.cutoff, sum.plot.axis, 
                 vote.bin.width, keep.base, verbose, num.threads, 
-                report, keep.limma, keep.set.scores){    
-    print("EGSEA analysis has started")
+                report, keep.limma, keep.set.scores, interactive){    
+    message("EGSEA analysis has started")
     start.time <- proc.time()
     timestamp()
     # check arguments are valid    
@@ -26,7 +26,7 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
     combineMethod = tolower(combineMethod)  
     sort.by = tolower(sort.by)   
     if (length(baseGSEAs) <= 1){
-        print("The ensemble mode was disabled. No sufficient number of base methods.")
+        warning("The ensemble mode was disabled. No sufficient base methods.")
         if (! sort.by %in% c("p.adj", "p.value")){
             sort.by = "p.adj"
             warning("The argument 'sort.by' was set to \"p.adj\"")
@@ -58,13 +58,13 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
     }
     if (!is.matrix(contrast)){
         stopifnot(max(contrast) <= ncol(voom.results$design))
-        cat(paste0("The argument 'contrast' is recommended to be a matrix object.\n",
-                    "See Vignette or Help.\n"))
+        message("The argument 'contrast' is recommended to be a matrix object.\n",
+                    "See Vignette or Help.")
         if (is.null(names(contrast))){
             if (is.null(voom.results$targets) || 
                     is.null(voom.results$targets$group))
-                stop(paste0("The data frame 'targets' of the object 'voom.results' ",
-                                "must have a column named 'group'."))
+                stop("The data frame 'targets' of the object 'voom.results' ",
+                                "must have a column named 'group'.")
             ref.group = levels(factor(voom.results$targets$group))[1]  
             names(contrast) = paste0(colnames(voom.results$design)[contrast], 
                     "vs", ref.group)
@@ -85,17 +85,17 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
     logFC.calculated = "No"
     if (is.null(logFC)){
         #row names should be Entrez Gene IDs in order to plot KEGG pathways
-        print("Log fold changes are estimated using limma package ... ")
-        tmp = getlogFCFromLMFit(voom.results, contrast, logFC.cutoff, fdr.cutoff)
+        message("Log fold changes are estimated using limma package ... ")
+        tmp = runStandardLimmaDEA(voom.results, contrast, logFC.cutoff, fdr.cutoff)
         logFC = tmp$logFC
         limma.results = tmp$limma.results
         limma.tops = tmp$limma.tops
         logFC.calculated = "Yes"
     }else if (!is.matrix(logFC) || !identical(colnames(logFC), contr.names)){
         stop(paste0("logFC should be a matrix object with column names equal ", 
-                        "to the (column) names of the argument 'contrast'.\n"))
+                        "to the (column) names of the argument 'contrast'."))
     }else if (class(voom.results) == "EList"){
-        tmp = getlogFCFromLMFit(voom.results, contrast, logFC.cutoff, fdr.cutoff)
+        tmp = runStandardLimmaDEA(voom.results, contrast, logFC.cutoff, fdr.cutoff)
         limma.results = tmp$limma.results
         limma.tops = tmp$limma.tops
     }else{
@@ -107,10 +107,10 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
     if (!identical(rownames(logFC), featureIDs)){     
         logFC = logFC[match(featureIDs, rownames(logFC)) , ]    
         if (!identical(rownames(logFC), featureIDs)){
-            print(rownames(logFC)[1:10])       
-            print(featureIDs[1:10])
-            stop("The row names of the fold change matrix should 
-                            match the featureIDs vector in the gs.annot list")          
+            stop("The row names of the fold change matrix should \n", 
+                  "match the featureIDs vector in the gs.annot list.\n",
+                 paste(rownames(logFC)[1:10], collapse=' '), "\n", 
+                 paste(featureIDs[1:10], collapse= ' '))          
         }
     }    
     # check the 'symbolsMap' argument and replace NA symbols 
@@ -123,6 +123,8 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
             symbolsMap[na.sym, 2] = symbolsMap[na.sym, 1]
         }
     }    
+    if (is.null(report.dir))
+      report.dir = ""
     # optimize number of cores to be used 
     num.threads = optimizeNumThreads(num.threads, length(baseGSEAs), 
             length(contr.names), verbose)    
@@ -137,7 +139,7 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
             logFC = logFC, logFC.calculated = logFC.calculated,
             sum.plot.axis = sum.plot.axis, 
             sum.plot.cutoff = sum.plot.cutoff,
-            report = report, report.dir = egsea.dir,
+            report = report, report.dir = report.dir,
             egsea.version = paste0(packageVersion("EGSEA")),
             egseaData.version = paste0(packageVersion("EGSEAdata"))
             )  
@@ -148,14 +150,14 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
     for (gs.annot in gs.annots){
         gs.annot = selectGeneSets(gs.annot, min.size=minSize)  
         if (length(gs.annot@idx) == 0){
-            print(paste0("No gene sets in ", gs.annot@label, 
-                    " meets the minimum size criterion."))
+            message("No gene sets in ", gs.annot@label, 
+                    " meets the minimum size criterion.")
             skipped = c(skipped, gs.annot@label)
             next
         }
         # run egsea and write out ranked gene sets for all contrasts
-        print(paste0("EGSEA is running on the provided data and ",
-                        gs.annot@label, " collection"))       
+        message("EGSEA is running on the provided data and ",
+                        gs.annot@label, " collection")   
         
         results <- runegsea(voom.results = voom.results, 
                 contrast = contrast, limma.tops = limma.tops,
@@ -176,12 +178,7 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
                                 ]      
         }  
         
-        # select top gene sets        
-        gsets.top = egsea.selectTopGeneSets(egsea.results=egsea.results, 
-                        display.top=display.top, gs.annot=gs.annot, 
-                        report=report)   
-        
-        gsa = list("top.gene.sets"=gsets.top, "test.results"=egsea.results)
+        gsa = list("test.results"=egsea.results)
         if (keep.base)
             gsa[["base.results"]] = results[["base.results"]]        
         if (keep.set.scores){
@@ -191,7 +188,7 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
                     set.methods, num.threads, verbose)
         }  
         # Comparison analysis reports generated here
-        if (length(gsets.top) > 1){         
+        if (length(egsea.results) > 1){         
             egsea.comparison = createComparison(egsea.results, 
                     combineMethod = combineMethod, 
                     display.top=Inf, sort.by = sort.by)
@@ -201,20 +198,21 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
             egsea.comparison = egsea.comparison[1:ifelse(nrow(egsea.comparison) 
                 > display.top, 
                 display.top, nrow(egsea.comparison)), ]
-            gsa$comparison[["top.gene.sets"]] = rownames(egsea.comparison)
+            # gsa$comparison[["top.gene.sets"]] = rownames(egsea.comparison)
         }   
         gsas = addEGSEAResult(gsas, gs.annot@label, gsa)
         #gsas[[gs.annot@label]] = gsa
     }    
     elapsed.time = proc.time() - start.time    
     timestamp()
-    print(paste0("EGSEA analysis took ", elapsed.time["elapsed"], " seconds."))
-    print("EGSEA analysis has completed")
+    message("EGSEA analysis took ", elapsed.time["elapsed"], " seconds.")
+    message("EGSEA analysis has completed")
     if (report){
-       generate.EGSEA.Report(gsas, limma.tops = limma.tops,
+      generateMainReport(gsas, limma.tops = limma.tops,
                display.top = display.top,
                kegg.dir = kegg.dir, num.threads = num.threads, 
                print.base = TRUE,
+               interactive = interactive,
                verbose = verbose) 
     }
     return(gsas)
@@ -225,8 +223,8 @@ optimizeNumThreads <- function(num.threads, base.num, contr.num, verbose=TRUE){
     exp.threads.num = min(num.threads, base.num) * 
                     min(num.threads, contr.num)
     if (verbose)
-        cat(paste0("Expected number of running processes: ", 
-                        exp.threads.num, "\n"))
+        message("Expected number of running processes: ", 
+                        exp.threads.num)
     if (cores < exp.threads.num ){
         new.threads.num = 1
         exp.threads.num = min(new.threads.num, base.num) * 
@@ -245,9 +243,9 @@ optimizeNumThreads <- function(num.threads, base.num, contr.num, verbose=TRUE){
     else
         new.threads.num = num.threads
     if (new.threads.num  != num.threads){      
-        cat(paste0("Number of used cores has changed to ", 
+        message("Number of used cores has changed to ", 
                         new.threads.num , "\nin order to avoid ",
-                        "CPU overloading.\n"))
+                        "CPU overloading.")
     }
     return(new.threads.num)
 }
@@ -256,7 +254,7 @@ calculateSetScores <- function(voom.results, gs.annot, set.methods,
         num.workers, verbose = TRUE){    
     set.scores = list()
     if (length(set.methods) == 0){
-        cat("The parameter keep.set.scores has nothing to keep.")
+        message("The parameter keep.set.scores has nothing to keep.")
         return(set.scores)
     }
     data.log = voom.results$E
@@ -268,9 +266,9 @@ calculateSetScores <- function(voom.results, gs.annot, set.methods,
     names(gsets) = names(gs.annot@idx)
     for (method in set.methods){
         if (verbose)
-            cat(paste0("Gene set enrichment scores per sample are\n", 
+            message("Gene set enrichment scores per sample are\n", 
                     "being calculated using ", 
-                        method, "...\n"))
+                        method, "...")
         gs.es = calculateSetScores.parallel(data.log, gsets, method, num.workers)
         set.scores[[method]] = gs.es
     }
@@ -304,7 +302,7 @@ getBaseInfo <- function(baseGSEAs){
 
 
 egsea.selectTopGeneSets <- function(egsea.results, display.top, gs.annot, 
- report=TRUE){
+ verbose=TRUE){
     contrast.names = names(egsea.results)
     top.gene.sets = list()
     
@@ -319,7 +317,7 @@ display.top,length(gs.annot@idx))
             egsea.results.top = egsea.results[[i]][1:num.gene.sets.fdr,]    
         
             top.gene.sets[[i]] = rownames(egsea.results.top) 
-            if (report){
+            if (verbose){
                 print(paste0("The top gene sets for contrast ", 
                                 contrast.names[i], " are:"))
                 if (length(grep("^kegg", gs.annot@label)) == 0){
@@ -338,7 +336,7 @@ display.top,length(gs.annot@idx))
             }
             
         }else{            
-            print("No gene sets found")
+            message("No gene sets found")
             top.gene.sets[[i]] = NA
         }
         
@@ -362,14 +360,13 @@ runbaseGSEAParallelWorker <- function(args){
                     message(paste0("Running ", toupper(args$baseGSEA), " on all ", 
 							"contrasts ... COMPLETED"))
                 else{
-                    message(args$baseGSEA, appendLF = FALSE)
-                    message("*", appendLF = FALSE)
+                    message(args$baseGSEA, "*", appendLF = FALSE)
                 }
                 return(temp.result)
             }, 
             error = function(e) {
-                print(paste0("ERROR: ",toupper(args$baseGSEA), 
-                           " encountered an error ", e ))
+                message(toupper(args$baseGSEA), 
+                           " encountered an error -> ", e )
             })
     return(NULL)
 }
@@ -425,10 +422,10 @@ mc.cores=num.workers)
         for (i in 1:length(contr.names)){
             # order is important when combine
             if (is.null(temp.results[[baseGSEA]])){
-                err = paste0("ERROR: One of the GSE methods failed on this 
-dataset (",baseGSEA , ").\nRemove it and try again.\nSee error messages for 
-more information.")
-                stop(err)
+                stop("ERROR: One of the base methods failed on this ", 
+                "dataset (", baseGSEA , 
+                ").\nRemove it and try again.\nSee error messages for ", 
+                "more information.")
             }
 #            print(paste0(baseGSEA, colnames(contrast)[i]))
 #            if (baseGSEA == "globaltest")
@@ -550,6 +547,16 @@ combinePvalues <- function(data, combineMethod, combineWeights = NULL){
             data[data == 1] = 1 - 1*10^-5
             pvalues = sapply(apply(data,  1, function(y) wilkinsonp(y[!is.na(y)], r = 1)), 
                     function(x) x$p)            
+        } else if (combineMethod == "votep"){        
+          data[data == 0] = 1*10^-22
+          data[data == 1] = 1 - 1*10^-5
+          pvalues = sapply(apply(data,  1, function(y) votep(y[!is.na(y)])), 
+                           function(x) x$p)            
+        } else if (combineMethod == "median"){        
+          data[data == 0] = 1*10^-22
+          data[data == 1] = 1 - 1*10^-5
+          pvalues = sapply(apply(data,  1, function(y) median(y[!is.na(y)])), 
+                           function(x) x$p)            
         }    
     } else{
         pvalues = data[, 1]
@@ -659,9 +666,9 @@ extractAdjPvaluesRanks <- function(results.multi){
             results.ranked[[i]][,j] = as.numeric(results.multi[[i]][[j]][, 
                             "Rank"])
             if (max(results.comp[[i]][,j], na.rm = TRUE) < 0.000001)
-                print(paste0("WARNING: ", method, 
+                warning(method, 
                     " produces very low p-values on ", 
-                    names(results.comp)[i]))
+                    names(results.comp)[i])
             j = j + 1
         }
     }
@@ -690,9 +697,9 @@ extractPvaluesRanks <- function(results.multi){
             results.ranked[[i]][,j] = as.numeric(results.multi[[i]][[j]][, 
                 "Rank"])
             if (max(results.comp[[i]][,j], na.rm = TRUE) < 0.000001)
-                print(paste0("WARNING: ", method, 
+                warning(method, 
                       " produces very low p-values on ", 
-                      names(results.comp)[i]))
+                      names(results.comp)[i])
             j = j + 1
         }
     }
@@ -819,11 +826,11 @@ get.toptables <- function(ebayes.results, contrast){
     return(limma.tops)
 }
 
-getlogFCFromLMFit <- function(voom.results, contrast, 
+runStandardLimmaDEA <- function(voom.results, contrast, 
         logFC.cutoff, fdr.cutoff){
     # to be changed for gene symbols support
     stopifnot(class(voom.results) == "EList")
-    print("limma DE analysis is carried out ... ")
+    message("limma DE analysis is carried out ... ")
     # fit linear model for each gene using limma package functions
     vfit = lmFit(voom.results, design=voom.results$design) # Fit linear model 
 # for each gene given a series of arrays
@@ -853,17 +860,17 @@ getlogFCFromLMFit <- function(voom.results, contrast,
         limma.tops[[contr.names[i]]] = top.table
         de.genes = top.table[top.table[, "adj.P.Val"] <= fdr.cutoff, ]
         if (nrow(de.genes) == 0)
-            cat(paste0("WARNING: it seems the contrast ", 
+            warning("It seems the contrast ", 
                     contr.names[i], 
                     " has no DE genes at the selected 'fdr.cutoff'.\n",
-                    "The 'fdr.cutoff' was ignored in the calculations.\n"))
+                    "The 'fdr.cutoff' was ignored in the calculations.")
         if (nrow(de.genes) > 0){
             de.genes = de.genes[abs(de.genes[, "logFC"]) >= logFC.cutoff, ]
             if (nrow(de.genes) == 0)
-                cat(paste0("WARNING: it seems the contrast ", 
+                warning("It seems the contrast ", 
                     contr.names[i], 
                     " has no DE genes at the selected 'logFC.cutoff'.\n",
-                    "The 'logFC.cutoff' was ignored in the calculations.\n"))
+                    "The 'logFC.cutoff' was ignored in the calculations.")
         }
     }
     

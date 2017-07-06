@@ -41,9 +41,9 @@ runsafe <- function(voom.results, contrast, gs.annot,
 
 runsafe.contrast <- function(args){
     if (args$verbose)
-        print(paste0("   Running SAFE for ", args$contrast))
+        message("   Running SAFE for ", args$contrast)
     else
-        cat(".")
+        message(".", appendLF = FALSE)
     group = c(rep("Ctr", length(args$group1)), 
             rep("Trt", length(args$group2)))
     

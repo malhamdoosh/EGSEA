@@ -172,7 +172,7 @@ buildIdx <- function(entrezIDs, species="human",
 #' 
 
 buildKEGGIdx <- function(entrezIDs, species = "human", min.size=1, 
-updated=FALSE, exclude = c()) {   
+          updated=FALSE, exclude = c()) {   
     species = normalizeSpecies(species)
     updatedSuccess = FALSE
     entrezIDs = as.character(entrezIDs)    
@@ -182,20 +182,21 @@ updated=FALSE, exclude = c()) {
         kegg.pathways = loadKeggData()
         kegg = kegg.pathways[[species.fullToShort[[tolower(species)]]]]
     }else{
-        kegg = tryCatch({ 
-            kegg.gsets(species = 
+        tryCatch({ 
+            kegg <- kegg.gsets(species = 
             species.fullToShort[[tolower(species)]], id.type = "kegg")
-            updatedSuccess = TRUE
+            updatedSuccess <- TRUE
         },
         error = function(e){    
             warning("KEGG pathways have not been updated successfully.")                
-            kegg.pathways = loadKeggData() 
-            return(kegg.pathways[[species.fullToShort[[tolower(species)]]]])
+            kegg.pathways <- loadKeggData() 
+            kegg <- kegg.pathways[[species.fullToShort[[tolower(species)]]]]
         })
     }
     
     if (is.null(kegg))
         stop("Failed to load the KEGG pathway data.")
+   
     gsets = kegg$kg.sets        
     gsets.ez = gsets
     gsets = ids2indices(gsets.ez, entrezIDs, remove.empty=TRUE) 
@@ -225,6 +226,7 @@ sapply(gsets.ez, length)),
         ver = "NA"
         dat = date()
     }
+    
     gs.annot = GSCollectionIndex(original = gsets.ez,
             idx = gsets,
             anno = anno,                
@@ -234,6 +236,7 @@ sapply(gsets.ez, length)),
             label = "kegg",
             version = ver,
             date = dat)
+    
     gs.annot = selectGeneSets(gs.annot, min.size=min.size)   
     if (length(gs.annot@idx) == 0)
         cat("KEGG pathway collection is empty.\n")
@@ -244,6 +247,7 @@ sapply(gsets.ez, length)),
         gs.annot@original = gs.annot@original[sel]
         gs.annot@anno = gs.annot@anno[sel, ]
     }
+   
     return(gs.annot)
 }
 
@@ -672,10 +676,10 @@ buildCustomIdx <- function(entrezIDs, gsets, anno=NULL,label="custom",
 
 #' @title Gene Set Collection Index from a GMT file
 #' 
-#' @description \code{buildCustomIdx} creates a gene set collection from a 
+#' @description \code{buildGMTIdx} creates a gene set collection from a 
 #' given GMT file to be used for the EGSEA analysis. 
 #' 
-#' @details \code{buildCustomIdx} indexes newly created gene sets and 
+#' @details \code{buildGMTIdx} indexes newly created gene sets and 
 #' attach gene set annotation if provided.
 #'   
 #' @inheritParams entrezIDs

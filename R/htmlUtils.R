@@ -62,7 +62,7 @@ gs.annot@anno[,"GeneSet"]),]
 }
 
 writeEGSEAResultsToHTML <- function(contrast.name, gsa.results, gs.annot, 
-file.name, comparison=FALSE){   
+file.name, comparison=FALSE, interactive=TRUE){   
     
     title = paste0("Gene Set Enrichment Analysis on ", gs.annot@name, " 
 using EGSEA (",
@@ -146,7 +146,7 @@ gs.annot@anno[,"GeneSet"]),],
             if (!anyOccur(colnames(table.data)[i], c("p.value", 
 "p.adj", "min.pvalue")))
                 table.data[, i] = round(table.data[,i], 2)
-            else
+            else if (! interactive)
                 table.data[, i] = round(table.data[,i], 6)
         }
     }
@@ -202,6 +202,14 @@ as.character(lapply(as.numeric(table.data[, "direction"]),
     }
     
     capture.output(HTMLsortedTable(table.data, title, title, file=file, path=path))
+    if(interactive){
+      saveWidget(widget=datatable(table.data,escape = FALSE), 
+                 selfcontained=FALSE, libdir=file.path(path,"lib"), 
+                 file=file.path(path,file)) # DT::datatable 
+    }else{
+      capture.output(HTMLsortedTable(table.data, title, title, file=file, path=path))
+    }
+    
     
 }
 
@@ -217,7 +225,7 @@ anyOccur <- function(string, list){
 }
 
 generateSummaryPage.comparison <- function(contrast.names, gs.annot, 
-        sum.plot.axis, sort.by, file.name){
+        sum.plot.axis, sort.by, file.name, interactive=TRUE){
     path = strsplit(file.name, "/")[[1]]    
     file = path[length(path)]
     file = gsub(".txt", ".html", file)
@@ -279,15 +287,24 @@ regulation direction and significance <br/>")
                     href=sub(".png", ".csv", file.name)), ")")
         plot.titles = c(plot.titles, fig.title)
     }
+    if(interactive){
+      html.img.files = sub(".png", ".html", img.files)
+      pdfs = hmakeTag("a", "Open interactive plot", href=html.img.files) 
+      # actually they are html files. but for convention we still call it pdf
+      pdf.files = html.img.files
+    }else{
+      pdf.img.files = sub(".png", ".pdf", img.files)
+      pdfs = hmakeTag("a", "Download pdf file", href=pdf.img.files) 
+      pdf.files = pdf.img.files
+    }
     file.name.bar = paste0("./",                    
             "comparison-", gs.annot@label, "-bar-plot-", 
             sort.by ,".png")
     img.files = c(img.files, file.name.bar)
     plot.titles = c(plot.titles, "Bar plot of the top gene sets")
-    pdf.files = sub(".png", ".pdf", img.files)  
+    pdf.files = c(pdf.files, sub(".png", ".pdf", file.name.bar))
     images = hmakeTag("a", hmakeTag("img", src=img.files, width=500), 
 href=pdf.files)
-    pdfs = hmakeTag("a", "Download pdf file", href=pdf.files)
     content = paste(images, plot.titles, pdfs, sep="<br/>")
     if (length(contrast.names) > 2){
         anchors = hmakeTag("a", "", name=anchor.names)
@@ -401,7 +418,7 @@ width=600), href=pdf.files)
 }
 
 generateSummaryPage <- function(contrast.name, gs.annot, sum.plot.axis, 
-        sort.by, contr.num, file.name){
+        sort.by, contr.num, file.name, interactive=TRUE){
     title = paste0("Gene Set Enrichment Analysis on ", gs.annot@name, " 
 using EGSEA (",
             contrast.name, ")") 
@@ -413,23 +430,38 @@ gs.annot@label, "-summary-", sum.plot.axis ,".rank.png")
     path = paste0(paste(path[1:length(path) -1], collapse = "/"), "/")
     mds.file = paste0(sub(" - ", "-", contrast.name), "-", gs.annot@label, 
 "-methods.png")
-    if (file.exists(paste0(path, mds.file)))
-        img.files = c(img.files, paste0("./", mds.file))
+    if(interactive){
+      pdf.files = sub(".png", ".html", img.files)
+      pdfs = hmakeTag("a", "Open interactive plot", href=pdf.files)
+    }else{
+      pdf.files = sub(".png", ".pdf", img.files)
+      pdfs = hmakeTag("a", "Download pdf file", href=pdf.files)
+    }
+    if (file.exists(paste0(path, mds.file))){
+      img.files = c(img.files, paste0("./", mds.file))
+      ta = hmakeTag("a", "Download pdf file", href=sub(".png", ".pdf", paste0("./", mds.file)))
+      pdfs = c(pdfs, ta)
+      pdf.files = c(pdf.files, sub(".png", ".pdf", paste0("./", mds.file)))
+      
+    }
     # add summary heatmap to the contrast summary page if no. contrasts = 1
     if (contr.num == 1){
         file.name.sum = paste0("./", gs.annot@label, 
                 "-summary-heatmap-", sort.by,".png")
-        img.files = c(img.files, file.name.sum)        
+        img.files = c(img.files, file.name.sum)  
+        ta = hmakeTag("a", "Download pdf file", href=sub(".png", ".pdf", file.name.sum))
+        pdfs = c(pdfs, ta)
+        pdf.files =  c(pdf.files, sub(".png", ".pdf", file.name.sum))
     }
     file.name.bar = paste0("./",contrast.name,                    
             "-", gs.annot@label, "-bar-plot-", 
             sort.by,".png")
     img.files = c(img.files, file.name.bar)
-    pdf.files = sub(".png", ".pdf", img.files)
+    pdf.files = c(pdf.files, sub(".png", ".pdf", file.name.bar))
     
     images = hmakeTag("a", hmakeTag("img", src=img.files, width=500), 
 href=pdf.files)
-    pdfs = hmakeTag("a", "Download pdf file", href=pdf.files)
+    pdfs = c(pdfs, hmakeTag("a", "Download pdf file", href=sub(".png", ".pdf", file.name.bar)))
     plot.titles = c("Summary plot based on gene set rank and size", 
             "Summary plot based on regulation direction and significance")
     if (file.exists(paste0(path, mds.file)))
@@ -555,7 +587,7 @@ sep="<br />")
 
 createEGSEAReport <- function(sampleSize, contr.names, gs.annots, baseInfo, 
 combineMethod, 
-        sort.by,  egsea.dir, 
+        sort.by,  report.dir, 
         logFC.cal, symbolsMap,
         egsea.ver,
         egseadata.ver){ 
@@ -572,11 +604,11 @@ combineMethod,
     go.dir = "./go-graphs/"
     
     
-    p = openPage("index.html", dirname=egsea.dir, title="Ensemble of Gene 
+    p = openPage("index.html", dirname=report.dir, title="Ensemble of Gene 
 Set Enrichment Analyses (EGSEA) - Report")    
     logo.file = system.file("logo", "EGSEA_logo.png", package="EGSEA")
     if (file.exists(logo.file)){
-        file.copy(logo.file, egsea.dir)
+        file.copy(logo.file, report.dir)
         img = hmakeTag("img", src="EGSEA_logo.png", width="150", 
                 style="float:left;")
         title = hmakeTag("h1", "Gene Set Testing Report",

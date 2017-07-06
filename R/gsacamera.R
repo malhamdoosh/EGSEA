@@ -41,9 +41,9 @@ runcamera <- function(voom.results, contrast, gs.annot,
 
 runcamera.contrast <- function(args){
     if (args$verbose)
-        print(paste0("   Running CAMERA for ", args$contrast.name))
+        message("   Running CAMERA for ", args$contrast.name)
     else
-        cat(".")
+        message(".", appendLF = FALSE)
     camera.results = camera(y=args$voom.results, 
             index=args$gs.annot@idx, 
             design=args$voom.results$design, 
