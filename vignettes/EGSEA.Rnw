@@ -9,10 +9,18 @@ BiocStyle::latex()
 
 \usepackage{url}
 \usepackage{subcaption}
+\newcommand{\includegraphicsmaybe}[2]{%
+  \IfFileExists{#2}
+    {\includegraphics[width=#1]{#2}}
+    {\fbox{\parbox[c][0.5\paperwidth][c]{0.5\paperwidth}{\centering\textbf{File not found}\\ #2 \\ 
+      \textit{Please report this to package maintainers at GitHub or via email m.hamdoosh@gmail.com}}
+      }}
+  }
+
 
 \begin{document}
 \bioctitle[EGSEA]{Ensemble of Gene Set Enrichment Analyses}
-\author{Monther Alhamdoosh\footnote{m.hamdoosh@gmail.com}, Milica Ng and Matthew
+\author{Monther Alhamdoosh\footnote{m.hamdoosh@gmail.com}, Luyi Tian, Milica Ng and Matthew
 Ritchie\footnote{mritchie@wehi.edu.au}}
 
 \maketitle
@@ -579,7 +587,7 @@ plotMethods(gsa, gs.label = "kegg", contrast=1, file.name="X24IL13-X24-kegg-meth
 
 \begin{figure}[!h]
 \center
-\includegraphics[width=0.6\paperwidth]{X24IL13-X24-kegg-methods.pdf}
+\includegraphicsmaybe{0.6\paperwidth}{X24IL13-X24-kegg-methods.pdf}
 \caption{The performance of multiple GSE methods on the contrast X24IL13-X24.}
 \label{fig:summary_methods}
 \end{figure}
@@ -595,12 +603,12 @@ plotSummary(gsa, gs.label="kegg", contrast = 1, file.name="X24IL13-X24-kegg-summ
 \begin{figure}
 \begin{subfigure}{.5\textwidth}
 \centering
-\includegraphics[width=\linewidth]{{X24IL13-X24-kegg-summary.dir}.pdf}
+\includegraphicsmaybe{\linewidth}{X24IL13-X24-kegg-summary_dir.pdf}
 \caption{\label{fig:kegg_summary_dir} Directional summary plot}
 \end{subfigure}
 \begin{subfigure}{.5\textwidth}
 \centering
-\includegraphics[width=\linewidth]{{X24IL13-X24-kegg-summary.rank}.pdf}
+\includegraphicsmaybe{\linewidth}{X24IL13-X24-kegg-summary_rank.pdf}
 \caption{\label{fig:kegg_summary_rank} Ranking summary plot }
 \end{subfigure}
 \caption{Summary plots for the contrast X24IL13-X24 on the KEGG pathways
@@ -630,7 +638,7 @@ displays the top 5 significant terms in each category. For example, Figure
 
 \begin{figure}[!h]
 \center
-\includegraphics[width=0.8\paperwidth]{X24IL13-X24-c5-top-BP.pdf}
+\includegraphicsmaybe{0.8\paperwidth}{X24IL13-X24-c5-top-BP.pdf}
 \caption{The top significant Biological Processes (BP) from the c5 collection.}
 \label{fig:go_terms}
 \end{figure}
@@ -644,7 +652,7 @@ plotHeatmap(gsa, "Asthma", gs.label="kegg", contrast=1,
 
 \begin{figure}[!h]
 \center
-\includegraphics[width=0.6\paperwidth]{asthma_hm.pdf}
+\includegraphicsmaybe{0.6\paperwidth}{asthma_hm.pdf}
 \caption{Asthma heatmap for the contrast X24IL13-X24}
 \label{fig:heatmaps}
 \end{figure}
@@ -659,7 +667,7 @@ plotPathway(gsa, "Asthma", gs.label="kegg", file.name="asthma_pathway")
 
 \begin{figure}[!h]
 \center
-\includegraphics[width=0.8\paperwidth]{asthma_pathway.png}
+\includegraphicsmaybe{0.8\paperwidth}{asthma\_pathway.png}
 \caption{Asthma pathway map for the contrast X24IL13-X24}
 \label{fig:pathways_single}
 \end{figure}
@@ -677,7 +685,7 @@ plotSummary(gsa, gs.label="kegg", contrast=c(1,2), file.name="kegg-summary-cmp")
 
 \begin{figure}[!h]
 \center
-\includegraphics[width=0.6\paperwidth]{{kegg-summary-cmp.dir}.pdf}
+\includegraphicsmaybe{0.6\paperwidth}{kegg-summary-cmp_dir.pdf}
 \caption{Summary plot for the comparative analysis}
 \label{fig:kegg_summary_multi}
 \end{figure}
@@ -702,7 +710,7 @@ contrasts.
 
 \begin{figure}[!h]
 \center
-\includegraphics[width=0.6\paperwidth]{il13_sum_heatmap.pdf}
+\includegraphicsmaybe{0.6\paperwidth}{il13_sum_heatmap.pdf}
 \caption{Summary heatmap for the comparative analysis}
 \label{fig:kegg_summary_heatmap}
 \end{figure}
@@ -717,7 +725,7 @@ plotHeatmap(gsa, "Asthma", gs.label="kegg", contrast="comparison",
 
 \begin{figure}[!h]
 \center
-\includegraphics[width=0.6\paperwidth]{asthma_hm_cmp.pdf}
+\includegraphicsmaybe{0.6\paperwidth}{asthma_hm_cmp.pdf}
 \caption{Asthma heatmap for the comparative analysis}
 \label{fig:heatmaps_multi}
 \end{figure}
@@ -734,7 +742,7 @@ plotPathway(gsa, "Asthma", gs.label="kegg", contrast=0,  file.name="asthma_pathw
 
 \begin{figure}[!h]
 \center
-\includegraphics[width=0.8\paperwidth]{asthma_pathway_cmp.png}
+\includegraphicsmaybe{0.8\paperwidth}{asthma\_pathway\_cmp.png}
 \caption{Asthma pathway map for the comparative analysis}
 \label{fig:pathways_multi}
 \end{figure}
@@ -791,7 +799,7 @@ EGSEA score, the original paper of this work is available at Section 2.
 
 \begin{figure}[!t]
 \center
-\includegraphics[width=0.85\paperwidth]{egsea_report-crop.pdf}
+\includegraphicsmaybe{0.85\paperwidth}{egsea_report-crop.pdf}
 \caption{The main page of the EGSEA HTML report.}
 \label{fig:egsea_report}
 \end{figure}

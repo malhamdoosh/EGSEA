@@ -1,7 +1,7 @@
 Package: EGSEA
 Title: Ensemble of Gene Set Enrichment Analyses
 Version: 1.5.2
-Date: 3-05-2017
+Date: 18-07-2017
 Author: Monther Alhamdoosh, Luyi Tian, Milica Ng and Matthew Ritchie
 Maintainer: Monther Alhamdoosh <m.hamdoosh@gmail.com>
 Description: This package implements the Ensemble of Gene Set Enrichment

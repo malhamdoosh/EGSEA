@@ -103,7 +103,7 @@ EGSEA 1.5.1 (2017-04-11)
 - Added: a new function named egsea.ma to work with Microarray dataset 
 - Modified: egsea functions to generate all the pairwise comparisons (contrasts) when the contrast parameter is NULL. This is mainly done based on the primary factor of the design matrix that is defined by 'group' parameter or column in voom.results$targets$group. 
 
-EGSEA 1.5.2 (2017-05-30)
+EGSEA 1.5.2 (2017-07-18)
 ------------------------
 - changed: method name from getlogFCFromLMFit to runStandardLimmaDEA
 - fixed: a minor bugin buildKEGGIdx
@@ -112,3 +112,4 @@ EGSEA 1.5.2 (2017-05-30)
 - Replaced: print statements with message, warning, stop where appropriate. 
 - Added: interactive stats table and interactive summary plots.
 - Added: parameter 'interactive' to egsea main functions, generateReport and plotSummary 
+- Modified: vignette so that images that are not generated are replaced with a warning message

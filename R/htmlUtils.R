@@ -235,7 +235,7 @@ generateSummaryPage.comparison <- function(contrast.names, gs.annot,
 using EGSEA (Comparison Analysis)")
     if (length(contrast.names) == 2 ){
         img.files = paste0("./", gs.annot@label, "-summary-",
-                sum.plot.axis, c(".rank", ".dir"),".png")
+                sum.plot.axis, c("_rank", "_dir"),".png")
         plot.titles = c("Summary plot based on gene set rank and size", 
         "Summary plot based on regulation direction and significance")
     }
@@ -260,7 +260,7 @@ length(contrast.names))
                 img.files = c(img.files, paste0("./", 
                         gs.annot@label, paste0('-', 
                         i,j), "-summary-",
-                        sum.plot.axis, c(".rank", ".dir"),
+                        sum.plot.axis, c("_rank", "_dir"),
                         ".png"))
                 titles = c("Summary plot based on gene set rank 
 and size <br/>", 
@@ -423,9 +423,9 @@ generateSummaryPage <- function(contrast.name, gs.annot, sum.plot.axis,
 using EGSEA (",
             contrast.name, ")") 
     img.files = paste0("./", sub(" - ", "-", contrast.name), "-", 
-gs.annot@label, "-summary-", sum.plot.axis ,".rank.png")
+gs.annot@label, "-summary-", sum.plot.axis ,"_rank.png")
     img.files = c(img.files, paste0("./", sub(" - ", "-", contrast.name), 
-"-", gs.annot@label, "-summary-", sum.plot.axis,".dir.png"))
+"-", gs.annot@label, "-summary-", sum.plot.axis,"_dir.png"))
     path = strsplit(file.name, "/")[[1]]    
     path = paste0(paste(path[1:length(path) -1], collapse = "/"), "/")
     mds.file = paste0(sub(" - ", "-", contrast.name), "-", gs.annot@label, 

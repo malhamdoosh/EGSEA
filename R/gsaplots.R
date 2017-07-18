@@ -218,7 +218,7 @@ generateSumPlots <- function(egsea.results, baseGSEAs, gs.annot, report.dir,
                 contrast.names[i]), "-", gs.annot@label, 
                 "-summary-", sum.plot.axis)        
 
-        if (!file.exists(paste0(file.name, ".dir.png"))){
+        if (!file.exists(paste0(file.name, "_dir.png"))){
             plot.data = generatePlotData(egsea.results[[i]], 
                      gs.annot, sum.plot.cutoff, sum.plot.axis)
             if (sum.plot.axis %in% c("p.value", "p.adj"))
@@ -272,7 +272,7 @@ generateSummaryPlots.comparison <- function(egsea.results, egsea.comparison,
                         file.prefix, summary.dir,interactive=FALSE){
     file.name = paste0(summary.dir, gs.annot@label, file.prefix, 
             "-summary-", sum.plot.axis)
-    if (!file.exists(paste0(file.name, ".dir.png"))){
+    if (!file.exists(paste0(file.name, "_dir.png"))){
         contrast.names = names(egsea.results)
         plot.data = generatePlotData.comparison(egsea.results, 
                 egsea.comparison, gs.annot, 
@@ -446,7 +446,7 @@ high="#000000",
         # customize bubble size
         p = p + scale_size("Cardinality", range=c(2,20))       
         if (is.null(format) || tolower(format) == "pdf"){
-            pdf(paste0(file.name, ".rank.pdf"), width = 10, height = 7,
+            pdf(paste0(file.name, "_rank.pdf"), width = 10, height = 7,
                     useDingbats = FALSE) 
         
             # label the bubbles of the top 10 gene sets
@@ -457,7 +457,7 @@ high="#000000",
             dev.off()       
         }
         if (is.null(format) || tolower(format) == "png"){
-            png(paste0(file.name, ".rank.png"), width = 800, height = 700)
+            png(paste0(file.name, "_rank.png"), width = 800, height = 700)
             print(p + geom_text(size=5, mapping=aes(x=x.data, y=y.data, 
     label=id), 
                             data=plot.data.sig, 
@@ -468,7 +468,7 @@ high="#000000",
         if(interactive){
           saveWidget(widget=ggplotly(p), selfcontained=FALSE, 
                      libdir=file.path(file.dir,"lib"), 
-                     file=paste0(file.name, ".rank.html"),
+                     file=paste0(file.name, "_rank.html"),
                      list(fig.width = 800, fig.height = 800)) #  htmlwidgets::saveWidget
         }
         # print("here1")
@@ -492,7 +492,7 @@ high="#E35F5F",
 name="Regulation Direction") # low="#5FE377"
         p = p + scale_size("significance", range=c(2,20))   
         if (is.null(format) || tolower(format) == "pdf"){
-            pdf(paste0(file.name, ".dir.pdf"), width = 10, height = 7,
+            pdf(paste0(file.name, "_dir.pdf"), width = 10, height = 7,
                     useDingbats = FALSE)  
             
             print(p + geom_text(size=5, mapping=aes(x=x.data, y=y.data, 
@@ -502,7 +502,7 @@ name="Regulation Direction") # low="#5FE377"
             dev.off()
         }
         if (is.null(format) || tolower(format) == "png"){
-            png(paste0(file.name, ".dir.png"), width = 800, height = 700)
+            png(paste0(file.name, "_dir.png"), width = 800, height = 700)
             print(p + geom_text(size=5, mapping=aes(x=x.data, y=y.data, 
                             label=id), 
                             data=plot.data.sig, 
@@ -512,7 +512,7 @@ name="Regulation Direction") # low="#5FE377"
         if(interactive){
           saveWidget(widget=ggplotly(p), selfcontained=FALSE, 
                      libdir=file.path(file.dir,"lib"), 
-                     file=paste0(file.name, ".dir.html")) #  htmlwidgets::saveWidget
+                     file=paste0(file.name, "_dir.html")) #  htmlwidgets::saveWidget
         }
         
     }, 
@@ -594,7 +594,7 @@ generatePathway <- function(gene.set, gs.annot, fc, kegg.dir="./",
             file.remove(paste0(kegg.dir, id, ".png"))
             file.remove(paste0(kegg.dir, id, ".xml"))
         }else{
-            stop("EGSEA could not generate the pathway map image.")
+            warning("EGSEA could not generate the pathway map image.")
         }
     }
 }
@@ -649,7 +649,7 @@ generateComparisonPathway <- function(gene.set, gs.annot, fc, kegg.dir="./",
             file.remove(paste0(kegg.dir, id, ".png"))
             file.remove(paste0(kegg.dir, id, ".xml"))
         }else{
-            stop("EGSEA could not generate the pathway map image.")
+            warning("EGSEA could not generate the pathway map image.")
         }
     }
 }
