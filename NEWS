@@ -113,3 +113,7 @@ EGSEA 1.5.2 (2017-07-18)
 - Added: interactive stats table and interactive summary plots.
 - Added: parameter 'interactive' to egsea main functions, generateReport and plotSummary 
 - Modified: vignette so that images that are not generated are replaced with a warning message
+
+EGSEA 1.5.3 (2017-07-20)
+------------------------
+- Replaced: underscore characters and dots with dashes in vignette, gsaplots.R and htmlUtils.R

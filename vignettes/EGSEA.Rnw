@@ -603,12 +603,12 @@ plotSummary(gsa, gs.label="kegg", contrast = 1, file.name="X24IL13-X24-kegg-summ
 \begin{figure}
 \begin{subfigure}{.5\textwidth}
 \centering
-\includegraphicsmaybe{\linewidth}{X24IL13-X24-kegg-summary_dir.pdf}
+\includegraphicsmaybe{\linewidth}{X24IL13-X24-kegg-summary-dir.pdf}
 \caption{\label{fig:kegg_summary_dir} Directional summary plot}
 \end{subfigure}
 \begin{subfigure}{.5\textwidth}
 \centering
-\includegraphicsmaybe{\linewidth}{X24IL13-X24-kegg-summary_rank.pdf}
+\includegraphicsmaybe{\linewidth}{X24IL13-X24-kegg-summary-rank.pdf}
 \caption{\label{fig:kegg_summary_rank} Ranking summary plot }
 \end{subfigure}
 \caption{Summary plots for the contrast X24IL13-X24 on the KEGG pathways
@@ -647,12 +647,12 @@ Heatmaps of the gene fold changes can be gereated for a selected gene set as
 follows
 <<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE,width.cutoff=60)>>= 
 plotHeatmap(gsa, "Asthma", gs.label="kegg", contrast=1,
-        file.name="asthma_hm")
+        file.name="asthma-hm")
 @
 
 \begin{figure}[!h]
 \center
-\includegraphicsmaybe{0.6\paperwidth}{asthma_hm.pdf}
+\includegraphicsmaybe{0.6\paperwidth}{asthma-hm.pdf}
 \caption{Asthma heatmap for the contrast X24IL13-X24}
 \label{fig:heatmaps}
 \end{figure}
@@ -662,12 +662,12 @@ collection, a pathway map that shows the gene interactiosn can be generated as
 follows 
 
 <<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE,width.cutoff=60)>>= 
-plotPathway(gsa, "Asthma", gs.label="kegg", file.name="asthma_pathway")
+plotPathway(gsa, "Asthma", gs.label="kegg", file.name="asthma-pathway")
 @
 
 \begin{figure}[!h]
 \center
-\includegraphicsmaybe{0.8\paperwidth}{asthma\_pathway.png}
+\includegraphicsmaybe{0.8\paperwidth}{asthma-pathway.png}
 \caption{Asthma pathway map for the contrast X24IL13-X24}
 \label{fig:pathways_single}
 \end{figure}
@@ -685,7 +685,7 @@ plotSummary(gsa, gs.label="kegg", contrast=c(1,2), file.name="kegg-summary-cmp")
 
 \begin{figure}[!h]
 \center
-\includegraphicsmaybe{0.6\paperwidth}{kegg-summary-cmp_dir.pdf}
+\includegraphicsmaybe{0.6\paperwidth}{kegg-summary-cmp-dir.pdf}
 \caption{Summary plot for the comparative analysis}
 \label{fig:kegg_summary_multi}
 \end{figure}
@@ -699,7 +699,7 @@ generated as follows
 
 <<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE,width.cutoff=60)>>=
 plotSummaryHeatmap(gsa, gs.label="kegg", show.vals = "p.adj",
-        file.name="il13_sum_heatmap")
+        file.name="il13-sum-heatmap")
 @
 
 Figure \ref{fig:kegg_summary_heatmap} shows a summary heatmap for the rankings
@@ -710,7 +710,7 @@ contrasts.
 
 \begin{figure}[!h]
 \center
-\includegraphicsmaybe{0.6\paperwidth}{il13_sum_heatmap.pdf}
+\includegraphicsmaybe{0.6\paperwidth}{il13-sum-heatmap.pdf}
 \caption{Summary heatmap for the comparative analysis}
 \label{fig:kegg_summary_heatmap}
 \end{figure}
@@ -720,12 +720,12 @@ heatmap can be generated as follows
 
 <<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE,width.cutoff=60)>>= 
 plotHeatmap(gsa, "Asthma", gs.label="kegg", contrast="comparison",
-        file.name="asthma_hm_cmp")
+        file.name="asthma-hm-cmp")
 @
 
 \begin{figure}[!h]
 \center
-\includegraphicsmaybe{0.6\paperwidth}{asthma_hm_cmp.pdf}
+\includegraphicsmaybe{0.6\paperwidth}{asthma-hm-cmp.pdf}
 \caption{Asthma heatmap for the comparative analysis}
 \label{fig:heatmaps_multi}
 \end{figure}
@@ -737,12 +737,12 @@ Asthma pathway are affected by IL-13 stimulation (Figure
 \ref{fig:pathways_multi}) and can be generated as follows
 
 <<echo=TRUE, eval=TRUE,tidy=TRUE,tidy.opts=list(blank=FALSE,width.cutoff=60)>>= 
-plotPathway(gsa, "Asthma", gs.label="kegg", contrast=0,  file.name="asthma_pathway_cmp")
+plotPathway(gsa, "Asthma", gs.label="kegg", contrast=0,  file.name="asthma-pathway-cmp")
 @
 
 \begin{figure}[!h]
 \center
-\includegraphicsmaybe{0.8\paperwidth}{asthma\_pathway\_cmp.png}
+\includegraphicsmaybe{0.8\paperwidth}{asthma-pathway-cmp.png}
 \caption{Asthma pathway map for the comparative analysis}
 \label{fig:pathways_multi}
 \end{figure}
@@ -799,7 +799,7 @@ EGSEA score, the original paper of this work is available at Section 2.
 
 \begin{figure}[!t]
 \center
-\includegraphicsmaybe{0.85\paperwidth}{egsea_report-crop.pdf}
+\includegraphics[width=0.85\paperwidth]{egsea_report-crop.pdf}
 \caption{The main page of the EGSEA HTML report.}
 \label{fig:egsea_report}
 \end{figure}
