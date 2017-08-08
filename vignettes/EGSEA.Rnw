@@ -988,7 +988,7 @@ data(kegg.pathways)
 gsets = kegg.pathways$human$kg.sets[1:50]
 gsets[1]
 # build custom gene set collection using these 50 pathways
-gs.annot = buildCustomIdx(entrezIDs=rownames(v$E), gsets= gsets, species="human")
+gs.annot = buildCustomIdx(geneIDs=rownames(v$E), gsets= gsets, species="human")
 class(gs.annot)
 show(gs.annot)
 @
@@ -996,7 +996,7 @@ show(gs.annot)
 The \Rfunction{buildCustomIdx} creates an annotation data frame for the gene
 set collection if the \textit{anno} parameter is not provided. Once the gene set
 collection is indexed, it can be used with any of the \Biocpkg{EGSEA} functions:
-\Rfunction{egsea}, \Rfunction{egsea.cnt} or \Rfunction{egsea.ora}.
+\Rfunction{egsea}, \Rfunction{egsea.cnt} or \Rfunction{egsea.ora}. Similarly, the function \Rfunction{buildGMTIdx} can be used to build an index from a GMT file.
 
 
 \section{Adding new GSE method}

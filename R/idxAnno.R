@@ -499,7 +499,7 @@ buildGeneSetDBIdx <- function(entrezIDs, species, geneSets="all",
         stop("Failed to load the GeneSetDB collection data")
     }
     
-    gs.annot = buildCustomIdx(entrezIDs = entrezIDs, gsets = 
+    gs.annot = buildCustomIdx(geneIDs = entrezIDs, gsets = 
         gsetdb.all$original,
         anno = gsetdb.all$anno, label = "gsDB", 
         name="GeneSetDB Gene Sets", species = species)
@@ -594,7 +594,11 @@ buildGeneSetDBIdx <- function(entrezIDs, species, geneSets="all",
 #' @details \code{buildCustomIdx} indexes newly created gene sets and 
 #' attach gene set annotation if provided.
 #'   
-#' @inheritParams entrezIDs
+#' @param geneIDs character, a vector that stores the Gene IDs 
+#' tagged in your dataset. The order of the Gene IDs must match those of 
+#' the count/expression matrix row names. Gene IDs can be in any annotation, e.g.,
+#' Symbols, Ensembl, etc., as soon as the parameter \code{gsets} uses the same
+#' Gene ID annotation.  
 #' @param gsets list, list of gene sets. Each gene set is character vector of 
 #' Enterz IDs. 
 #' The names of the list should match the GeneSet column in the \code{anno} 
@@ -627,20 +631,20 @@ buildGeneSetDBIdx <- function(entrezIDs, species, geneSets="all",
 #' v = il13.data$voom
 #' data(kegg.pathways)
 #' gsets = kegg.pathways$human$kg.sets[1:50]
-#' gs.annot = buildCustomIdx(entrezIDs=rownames(v$E), gsets= gsets, 
+#' gs.annot = buildCustomIdx(geneIDs=rownames(v$E), gsets= gsets, 
 #' species="human")
 #' class(gs.annot)
 #' 
 #' 
 
-buildCustomIdx <- function(entrezIDs, gsets, anno=NULL,label="custom", 
+buildCustomIdx <- function(geneIDs, gsets, anno=NULL,label="custom", 
         name="User-Defined Gene Sets", species="Human", min.size=1){   
-    entrezIDs = as.character(entrezIDs)
+    geneIDs = as.character(geneIDs)
     for (j in 1:length(gsets)){
         gsets[[j]] = as.character(gsets[[j]])
     }       
     gsets.ez = gsets
-    gsets.idx = ids2indices(gsets.ez, entrezIDs, remove.empty=TRUE)
+    gsets.idx = ids2indices(gsets.ez, geneIDs, remove.empty=TRUE)
     gsets.ez = gsets.ez[names(gsets.idx)]            
     gsets.names = names(gsets.ez)
     names(gsets.idx) = gsets.names
@@ -661,7 +665,7 @@ buildCustomIdx <- function(entrezIDs, gsets, anno=NULL,label="custom",
     gs.annot = GSCollectionIndex(original = gsets.ez,
             idx = gsets.idx,
             anno = anno,                
-            featureIDs = entrezIDs,
+            featureIDs = geneIDs,
             species =species,
             name = name,
             label = label,
@@ -682,7 +686,7 @@ buildCustomIdx <- function(entrezIDs, gsets, anno=NULL,label="custom",
 #' @details \code{buildGMTIdx} indexes newly created gene sets and 
 #' attach gene set annotation if provided.
 #'   
-#' @inheritParams entrezIDs
+#' @inheritParams geneIDs
 #' @param gmt.file character, the path and name of the GMT file
 #' @param anno.cols integer, number of columns in the GMT file that are 
 #' used for annotation. These columns should be inserted immediately after
@@ -707,12 +711,12 @@ buildCustomIdx <- function(entrezIDs, gsets, anno=NULL,label="custom",
 #' library(EGSEAdata) 
 #' data(il13.data)
 #' v = il13.data$voom
-#' #gs.annot = buildGMTIdx(entrezIDs=rownames(v$E), gsets= gmt.file, 
+#' #gs.annot = buildGMTIdx(geneIDs=rownames(v$E), gsets= gmt.file, 
 #' #species="human")
 #' #class(gs.annot)
 #' 
 #' 
-buildGMTIdx <- function(entrezIDs, gmt.file, anno.cols = 0, 
+buildGMTIdx <- function(geneIDs, gmt.file, anno.cols = 0, 
         anno.col.names = NULL, label="gmtcustom", 
         name="User-Defined GMT Gene Sets", species="Human", min.size=1){
     fc <- file(gmt.file)
@@ -738,6 +742,6 @@ buildGMTIdx <- function(entrezIDs, gmt.file, anno.cols = 0,
     }
     rownames(anno) = gsets.names
     
-    return(buildCustomIdx(entrezIDs, gsets,
+    return(buildCustomIdx(geneIDs, gsets,
                     anno, label, name, species, min.size))
 }

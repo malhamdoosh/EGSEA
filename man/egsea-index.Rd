@@ -28,10 +28,10 @@ buildMSigDBIdx(entrezIDs, species = "Homo sapiens", geneSets = "all",
 buildGeneSetDBIdx(entrezIDs, species, geneSets = "all", go.part = FALSE,
   min.size = 1)
 
-buildCustomIdx(entrezIDs, gsets, anno = NULL, label = "custom",
+buildCustomIdx(geneIDs, gsets, anno = NULL, label = "custom",
   name = "User-Defined Gene Sets", species = "Human", min.size = 1)
 
-buildGMTIdx(entrezIDs, gmt.file, anno.cols = 0, anno.col.names = NULL,
+buildGMTIdx(geneIDs, gmt.file, anno.cols = 0, anno.col.names = NULL,
   label = "gmtcustom", name = "User-Defined GMT Gene Sets",
   species = "Human", min.size = 1)
 }
@@ -91,6 +91,12 @@ is human specific. For GeneSetDB, it takes
  "gsdbdrug" to load the drug/chemical collection, 
 "gsdbpath" to load the pathways collection and "gsdbreg" to load the gene regulation
 collection.  If "all", all available gene set collections are loaded.}
+
+\item{geneIDs}{character, a vector that stores the Gene IDs 
+tagged in your dataset. The order of the Gene IDs must match those of 
+the count/expression matrix row names. Gene IDs can be in any annotation, e.g.,
+Symbols, Ensembl, etc., as soon as the parameter \code{gsets} uses the same
+Gene ID annotation.}
 
 \item{gsets}{list, list of gene sets. Each gene set is character vector of 
 Enterz IDs. 
@@ -208,7 +214,7 @@ data(il13.data)
 v = il13.data$voom
 data(kegg.pathways)
 gsets = kegg.pathways$human$kg.sets[1:50]
-gs.annot = buildCustomIdx(entrezIDs=rownames(v$E), gsets= gsets, 
+gs.annot = buildCustomIdx(geneIDs=rownames(v$E), gsets= gsets, 
 species="human")
 class(gs.annot)
 
@@ -217,7 +223,7 @@ class(gs.annot)
 library(EGSEAdata) 
 data(il13.data)
 v = il13.data$voom
-#gs.annot = buildGMTIdx(entrezIDs=rownames(v$E), gsets= gmt.file, 
+#gs.annot = buildGMTIdx(geneIDs=rownames(v$E), gsets= gmt.file, 
 #species="human")
 #class(gs.annot)
 
