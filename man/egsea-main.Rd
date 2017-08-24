@@ -30,11 +30,11 @@ egsea.cnt(counts, group, design = NULL, contrasts = NULL, logFC = NULL,
   report = TRUE, interactive = FALSE, keep.base = FALSE,
   verbose = FALSE, keep.limma = TRUE, keep.set.scores = FALSE)
 
-egsea.ora(entrezIDs, universe = NULL, logFC = NULL, title = NULL,
-  gs.annots, symbolsMap = NULL, minSize = 2, display.top = 20,
-  sort.by = "p.adj", report.dir = NULL, kegg.dir = NULL,
-  sum.plot.axis = "p.adj", sum.plot.cutoff = NULL, num.threads = 4,
-  report = TRUE, interactive = FALSE, verbose = FALSE)
+egsea.ora(geneIDs, universe = NULL, logFC = NULL, title = NULL, gs.annots,
+  symbolsMap = NULL, minSize = 2, display.top = 20, sort.by = "p.adj",
+  report.dir = NULL, kegg.dir = NULL, sum.plot.axis = "p.adj",
+  sum.plot.cutoff = NULL, num.threads = 4, report = TRUE,
+  interactive = FALSE, verbose = FALSE)
 
 egsea.ma(expr, group, probe.annot, probeMap.method = "avg", design = NULL,
   contrasts = NULL, logFC = NULL, gs.annots, baseGSEAs = egsea.base(),
@@ -183,7 +183,8 @@ the linear model fitting. N is the number of coefficients in model.
 If this parameter is 
 \code{NULL}, \code{model.matrix(~0+group)} is used to create a deisgn matrix.}
 
-\item{entrezIDs}{character, a vector of Entrez Gene IDs to be tested for ORA.}
+\item{geneIDs}{character, a vector of Gene IDs to be tested for ORA. They 
+must be Entrez IDs if \pkg{EGSEAdata} collections are used.}
 
 \item{universe}{character, a vector of Enterz IDs to be used as a background 
 list. If universe=NULL, the background list is created from the 
@@ -342,7 +343,7 @@ varied between 23.1 seconds (single thread) to 7.9 seconds (16 threads) when the
 report generation was disabled. The execution time took 145.5 seconds when the report 
 generation was enabled using 16 threads.
 
-\code{egsea.ora} takes a list of Entrez gene IDs and uses the 
+\code{egsea.ora} takes a list of gene IDs and uses the 
 gene set collections from \pkg{EGSEAdata} or a custom-built collection to 
 find over-represented gene sets in this list. It takes the advantage of 
 the existing EGSEA reporting capabilities and generate an interative report 
@@ -404,7 +405,7 @@ gs.annots = buildIdx(entrezIDs=deGenes, species="human",
 msigdb.gsets="none",
          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
 # set report = TRUE to generate the EGSEA interactive report
-gsa = egsea.ora(entrezIDs=deGenes, universe= 
+gsa = egsea.ora(geneIDs=deGenes, universe= 
 as.character(voom.results$genes[,1]),
              logFC =logFC, title="X24IL13-X24",  
 gs.annots=gs.annots, 

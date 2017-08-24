@@ -653,11 +653,11 @@ buildCustomIdx <- function(geneIDs, gsets, anno=NULL,label="custom",
     if (is.null(anno)){
         anno = data.frame(ID=paste0(label, seq(1, length(gsets.idx))), 
             GeneSet=gsets.names)
-        rownames(anno) = gsets.names
     }else{
         stopifnot("GeneSet" %in% colnames(anno))
         anno = anno[match(gsets.names, anno[, "GeneSet"]), ]        
     }
+    rownames(anno) = gsets.names
     anno[, "NumGenes"] = paste0(sapply(gsets.idx, length), 
         '/',sapply(gsets.ez, length))
 

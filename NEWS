@@ -122,3 +122,12 @@ EGSEA 1.5.3 (2017-07-20)
 EGSEA 1.5.4 (2017-08-10)
 ------------------------
 - changed: entrezIDs into geneIDs in buildCustomIdx and buildGMTIdx.
+
+EGSEA 1.5.5 (2017-08-24)
+------------------------
+- fixed: bug in egsea.ora where interpret files not generated correctly. 
+- fixed: summary plot based on ranking when using egsea.ora 
+- Renamed: entrezIDs in egsea.ora into geneIDs
+- fixed: bug in egsea.ora when 'title' includes white spaces or special characters 
+- fixed: several minor bugs
+

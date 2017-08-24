@@ -386,6 +386,7 @@ generatePlotData <- function(egsea.results, gs.annot,
             x.data=x.data, y.data=egsea.results[gsets, "avg.logfc"], 
             gsSize=gs.sizes, sig=egsea.results[gsets, "significance"], 
             dir=egsea.results[gsets, "direction"], rank = rank)  
+    # print(head(plot.data))
     return(plot.data)
 }
 
@@ -711,10 +712,15 @@ plotHeatMapsLogFC = function(gene.sets, fc, limma.tops, gs.annot,  symbolsMap,
             if (file.exists(file.name)){        
                 next
             }
-            ##### generate heat map here    
-            generateHeatMap(gene.set, gs.annot, fc[, i],
+            ##### generate heat map here   
+            if (length(limma.tops) > 0)
+              generateHeatMap(gene.set, gs.annot, fc[, i],
                 limma.tops[contrast.names[i]],
                 symbolsMap, sub(".png", "", file.name))
+            else
+              generateHeatMap(gene.set, gs.annot, fc[, i],
+                              limma.tops,
+                              symbolsMap, sub(".png", "", file.name))
         }
     }
         
@@ -744,8 +750,9 @@ generateHeatMap <- function(gene.set, gs.annot, fc, limma.tops, symbolsMap,
                     identical(rownames(fc), rownames(limma.tops[[1]])))
             csv.out = limma.tops[[1]][sel.genes, ]       
             sig.genes[csv.out[, "adj.P.Val"] <= 0.05] = TRUE
-        }else
+        }else{
             csv.out = hm[,1]
+        }
         leglabels = c("FDR <= 0.05", 
                 "FDR > 0.05")
         
@@ -777,6 +784,8 @@ generateHeatMap <- function(gene.set, gs.annot, fc, limma.tops, symbolsMap,
     else
         rownames(hm) = symbolsMap[match(gs.annot@featureIDs[sel.genes], 
                                     symbolsMap[,1]), 2]
+    if (length(limma.tops) == 0)
+      csv.out = cbind(rownames(hm), csv.out)
                 
     # initialize and create the heat map plot
     colrange = colorpanel(99, fc.colors[1], fc.colors[2],fc.colors[3])   

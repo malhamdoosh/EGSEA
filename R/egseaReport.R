@@ -12,6 +12,8 @@ generateMainReport <- function(egseaResults, limma.tops = list(),
         print.base = FALSE,
         interactive = TRUE,
         verbose = FALSE){
+    # print("HereReport1")
+    # print(limma.tops)
     # create output directory for 'egsea' results
     message("EGSEA HTML report is being generated ...")
     start.time <- proc.time()
@@ -37,7 +39,7 @@ generateMainReport <- function(egseaResults, limma.tops = list(),
     gs.annots = egseaResults@gs.annots
     symbolsMap = egseaResults@symbolsMap
     
-    if (is.null(report.dir) || length(report.dir) == 0){
+    if (is.null(report.dir) || nchar(report.dir) == 0){
         timestamp = as.integer(as.numeric(Sys.time()))
         report.dir = paste0("./egsea_report_", timestamp)
     }
@@ -181,7 +183,8 @@ generateMainReport.sub <- function(args){
                           contr.names,"-", gs.annot@label,
                           "-allGOgraphs.html")
   }
-  
+  # print("HereReport2")
+  # print(limma.tops)
   plotHeatMapsLogFC(gene.sets = gsets.top, fc=logFC, 
                     limma.tops = limma.tops,
                     gs.annot=gs.annot, 

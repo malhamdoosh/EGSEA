@@ -454,14 +454,15 @@ egsea.cnt <- function(counts, group, design = NULL, contrasts = NULL, logFC=NULL
 #' over-representation analysis (ORA) on gene set collections using
 #' a list of genes. 
 #'
-#' @details \code{egsea.ora} takes a list of Entrez gene IDs and uses the 
+#' @details \code{egsea.ora} takes a list of gene IDs and uses the 
 #' gene set collections from \pkg{EGSEAdata} or a custom-built collection to 
 #' find over-represented gene sets in this list. It takes the advantage of 
 #' the existing EGSEA reporting capabilities and generate an interative report 
 #' for the ORA analysis. 
 #' The results can be explored using the \code{\link{topSets}} function. 
 #'
-#' @param entrezIDs character, a vector of Entrez Gene IDs to be tested for ORA.
+#' @param geneIDs character, a vector of Gene IDs to be tested for ORA. They 
+#' must be Entrez IDs if \pkg{EGSEAdata} collections are used. 
 #' @param universe character, a vector of Enterz IDs to be used as a background 
 #' list. If universe=NULL, the background list is created from the 
 #' \pkg{AnnotationDbi} package.
@@ -513,7 +514,7 @@ egsea.cnt <- function(counts, group, design = NULL, contrasts = NULL, logFC=NULL
 #' msigdb.gsets="none",
 #'          kegg.updated=FALSE, kegg.exclude = c("Metabolism"))
 #' # set report = TRUE to generate the EGSEA interactive report
-#' gsa = egsea.ora(entrezIDs=deGenes, universe= 
+#' gsa = egsea.ora(geneIDs=deGenes, universe= 
 #' as.character(voom.results$genes[,1]),
 #'              logFC =logFC, title="X24IL13-X24",  
 #' gs.annots=gs.annots, 
@@ -523,7 +524,7 @@ egsea.cnt <- function(counts, group, design = NULL, contrasts = NULL, logFC=NULL
 #' topSets(gsa) 
 #' 
 
-egsea.ora <- function(entrezIDs, universe=NULL, logFC=NULL, title=NULL, 
+egsea.ora <- function(geneIDs, universe=NULL, logFC=NULL, title=NULL, 
         gs.annots, symbolsMap=NULL, 
         minSize=2, display.top=20, sort.by = "p.adj",   
         report.dir=NULL, kegg.dir=NULL, 
@@ -531,15 +532,15 @@ egsea.ora <- function(entrezIDs, universe=NULL, logFC=NULL, title=NULL,
         num.threads=4, report = TRUE,    
         interactive = FALSE,
         verbose=FALSE){
-    voom.results = list(ids=as.character(entrezIDs))
+    voom.results = list(ids=as.character(geneIDs))
     if (!is.null(universe))
         voom.results$featureIDs = universe
     if (is.null(logFC)){
-        logFC = matrix(1, length(entrezIDs), 1)
-        rownames(logFC) = entrezIDs     
+        logFC = matrix(1, length(geneIDs), 1)
+        rownames(logFC) = geneIDs     
     } else if (!is.matrix(logFC)){
         tmp = logFC
-        logFC = matrix(1, length(entrezIDs), 1)
+        logFC = matrix(1, length(geneIDs), 1)
         logFC[, 1] = tmp
         if (!is.null(names(tmp)))
             rownames(logFC) = as.character(names(tmp))      
@@ -547,9 +548,10 @@ egsea.ora <- function(entrezIDs, universe=NULL, logFC=NULL, title=NULL,
             rownames(logFC) = voom.results$ids
     }
     if (is.null(title))
-        colnames(logFC) = c("Experimental contrast")
-    else
-        colnames(logFC) = title
+        title = c("ExperimentalContrast")
+    title = gsub("[[:punct:]]+", "", title)
+    title = gsub("[[:space:]]+", "", title)
+    colnames(logFC) = title
     
     dummyContrasts = matrix(0, 2, 1)
     dummyContrasts[, 1] = c(1,-1)
