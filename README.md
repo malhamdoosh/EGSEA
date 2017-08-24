@@ -1,4 +1,4 @@
-#Ensemble of Gene Set Enrichment Analyses
+# Ensemble of Gene Set Enrichment Analyses
 
 <div align="center">
 <img src="inst/logo/EGSEA_logo.png" align="middle" width=250 />
@@ -16,7 +16,7 @@ Citation (from within R, enter ```citation("EGSEA")```):
 
 Alhamdoosh M, Ng M, Wilson N, Sheridan J, Huynh H, Wilson M and Ritchie M (2017). “Combining multiple tools outperforms individual methods in gene set enrichment analyses.” *Bioinformatics*, 33(3). doi: 10.1093/bioinformatics/btw623.
 
-#Installation
+# Installation
 
 To install the *stable release* of this package, start R and enter:
 ```{r}
@@ -31,7 +31,7 @@ install.packages("devtools") # if you have not installed "devtools" package
 devtools::install_github("malhamdoosh/EGSEA")
 ```
 
-#Documentation
+# Documentation
 
 To view documentation for the version of this package installed in your system, start R and enter:
 ```{r}
