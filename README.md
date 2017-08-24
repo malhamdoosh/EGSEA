@@ -1,19 +1,41 @@
-Ensemble of Gene Set Enrichment Analyses R Package
- 
-Author: Monther Alhamdoosh, Milica Ng and Matthew Ritchie 
-E:m.hamdoosh@gmail.com
+#Ensemble of Gene Set Enrichment Analyses
 
-You can download the current stable release from this url
+<div align="center">
+<img src="inst/logo/EGSEA_logo.png" align="middle" width=250 />
+<br />
+<sub>Credit: Roberto Bonelli </sub>
+</div>
 
-https://bitbucket.org/malhamdoosh/egsea/get/Stable_Release.tar.gz
+This package is part of the **Bioconductor** project and implements the Ensemble of Gene Set Enrichment Analyses (EGSEA) method for gene set testing.
 
-Alternatively, you can install EGSEA in your local computer by typing these commands in the R console
-library(devtools)
+**Author:** Monther Alhamdoosh, Luyi Tian, Milica Ng and Matthew Ritchie
 
-install_bitbucket("malhamdoosh/egseadata", ref="Stable_Release")
+**Maintainer:** Monther Alhamdoosh <m.hamdoosh at gmail.com>
 
-install_bitbucket("malhamdoosh/egsea", ref="Stable_Release")
+Citation (from within R, enter ```citation("EGSEA")```):
 
-Note that devtools should be installed before you can run these commands.
+Alhamdoosh M, Ng M, Wilson N, Sheridan J, Huynh H, Wilson M and Ritchie M (2017). “Combining multiple tools outperforms individual methods in gene set enrichment analyses.” *Bioinformatics*, 33(3). doi: 10.1093/bioinformatics/btw623.
 
-In order to get the development version of EGSEA, use ref = "Devel_Release". 
+#Installation
+
+To install the *stable release* of this package, start R and enter:
+```{r}
+## try http:// if https:// URLs are not supported
+source("https://bioconductor.org/biocLite.R")
+biocLite("EGSEA")
+```
+
+To install the *development version* of this package, start R and enter:
+```{r}
+install.packages("devtools") # if you have not installed "devtools" package
+devtools::install_github("malhamdoosh/EGSEA")
+```
+
+#Documentation
+
+To view documentation for the version of this package installed in your system, start R and enter:
+```{r}
+browseVignettes("EGSEA")
+```
+
+
