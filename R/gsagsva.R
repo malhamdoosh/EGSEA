@@ -92,11 +92,12 @@ rungsva.subcollection <- function(args){
     gs.es = gsva(expr=args$data.log, gset.idx.list=args$gsets, mx.diff=TRUE, 
             min.sz=1, 
             method=args$method, parallel.sz=1, 
-            verbose=FALSE, rnaseq=FALSE)#$es.obs
-  
-    if (args$method == "gsva"){
-        gs.es = gs.es$es.obs
-    }
+            verbose=FALSE, kcdf = "Gaussian")#$es.obs
+
+    # Depreciated in Version 1.25.6  
+    # if (args$method == "gsva"){
+    #     gs.es = gs.es$es.obs
+    # }
     
     return(gs.es)
 }

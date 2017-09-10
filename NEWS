@@ -131,3 +131,9 @@ EGSEA 1.5.5 (2017-08-24)
 - fixed: bug in egsea.ora when 'title' includes white spaces or special characters 
 - fixed: several minor bugs
 
+EGSEA 1.5.6 (2017-09-11)
+------------------------
+- modified: GSVA invokation due to changes from GSVA developers on the return value and arguments
+
+
+
