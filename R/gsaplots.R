@@ -8,40 +8,52 @@ plotGOGraphs <- function(egsea.results, gs.annot, report.dir, sort.by,
         verbose){
     message("   GO graphs are being generated for top-ranked GO terms\n",  
 			"based on ", sort.by, " ... ")
-    go.dir = paste0(report.dir, "/go-graphs/") 
-    if (!dir.exists(go.dir))
-        dir.create(file.path(go.dir), showWarnings = FALSE)
-    contrast.names = names(egsea.results)
-    file.name = paste0(go.dir, sub(" - ", "-", contrast.names), "-", 
-        gs.annot@label, "-top-", sort.by, "-")
-    if (file.exists(paste0(file.name[length(file.name)], "CC.png")))
-        return()
-    topGOdata = loadTopGOdata(gs.annot, go.dir)    
-    noSig = 5 
-    for (i in 1:length(contrast.names)){   
-        if (verbose)
-            message(contrast.names[i])
-        generateGOGraphs(egsea.results[[i]], gs.annot, sort.by,
-                file.name[i], topGOdata, noSig)
-        
-    }
+    tryCatch({
+      go.dir = paste0(report.dir, "/go-graphs/") 
+      if (!dir.exists(go.dir))
+          dir.create(file.path(go.dir), showWarnings = FALSE)
+      contrast.names = names(egsea.results)
+      file.name = paste0(go.dir, sub(" - ", "-", contrast.names), "-", 
+          gs.annot@label, "-top-", sort.by, "-")
+      if (file.exists(paste0(file.name[length(file.name)], "CC.png")))
+          return()
+      topGOdata = loadTopGOdata(gs.annot, go.dir)    
+      noSig = 5 
+      for (i in 1:length(contrast.names)){   
+          if (verbose)
+              message(contrast.names[i])
+          generateGOGraphs(egsea.results[[i]], gs.annot, sort.by,
+                  file.name[i], topGOdata, noSig)
+          
+      }
+    }, 
+    error = function(err){
+       warning("GO graphs were not generated." , 
+               "They might not be supported under your current OS.")
+    })
     
 }
 
 plotGOGraphs.comparison <- function(egsea.results, gs.annot, report.dir, sort.by){
     message("   GO graphs are being generated for top-ranked COMPARISON\n",  
 		"GO terms based on ", sort.by, " ... ")
-    go.dir = paste0(report.dir, "/go-graphs/") 
-    if (!dir.exists(go.dir))
-        dir.create(file.path(go.dir), showWarnings = FALSE)   
-    file.name = paste0(go.dir, "comparison-", 
-            gs.annot@label, "-top-", sort.by, "-")
-    if (file.exists(paste0(file.name, "CC.png")))
-        return()
-    topGOdata = loadTopGOdata(gs.annot, go.dir)    
-    noSig = 5
-    generateGOGraphs(egsea.results, gs.annot, sort.by,
-                file.name, topGOdata, noSig)        
+    tryCatch({
+      go.dir = paste0(report.dir, "/go-graphs/") 
+      if (!dir.exists(go.dir))
+          dir.create(file.path(go.dir), showWarnings = FALSE)   
+      file.name = paste0(go.dir, "comparison-", 
+              gs.annot@label, "-top-", sort.by, "-")
+      if (file.exists(paste0(file.name, "CC.png")))
+          return()
+      topGOdata = loadTopGOdata(gs.annot, go.dir)    
+      noSig = 5
+      generateGOGraphs(egsea.results, gs.annot, sort.by,
+                  file.name, topGOdata, noSig)   
+    }, 
+    error = function(err){
+      warning("GO graphs were not generated." , 
+              "They might not be supported under your current OS.")
+    })
    
 }
 
@@ -859,7 +871,7 @@ generateHeatMap <- function(gene.set, gs.annot, fc, limma.tops, symbolsMap,
     # Export text file
     if (print.csv){        
         write.csv(csv.out, file=paste0(file.name, ".csv"), 
-            row.names=FALSE, col.names=TRUE)
+            row.names=FALSE)
     }
 }
 
