@@ -32,7 +32,7 @@ prepareTwoGroupsData <- function(voom.results, contrast, gs.annot,
     design = voom.results$design       
     sam.idx = 1:ncol(data.log)
     groupData[["data"]] = list()
-    set.seed(05081986)
+    #set.seed(05081986)
     contr.num = ifelse(is.matrix(contrast), ncol(contrast), length(contrast))
     for(i in 1:contr.num){
         if (is.matrix(contrast)){

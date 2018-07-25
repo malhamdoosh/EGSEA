@@ -210,9 +210,9 @@ To install the developmental version of \Biocpkg{EGSEA} from Bioconductor, run t
 following commands in R console
 
 <<echo=TRUE,  eval=FALSE,tidy=TRUE>>=
-library(BiocInstaller)
-useDevel()
-biocLite("EGSEA")
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("EGSEA", version="devel")
 @
 
 \subsubsection{GitHub}

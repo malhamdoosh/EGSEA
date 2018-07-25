@@ -13,7 +13,7 @@ biocViews: DifferentialExpression, GO, GeneExpression,
         Proteomics, KEGG, GraphAndNetwork,
         GeneSignaling, GeneTarget, NetworkEnrichment, Network,
       Classification
-Depends: R (>= 3.4), Biobase, gage (>= 2.14.4), 
+Depends: R (>= 3.5), Biobase, gage (>= 2.14.4), 
 		AnnotationDbi, topGO (>= 2.16.0), pathview (>= 1.4.2)
 Imports: PADOG (>= 1.6.0), GSVA (>= 1.12.0),
         globaltest (>= 5.18.0), limma (>= 3.20.9), edgeR (>= 3.6.8),

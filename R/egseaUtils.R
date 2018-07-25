@@ -14,9 +14,9 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
     timestamp()
     # check arguments are valid    
 #    print(class(voom.results))
-    stopifnot((class(voom.results) == "list" && 
+    stopifnot((is(voom.results, "list") && 
                         "ids" %in% names(voom.results)) 
-                    || class(voom.results) == "EList")  
+                    || is(voom.results, "EList"))  
     #stopifnot(!is.null(contrast))
     stopifnot(!is.null(gs.annots))
     stopifnot(length(baseGSEAs) > 0 && length(setdiff(baseGSEAs, egsea.base())) == 0)
@@ -37,7 +37,7 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
     if (is.null(sum.plot.axis))
         sum.plot.axis = "p.adj"
     # create a list of GSCollectionIndex objects
-    if (class(gs.annots) == "GSCollectionIndex"){
+    if (is(gs.annots, "GSCollectionIndex")){
         gs.annot = gs.annots
         gs.annots = list()
         gs.annots[[gs.annot@label]] = gs.annot
@@ -94,7 +94,7 @@ egsea.main <- function(voom.results, contrast, gs.annots, baseGSEAs,
     }else if (!is.matrix(logFC) || !identical(colnames(logFC), contr.names)){
         stop(paste0("logFC should be a matrix object with column names equal ", 
                         "to the (column) names of the argument 'contrast'."))
-    }else if (class(voom.results) == "EList"){
+    }else if (is(voom.results, "EList")){
         tmp = runStandardLimmaDEA(voom.results, contrast, logFC.cutoff, fdr.cutoff)
         limma.results = tmp$limma.results
         limma.tops = tmp$limma.tops
@@ -377,7 +377,7 @@ runegsea <- function(voom.results, contrast, limma.tops,
             logFC.cutoff, fdr.cutoff, 
             vote.bin.width, keep.base=TRUE, 
             num.workers=8, verbose=FALSE){     
-    stopifnot(class(gs.annot) == "GSCollectionIndex")
+    stopifnot(is(gs.annot, "GSCollectionIndex"))
     if (!is.null(voom.results$E))
         geneIDs = rownames(voom.results$E)
     else 
@@ -852,7 +852,7 @@ get.toptables <- function(ebayes.results, contrast){
 runStandardLimmaDEA <- function(voom.results, contrast, 
         logFC.cutoff, fdr.cutoff){
     # to be changed for gene symbols support
-    stopifnot(class(voom.results) == "EList")
+    stopifnot(is(voom.results, "EList"))
     message("limma DE analysis is carried out ... ")
     # fit linear model for each gene using limma package functions
     vfit = lmFit(voom.results, design=voom.results$design) # Fit linear model 

@@ -256,8 +256,8 @@ NULL
 #' @importFrom graphics par legend
 #' @importFrom utils write.table browseURL write.csv data capture.output packageVersion timestamp
 #' @importFrom gage gage kegg.gsets
-#' @importFrom metap logitp meanp sumlog sump sumz wilkinsonp
-#' @importFrom methods new slot
+#' @importFrom metap logitp meanp sumlog sump sumz wilkinsonp votep
+#' @importFrom methods new slot is
 #' @import hwriter HTMLUtils stringi ggplot2 pathview gplots  Biobase topGO
 #' @export
 #' @references 
@@ -306,7 +306,7 @@ egsea <- function(voom.results, contrasts = NULL, logFC=NULL,
         keep.limma=TRUE, keep.set.scores=FALSE
         ){
 
-    set.seed(581986) # to guarantee reproducibility of results
+    #set.seed(581986) # to guarantee reproducibility of results
     if (verbose)    
         return(egsea.main(voom.results, contrasts, gs.annots, baseGSEAs, 
             combineMethod, combineWeights,sort.by,  report.dir, 
@@ -423,7 +423,7 @@ egsea.cnt <- function(counts, group, design = NULL, contrasts = NULL, logFC=NULL
         d = DGEList(counts, group=group)
         d = calcNormFactors(d, method="TMM")  
     }else{
-        stopifnot(class(counts) == "DGEList")
+        stopifnot(is(counts, "DGEList"))
         d = counts
     }
     if (is.null(design)){
@@ -714,7 +714,7 @@ egsea.ma <- function(expr, group, probe.annot, probeMap.method = "avg",
         symbolsMap = probe.annot[match(ezs, probe.annot[, 2]), c(2,3)]
     }else
         symbolsMap = NULL
-    set.seed(581986) # to guarantee reproducibility of results
+    #set.seed(581986) # to guarantee reproducibility of results
     if (verbose)    
         return(egsea.main(elist.filtered, contrasts, gs.annots, baseGSEAs, 
                         combineMethod, combineWeights,sort.by,  report.dir, 

@@ -88,7 +88,7 @@ calculateSetScores.parallel <- function(data.log, gsets, method, num.workers){
 }
 
 rungsva.subcollection <- function(args){
-    set.seed(519863)
+    #set.seed(519863)
     gs.es = gsva(expr=args$data.log, gset.idx.list=args$gsets, mx.diff=TRUE, 
             min.sz=1, 
             method=args$method, parallel.sz=1, 
