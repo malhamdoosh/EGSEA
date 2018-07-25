@@ -138,7 +138,7 @@ meta-analysis of significance values. To install this package, type
 parallel. It is used to carry out gene set tests on parallel. It is usually
 installed with R. 
 
-\item \CRANpkg{devtools} is needed to install packages from Bitbucket. 
+\item \CRANpkg{devtools} is needed to install packages from GitHub. 
 It is available at CRAN. For Windows this seems to depend on
 having Rtools for Windows installed. You can download and install this from:
 \url{http://cran.r-project.org/bin/windows/Rtools/}. To install
@@ -158,8 +158,9 @@ The Bioconductor packages that need to be installed in order for
 the following commands in R console
 
 <<echo=TRUE,  eval=FALSE,tidy=TRUE,tidy.opts=list(blank=FALSE, width.cutoff=60)>>=
-source("http://www.bioconductor.org/biocLite.R")
-biocLite(c("PADOG", "GSVA", "AnnotationDbi", "topGO", "pathview", "gage",
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install(c("PADOG", "GSVA", "AnnotationDbi", "topGO", "pathview", "gage",
 "globaltest", "limma", "edgeR", "safe", "org.Hs.eg.db", "org.Mm.eg.db",
 "org.Rn.eg.db"))
 @
@@ -171,36 +172,38 @@ and converted into R data objects to be used by the EGSEA functions. The data
 objects are stored in an R package, named \Biocpkg{EGSEAdata}. It contains the
 gene set collections that are needed by \Biocpkg{EGSEA} to perform gene set
 testing. \Biocpkg{EGSEAdata} is available at Bioconductor and can be also
-installed from Bitbucket.
+installed from GitHub.
 
 \par \Biocpkg{EGSEAdata} can be installed from Bioconductor by running in R
 console the following commands 
 <<echo=TRUE,  eval=FALSE,tidy=TRUE>>=
-source("http://bioconductor.org/biocLite.R")
-biocLite("EGSEAdata")
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("EGSEAdata")
 @
 
-It can be also installed from Bitbucket from inside R console using the
+It can be also installed from GitHub from inside R console using the
 \Rpackage{devtools} package as follows
 
 <<echo=TRUE,  eval=FALSE,tidy=TRUE>>= 
 library(devtools) 
-install_bitbucket("malhamdoosh/egseadata", ref="Stable_Release")
+install_github("malhamdoosh/EGSEAdata")
 @ 
 
 \subsection{Installation}
-\Biocpkg{EGSEA} can be installed from the Bioconductor project or the Bitbucket
+\Biocpkg{EGSEA} can be installed from the Bioconductor project or the GitHub
 repository. We aim to only push the successfully tested versions to
-Bioconductor. Therefore, the Bitbucket version can have additional features that
+Bioconductor. Therefore, the GitHub version can have additional features that
 are not yet available in Bioconductor. 
 
 \subsubsection{Bioconductor}
-To install the release version of \Biocpkg{EGSEA} from Bioconductor, type in R
+To install the stable release version of \Biocpkg{EGSEA} from Bioconductor, type in R
 console
 
 <<echo=TRUE,  eval=FALSE,tidy=TRUE>>=
-source("http://bioconductor.org/biocLite.R")
-biocLite("EGSEA")
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("EGSEA")
 @
 
 To install the developmental version of \Biocpkg{EGSEA} from Bioconductor, run the
@@ -212,18 +215,15 @@ useDevel()
 biocLite("EGSEA")
 @
 
-\subsubsection{Bitbucket}
+\subsubsection{GitHub}
 
-To install the developmental version of \Biocpkg{EGSEA} from Bitbucket, type in the R
+To install the developmental version of \Biocpkg{EGSEA} from GitHub, type in the R
 console
 
 <<echo=TRUE,  eval=FALSE,tidy=TRUE>>=
 library(devtools)
-install_bitbucket("malhamdoosh/egsea", ref="Devel_Release")
+install_github("malhamdoosh/EGSEA")
 @
-
-The stable release version of \Biocpkg{EGSEA} can be obtained from Bitbucket by
-setting \Rcode{ref = "Stabel\_Release"} in the previous commands.
 
 \section{Quick start}
 \subsection{EGSEA gene set collections}

@@ -569,11 +569,24 @@ combinePvalues <- function(data, combineMethod, combineWeights = NULL){
 
 combineBaseGSEAs <- function(results.multi, combineMethod, combineWeights=NULL, 
                     bin.width=5){
-    if (length(results.multi[[1]]) == 1 || names(results.multi[[1]]) == "ora"){
+    if (length(results.multi) == 1 && 
+        length(results.multi[[1]]) == 1 && 
+        names(results.multi[[1]]) == "ora"){
         results.multi[[1]] = results.multi[[1]][[1]]
         results.multi[[1]] = results.multi[[1]][, 
                 colnames(results.multi[[1]]) != "Rank"]
         return(results.multi)
+    }
+  
+    if (length(results.multi[[1]]) == 1){
+        results.combined = vector('list', length(results.multi))
+        names(results.combined) = names(results.multi)
+        for (i in 1:length(results.combined)){
+            results.combined[[i]] = results.multi[[i]][[1]]
+            results.combined[[i]] = results.combined[[i]][, 
+                            colnames(results.combined[[i]]) != "Rank"]
+        }
+        return(results.combined)
     }
     # compress detailed results into matrices
     temp = extractPvaluesRanks(results.multi) 
@@ -758,6 +771,7 @@ createComparison <- function(egsea.results, combineMethod="fisher", display.top=
         sort.by="p.value"){
     egsea.comparison = numeric(0)
     col.names = colnames(egsea.results[[1]])
+    col.names.sel = character(0)
     gset.names =  rownames(egsea.results[[1]])
     for (i in 1:length(col.names)){ # iterate over egsea.results columns
         if (col.names[i] == "p.adj")
@@ -773,33 +787,42 @@ createComparison <- function(egsea.results, combineMethod="fisher", display.top=
             adj.pvals = temp$adj.pvals
             egsea.comparison = cbind(egsea.comparison, 
                     pvalues, adj.pvals)
+            col.names.sel = c(col.names.sel, col.names[i], "p.adj")
         }
         else if (col.names[i] == "med.rank"){
             egsea.comparison = cbind(egsea.comparison, rowMedians(temp, 
                     na.rm=TRUE))
+            col.names.sel = c(col.names.sel, col.names[i])
         }
         else if (length(grep("min", col.names[i])) > 0){
             minVals = sapply(1:nrow(temp), function(x) min(temp[x, ], 
                     na.rm=TRUE))
             egsea.comparison = cbind(egsea.comparison, minVals)
+            col.names.sel = c(col.names.sel, col.names[i])
         }
         else if (col.names[i] %in% c("avg.rank", "direction", "significance", 
-                "avg.logfc", "avg.logfc.dir"))
+                "avg.logfc", "avg.logfc.dir")){
             egsea.comparison = cbind(egsea.comparison, rowMeans(temp, 
                 na.rm=TRUE))
-        else if (col.names[i] == "vote.rank"){
-            if (length(egsea.results) > 2)
+            col.names.sel = c(col.names.sel, col.names[i]) 
+        }else if (col.names[i] == "vote.rank"){
+            if (length(egsea.results) > 2){
                 egsea.comparison = cbind(egsea.comparison, voteRank(temp, 
                     bin.width = -1))
-            else
+                col.names.sel = c(col.names.sel, col.names[i])
+            }else{
                 egsea.comparison = cbind(egsea.comparison, rowMeans(temp, 
                             na.rm=TRUE))
+                col.names.sel = c(col.names.sel, "vote.rank.mean")
+            }
+        }else{
+            next
         }
     }
     rownames(egsea.comparison) = gset.names
 #   print(colnames(egsea.comparison))
 #   print(col.names)
-    colnames(egsea.comparison) = col.names[1:length(colnames(egsea.comparison))]
+    colnames(egsea.comparison) = col.names.sel
     egsea.comparison = egsea.comparison[order(egsea.comparison[,sort.by]), ]
     display.top = ifelse(nrow(egsea.comparison) > display.top, display.top, 
 nrow(egsea.comparison))

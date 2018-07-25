@@ -141,5 +141,10 @@ EGSEA 1.6.1 (2017-12-03)
 - fixed: a minor issue in writing CSV files. 
 
 
+EGSEA 1.9.1 (2018-05-021)
+-------------------------
+- fixed: a minor bug to allow users generate EGSEA reports for only a single base method
+- fixed: several minor bugs
+- Change: from biocLite to BiocManager
 
 

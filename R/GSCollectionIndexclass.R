@@ -262,6 +262,8 @@ setMethod(f = "getSetByName",
                     cat(paste0(col, ": ", object@anno[x, col], "\n"))
                     gset[[x]][[col]] = object@anno[x, col]
                 }
+                gset[[x]][["idx"]] = object@idx[[x]]
+                gset[[x]][["original"]] = object@original[[x]]
                 cat("\n")                
             }
             names(gset) = set.name
@@ -312,7 +314,7 @@ setMethod(f = "getSetByID",
         definition = function(object, id){
             stopifnot("ID" %in% colnames(object@anno))
             stopifnot(id %in% object@anno$ID)            
-            name = which(object@anno$ID %in% id)
+            name = as.character(object@anno$GeneSet[which(object@anno$ID %in% id)])
             cols = colnames(object@anno)
             gset = list()
             for (x in name){
@@ -321,6 +323,8 @@ setMethod(f = "getSetByID",
                     cat(paste0(col, ": ", object@anno[x, col], "\n"))
                     gset[[x]][[col]] = object@anno[x, col]
                 }
+                gset[[x]][["idx"]] = object@idx[[x]]
+                gset[[x]][["original"]] = object@original[[x]]
                 cat("\n")
             }
             names(gset) = id

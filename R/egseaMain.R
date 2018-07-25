@@ -790,8 +790,8 @@ mapProbesIntoEntrezIDs <- function(elist, probe.annot, probeMap.method){
 # R-dev CMD BiocCheck EGSEAdata_0.99.0.tar.gz 
 
 # push changes to MA's/Bioconductor's GitHub repositories 
-# MA: git push origin master
-# Bioc: git push upstream master
+# MA: git push origin master | git push origin RELEASE_3_X
+# Bioc: git push upstream master | git push upstream RELEASE_3_X
 
 
 ## Create test units, type inside the EGSEA directory
