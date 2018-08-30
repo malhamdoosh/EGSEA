@@ -21,8 +21,9 @@ Alhamdoosh M, Ng M, Wilson N, Sheridan J, Huynh H, Wilson M and Ritchie M (2017)
 To install the *stable release* of this package, start R and enter:
 ```{r}
 ## try http:// if https:// URLs are not supported
-source("https://bioconductor.org/biocLite.R")
-biocLite("EGSEA")
+if (!requireNamespace("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
+BiocManager::install("EGSEA")
 ```
 
 To install the *development version* of this package, start R and enter:
