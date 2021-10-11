@@ -634,7 +634,6 @@ egsea.ora <- function(geneIDs, universe=NULL, logFC=NULL, title=NULL,
 #' @importFrom limma neqc 
 #' @importFrom stats model.matrix median var IQR
 #' @importClassesFrom limma EListRaw EList
-#' @import Glimma
 #' @export
 #' 
 #' @name egsea.cnt
@@ -643,7 +642,6 @@ egsea.ora <- function(geneIDs, universe=NULL, logFC=NULL, title=NULL,
 #' 
 #' @examples
 #' # Example of egsea.ma
-#' library(Glimma)
 #' data(arraydata)
 #' expr = arraydata$arrays$E
 #' group = as.factor(arraydata$targets$Condition)
