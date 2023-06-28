@@ -15,25 +15,61 @@
 \alias{buildGMTIdx,egsea-index}
 \title{Functions to create gene set collection indexes for EGSEA}
 \usage{
-buildIdx(entrezIDs, species = "human", msigdb.gsets = "all",
-  gsdb.gsets = "none", go.part = FALSE, kegg.updated = FALSE,
-  kegg.exclude = c(), min.size = 1)
+buildIdx(
+  entrezIDs,
+  species = "human",
+  msigdb.gsets = "all",
+  gsdb.gsets = "none",
+  go.part = FALSE,
+  kegg.updated = FALSE,
+  kegg.exclude = c(),
+  min.size = 1
+)
 
-buildKEGGIdx(entrezIDs, species = "human", min.size = 1, updated = FALSE,
-  exclude = c())
+buildKEGGIdx(
+  entrezIDs,
+  species = "human",
+  min.size = 1,
+  updated = FALSE,
+  exclude = c()
+)
 
-buildMSigDBIdx(entrezIDs, species = "Homo sapiens", geneSets = "all",
-  go.part = FALSE, min.size = 1)
+buildMSigDBIdx(
+  entrezIDs,
+  species = "Homo sapiens",
+  geneSets = "all",
+  go.part = FALSE,
+  min.size = 1
+)
 
-buildGeneSetDBIdx(entrezIDs, species, geneSets = "all", go.part = FALSE,
-  min.size = 1)
+buildGeneSetDBIdx(
+  entrezIDs,
+  species,
+  geneSets = "all",
+  go.part = FALSE,
+  min.size = 1
+)
 
-buildCustomIdx(geneIDs, gsets, anno = NULL, label = "custom",
-  name = "User-Defined Gene Sets", species = "Human", min.size = 1)
+buildCustomIdx(
+  geneIDs,
+  gsets,
+  anno = NULL,
+  label = "custom",
+  name = "User-Defined Gene Sets",
+  species = "Human",
+  min.size = 1
+)
 
-buildGMTIdx(geneIDs, gmt.file, anno.cols = 0, anno.col.names = NULL,
-  label = "gmtcustom", name = "User-Defined GMT Gene Sets",
-  species = "Human", min.size = 1)
+buildGMTIdx(
+  geneIDs,
+  gmt.file,
+  anno.cols = 0,
+  anno.col.names = NULL,
+  label = "gmtcustom",
+  name = "User-Defined GMT Gene Sets",
+  species = "Human",
+  min.size = 1
+)
 }
 \arguments{
 \item{entrezIDs}{character, a vector that stores the Entrez Gene IDs tagged 
