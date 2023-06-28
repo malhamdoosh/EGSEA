@@ -1,8 +1,13 @@
 Package: EGSEA
 Title: Ensemble of Gene Set Enrichment Analyses
 Version: 1.29.0
-Date: 12-10-2021
-Author: Monther Alhamdoosh, Luyi Tian, Milica Ng and Matthew Ritchie
+Authors@R:
+        c(person(given="Monther", family="Alhamdoosh", role=c("aut", "cre"),
+                email="m.hamdoosh@gmail.com"),
+          person(given="Luyi", family="Tian", role=c("aut")),
+          person(given="Milica", family="Ng", role=c("aut")),
+          person("Matthew", "Ritchie",role=c("ctb"),
+                    email="mritchie@wehi.edu.au"))
 Maintainer: Monther Alhamdoosh <m.hamdoosh@gmail.com>
 Description: This package implements the Ensemble of Gene Set Enrichment
     Analyses (EGSEA) method for gene set testing.
@@ -27,6 +32,7 @@ Imports: PADOG (>= 1.6.0), GSVA (>= 1.12.0),
 License: GPL-3
 LazyLoad: yes
 NeedsCompilation: no
+Encoding: UTF-8
 Suggests: BiocStyle, knitr, testthat
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1
