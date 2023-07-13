@@ -245,10 +245,6 @@ setGeneric(name="addSymbolsMap",
 #' @title Show the content of the EGSEAResults object
 #' @description \code{show} displays the parameters of an EGSEAResults object
 #' 
-#' @inheritParams object EGSEAResults object, the analysis result object from  \code{\link{egsea}}, 
-#' \code{\link{egsea.cnt}}
-#' or  \code{\link{egsea.ora}}. 
-#' 
 #' @export
 #' @return \code{show} does not return data.  
 #' 
@@ -311,11 +307,6 @@ setMethod(f = "show",
 #' @title Summary of the EGSEAResults object
 #' @description \code{summary} displays a brief summary of the analysis results 
 #' stored in an EGSEAResults object
-#' 
-#' @inheritParams object EGSEAResults object, the analysis result object 
-#' from  \code{\link{egsea}}, 
-#' \code{\link{egsea.cnt}}
-#' or  \code{\link{egsea.ora}}. 
 #' 
 #' @export
 #' @return \code{summary} does not return data. 
@@ -384,12 +375,6 @@ setMethod(f = "show",
 #' @description \code{limmaTopTable} returns a dataframe of the top table of the 
 #' limma analysis for a given contrast. 
 #' @details \code{limmaTopTable} output can be understood from \code{limma::topTable}. 
-#' 
-#' @inheritParams object EGSEAResults object, the analysis result object 
-#' from  \code{\link{egsea}}, 
-#' \code{\link{egsea.cnt}}
-#' or  \code{\link{egsea.ora}}. 
-#' @inheritParams contrast character or numeric, the index/name of the contrast 
 #' 
 #' @export
 #' @return  \code{limmaTopTable} returns a dataframe. 
@@ -495,26 +480,17 @@ setMethod(f = "limmaTopTable",
 #' Finally, the "Interpret Results" hyperlink in the EGSEA report allows the user to download
 #' the fold changes and limma analysis results and thus improve the interpretation of the results.
 #' 
-#' @inheritParams object EGSEAResults object, the analysis result object 
-#' from  \code{\link{egsea}}, 
-#' \code{\link{egsea.cnt}}
-#' or  \code{\link{egsea.ora}}. 
-#' @inheritParams number
-#' @inheritParams sort.by
 #' @param report.dir character, directory into which the analysis results are 
 #' written out. 
 #' @param kegg.dir character, the directory of KEGG pathway data file (.xml) 
 #' and image file (.png). 
 #' Default kegg.dir=paste0(report.dir, "/kegg-dir/").
-#' @inheritParams x.axis
-#' @inheritParams x.cutoff
 #' @param num.threads numeric, number of CPU cores to be used. Default 
 #' num.threads=4.
 #' @param print.base logical, whether to write out the analysis results of the base methods.
 #' Default is False.
 #' @param interactive logical, whether to generate interactive tables and plots. 
 #' Note this might dramatically increase the size of the EGSEA report.
-#' @inheritParams verbose
 #' @importFrom plotly ggplotly
 #' @importFrom  htmlwidgets saveWidget
 #' @importFrom DT datatable
@@ -573,10 +549,6 @@ setMethod(f = "generateReport",
 #' @details \code{getlimmaResults}'s output can be manipulated using
 #'  \code{limma::topTable} and \code{limma::topTreat}. 
 #' 
-#' @inheritParams object EGSEAResults object, the analysis result object 
-#' from  \code{\link{egsea}} or
-#' \code{\link{egsea.cnt}}. 
-#' 
 #' @export
 #' @return  \code{getlimmaResults} returns an MArrayLM object.
 #' 
@@ -620,18 +592,10 @@ setMethod(f = "getlimmaResults",
 #' only genes that appear in the EGSEA analysis are visualized in the heatmap. Gene names 
 #' are coloured based on the statistical significance level from limma DE analysis. 
 #' 
-#' @inheritParams object EGSEAResults object, the analysis result object from  \code{\link{egsea}}, 
-#' \code{\link{egsea.cnt}}
-#' or  \code{\link{egsea.ora}}. 
 #' @param gene.set character, the name of the gene set. 
 #' See the output of \code{\link{topSets}}.
-#' @inheritParams gs.label character or numeric, the index/name of the gene set collection.
-#' See \code{names(object@@gs.annots)} for valid values.
-#' @inheritParams contrast character or numeric, the index/name of the contrast or 0/"comparison". 
-#' See \code{object@@contr.names} for valid values.
 #' @param file.name character, the prefix of the output file name. 
 #' @param format character, takes "pdf" or "png".
-#' @inheritParams verbose logical, whether to print out progress messages and warnings.
 #' @param fc.colors vector, determines the fold change colors of the heatmap. 
 #' Three colors of the negative, zero and positive log fold changes,
 #' respectively, should be assigned. Default is c( "#67A9CF", "#F7F7F7", "#EF8A62"). These 
@@ -737,21 +701,10 @@ setMethod(f = "getlimmaResults",
 #' help to identify gene sets that are highly ranked/sgnificant across multiple
 #' contrasts. 
 #' 
-#' @inheritParams object EGSEAResults object, the analysis result object from  \code{\link{egsea}}, 
-#' \code{\link{egsea.cnt}}
-#' or  \code{\link{egsea.ora}}. 
-#' @inheritParams gs.label character or numeric, the index/name of the gene set collection.
-#' See names(object@@gs.annots) for valid values.
-#' @inheritParams number integer, maximum number of gene sets to list
-#' @inheritParams sort.by character
 #' @param hm.vals character, determines which EGSEA score values are used to draw the map.
 #' Default is NULL which implies using the sort.by score. 
 #' @param show.vals character, determines which EGSEA score values are displayed on the map.
 #' Default is NULL which does not show anything.
-#' @inheritParams file.name character, the prefix of the output file name. 
-#' @inheritParams format character, takes "pdf" or "png".
-#' @inheritParams verbose logical, whether to print out progress messages and warnings.
-#
 #' @export
 #' @return \code{plotSummaryHeatmap} does not return data but creates image and CSV files. 
 #' 
@@ -862,19 +815,6 @@ setMethod(f = "getlimmaResults",
 #' @description \code{plotPathway} generates a visual map for a selected KEGG pathway with
 #' the gene fold changes overalid on it.
 #' 
-#' @inheritParams object EGSEAResults object, the analysis result object from  \code{\link{egsea}}, 
-#' \code{\link{egsea.cnt}}
-#' or  \code{\link{egsea.ora}}. 
-#' @inheritParams gene.set character, the name of the pathway. 
-#' See the output of \code{\link{topSets}}.
-#' @inheritParams gs.label character or numeric, the index/name of the KEGG pathways collection.
-#' See names(object@@gs.annots)[grep("^kegg", names(object@@gs.annots))] for valid values.
-#' @inheritParams contrast character or numeric, the index/name of the contrast or 0/"comparison". 
-#' See object@@contr.names for valid values.
-#' @inheritParams file.name character, the name of the output file without an extension.
-#' @inheritParams verbose logical, whether to print out progress messages and warnings.
-#' 
-#' 
 #' @export
 #' @return \code{plotPathway} does not return data but creates a file.
 #' 
@@ -942,17 +882,6 @@ setMethod(f = "getlimmaResults",
 #' @title Plot a multi-dimensional scaling (MDS) plot for the gene set rankings
 #' @description \code{plotMethods} generates a multi-dimensional scaling (MDS) plot
 #'  for the gene set rankings of different base GSE methods
-#' 
-#' @inheritParams object EGSEAResults object, the analysis result object from  \code{\link{egsea}}, 
-#' \code{\link{egsea.cnt}}
-#' or  \code{\link{egsea.ora}}. 
-#' @inheritParams gs.label character or numeric, the index/name of the KEGG pathways collection.
-#' See names(object@@gs.annots)[grep("^kegg", names(object@@gs.annots))] for valid values.
-#' @inheritParams contrast character or numeric, the index/name of the contrast or 0/"comparison". 
-#' See object@@contr.names for valid values.
-#' @inheritParams file.name character, the name of the output file without an extension.
-#' @inheritParams format character, takes "pdf" or "png".
-#' @inheritParams verbose logical, whether to print out progress messages and warnings. 
 #' 
 #' @export
 #' @return \code{plotMethods} does not reutrn data but creates an image file.
@@ -1026,16 +955,6 @@ setGeneric(name="plotMethods",
 #' as the mean. If \code{sort.by = NULL}, the slot \code{sort.by} of the \code{object} 
 #' is used to order gene sets.
 #' 
-#' @inheritParams object EGSEAResults object, the analysis result object from  \code{\link{egsea}}, 
-#' \code{\link{egsea.cnt}}
-#' or  \code{\link{egsea.ora}}. 
-#' @inheritParams gs.label character or numeric, the index/name of the KEGG pathways collection.
-#' See names(object@@gs.annots)[grep("^kegg", names(object@@gs.annots))] for valid values.
-#' @inheritParams contrast character or numeric, the index/name of the contrast. To compare two
-#' contrasts, pass their indexes/names.
-#' See object@@contr.names for valid values.
-#' @inheritParams file.name character, the name of the heatmap file without an extension.
-#' @inheritParams format character, takes "pdf" or "png".
 #' @param x.axis character, the x-axis of the summary plot. All the 
 #' values accepted by the 
 #' \strong{sort.by} parameter can be used. Default x.axis="p.value".
@@ -1043,12 +962,8 @@ setGeneric(name="plotMethods",
 #' the summary plots
 #' based on the values of the \strong{x.axis}. Default 
 #' x.cutoff=NULL.
-#' @inheritParams sort.by
 #' @param use.names logical, determines whether to display the GeneSet IDs or GeneSet Names.
 #' Default is FALSE.
-#' @inheritParams interactive
-#' @inheritParams verbose logical, whether to print out progress messages and warnings. 
-#' 
 #' @export
 #' @return \code{plotSummary} does not return data but creates an image file. 
 #' 
@@ -1158,22 +1073,8 @@ setGeneric(name="plotMethods",
 #' @description \code{plotGOGraph} generates a graph of the top significant GO terms in 
 #' a GO term collection, which could be c5 from MSigDB or Gene Ontolog from the GeneSetDB.
 #' 
-#' @inheritParams object EGSEAResults object, the analysis result object from  \code{\link{egsea}}, 
-#' \code{\link{egsea.cnt}}
-#' or  \code{\link{egsea.ora}}. 
-#' @inheritParams gs.label character or numeric, the index/name of the KEGG pathways collection.
-#' See names(object@@gs.annots)[grep("^kegg", names(object@@gs.annots))] for valid values.
-#' @inheritParams contrast character or numeric, the index/name of the contrast or 0/"comparison". 
-#' See object@@contr.names for valid values.
-#' @inheritParams sort.by
 #' @param noSig numeric, number of significant GO terms to be displayed. A number larger than 
 #' 5 might not work due to the size of the generated graph. 
-#' @inheritParams file.name character, the prefix of the output file name without an extension.
-#' @inheritParams format
-#' @inheritParams verbose logical, whether to print out progress messages and warnings.
- 
-#' 
-#' 
 #' @export
 #' @return \code{plotGOGraph} does not return data but creates an image file.  
 #' 
@@ -1249,21 +1150,8 @@ setGeneric(name="plotMethods",
 #' @description \code{plotBars} generates a multi-dimensional scaling (MDS) plot
 #'  for the gene set rankings of different base GSE methods
 #' 
-#' @inheritParams object EGSEAResults object, the analysis result object from  \code{\link{egsea}}, 
-#' \code{\link{egsea.cnt}}
-#' or  \code{\link{egsea.ora}}. 
-#' @inheritParams gs.label character or numeric, the index/name of the KEGG pathways collection.
-#' See names(object@@gs.annots)[grep("^kegg", names(object@@gs.annots))] for valid values.
-#' @inheritParams contrast character or numeric, the index/name of the contrast or 0/"comparison". 
-#' See object@@contr.names for valid values.
-#' @inheritParams number integer, maximum number of gene sets to list
-#' @inheritParams sort.by character
 #' @param bar.vals character, determines which EGSEA score values are used to draw the bars.
 #' Default is NULL which implies using the sort.by score. 
-#' @inheritParams file.name character, the name of the output file without an extension.
-#' @inheritParams format character, takes "pdf" or "png".
-#' @inheritParams verbose logical, whether to print out progress messages and warnings. 
-#' 
 #' @export
 #' @return \code{plotBars} does not reutrn data but creates an image file.
 #' 
@@ -1425,8 +1313,6 @@ setGeneric(name="plotMethods",
 #' @title Display the information of a given gene set name
 #' @description \code{showSetByname} shows the details of a given gene set indicated by name.
 #' 
-#' @inheritParams object EGSEAResults 
-#' @inheritParams gs.label
 #' @param set.name character, a vector of gene set names as they appear in \code{\link{topSets}}.
 #' 
 #' @export
@@ -1474,8 +1360,6 @@ setMethod(f = "showSetByName",
 #' @title Display the information of a given gene set ID
 #' @description \code{showSetByID} shows the details of a given gene set indicated by ID.
 #' 
-#' @inheritParams object EGSEAResults
-#' @inheritParams gs.label
 #' @param id character, a vector of gene set IDs as they appears in the 
 #' \code{\link{plotSummary}}.
 #' 
@@ -1525,9 +1409,6 @@ setMethod(f = "showSetByName",
 #' @title The gene set enrichment scores per sample
 #' @description \code{getSetScores} returns a dataframe of the gene set enrichment scores 
 #' per sample. This can be only calculated using specific base methods, namely, "ssgsea". 
-#' 
-#' @inheritParams object EGSEAResults
-#' @inheritParams gs.label
 #' 
 #' @export
 #' @return  \code{getSetScores} returnsa a dataframe where rows are gene sets and 

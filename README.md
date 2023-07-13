@@ -16,13 +16,16 @@ Citation (from within R, enter ```citation("EGSEA")```):
 
 Alhamdoosh M, Ng M, Wilson N, Sheridan J, Huynh H, Wilson M and Ritchie M (2017). “Combining multiple tools outperforms individual methods in gene set enrichment analyses.” *Bioinformatics*, 33(3). doi: 10.1093/bioinformatics/btw623.
 
+Alhamdoosh M, Law CW, Tian L et al. Easy and efficient ensemble gene set testing with EGSEA [version 1; peer review: 1 approved, 3 approved with reservations]. F1000Research 2017, 6:2010. doi: 10.12688/f1000research.12544.1
+
 # Installation
 
 To install the *stable release* of this package, start R and enter:
 ```{r}
 ## try http:// if https:// URLs are not supported
-source("https://bioconductor.org/biocLite.R")
-biocLite("EGSEA")
+if (!requireNamespace("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
+BiocManager::install("EGSEA")
 ```
 
 To install the *development version* of this package, start R and enter:

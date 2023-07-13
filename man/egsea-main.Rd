@@ -7,44 +7,117 @@
 \alias{egsea.cnt,egsea-main}
 \alias{egsea.ora}
 \alias{egsea.ora,egsea-main}
-\alias{egsea.cnt}
 \alias{egsea.ma}
-\alias{egsea.cnt,egsea-main}
 \title{Core functions to perform ensemble of gene set enrichment analysis (EGSEA)}
 \usage{
-egsea(voom.results, contrasts = NULL, logFC = NULL, gs.annots,
-  symbolsMap = NULL, baseGSEAs = egsea.base(), minSize = 2,
-  display.top = 20, combineMethod = "wilkinson", combineWeights = NULL,
-  sort.by = "p.adj", report.dir = NULL, kegg.dir = NULL,
-  logFC.cutoff = 0, fdr.cutoff = 0.05, sum.plot.axis = "p.adj",
-  sum.plot.cutoff = NULL, vote.bin.width = 5, num.threads = 4,
-  report = TRUE, interactive = FALSE, keep.base = FALSE,
-  verbose = FALSE, keep.limma = TRUE, keep.set.scores = FALSE)
+egsea(
+  voom.results,
+  contrasts = NULL,
+  logFC = NULL,
+  gs.annots,
+  symbolsMap = NULL,
+  baseGSEAs = egsea.base(),
+  minSize = 2,
+  display.top = 20,
+  combineMethod = "wilkinson",
+  combineWeights = NULL,
+  sort.by = "p.adj",
+  report.dir = NULL,
+  kegg.dir = NULL,
+  logFC.cutoff = 0,
+  fdr.cutoff = 0.05,
+  sum.plot.axis = "p.adj",
+  sum.plot.cutoff = NULL,
+  vote.bin.width = 5,
+  num.threads = 4,
+  report = TRUE,
+  interactive = FALSE,
+  keep.base = FALSE,
+  verbose = FALSE,
+  keep.limma = TRUE,
+  keep.set.scores = FALSE
+)
 
-egsea.cnt(counts, group, design = NULL, contrasts = NULL, logFC = NULL,
-  gs.annots, symbolsMap = NULL, baseGSEAs = egsea.base(), minSize = 2,
-  display.top = 20, combineMethod = "wilkinson", combineWeights = NULL,
-  sort.by = "p.adj", report.dir = NULL, kegg.dir = NULL,
-  logFC.cutoff = 0, fdr.cutoff = 0.05, sum.plot.axis = "p.adj",
-  sum.plot.cutoff = NULL, vote.bin.width = 5, num.threads = 4,
-  report = TRUE, interactive = FALSE, keep.base = FALSE,
-  verbose = FALSE, keep.limma = TRUE, keep.set.scores = FALSE)
+egsea.cnt(
+  counts,
+  group,
+  design = NULL,
+  contrasts = NULL,
+  logFC = NULL,
+  gs.annots,
+  symbolsMap = NULL,
+  baseGSEAs = egsea.base(),
+  minSize = 2,
+  display.top = 20,
+  combineMethod = "wilkinson",
+  combineWeights = NULL,
+  sort.by = "p.adj",
+  report.dir = NULL,
+  kegg.dir = NULL,
+  logFC.cutoff = 0,
+  fdr.cutoff = 0.05,
+  sum.plot.axis = "p.adj",
+  sum.plot.cutoff = NULL,
+  vote.bin.width = 5,
+  num.threads = 4,
+  report = TRUE,
+  interactive = FALSE,
+  keep.base = FALSE,
+  verbose = FALSE,
+  keep.limma = TRUE,
+  keep.set.scores = FALSE
+)
 
-egsea.ora(geneIDs, universe = NULL, logFC = NULL, title = NULL, gs.annots,
-  symbolsMap = NULL, minSize = 2, display.top = 20, sort.by = "p.adj",
-  report.dir = NULL, kegg.dir = NULL, sum.plot.axis = "p.adj",
-  sum.plot.cutoff = NULL, num.threads = 4, report = TRUE,
-  interactive = FALSE, verbose = FALSE)
+egsea.ora(
+  geneIDs,
+  universe = NULL,
+  logFC = NULL,
+  title = NULL,
+  gs.annots,
+  symbolsMap = NULL,
+  minSize = 2,
+  display.top = 20,
+  sort.by = "p.adj",
+  report.dir = NULL,
+  kegg.dir = NULL,
+  sum.plot.axis = "p.adj",
+  sum.plot.cutoff = NULL,
+  num.threads = 4,
+  report = TRUE,
+  interactive = FALSE,
+  verbose = FALSE
+)
 
-egsea.ma(expr, group, probe.annot, probeMap.method = "avg", design = NULL,
-  contrasts = NULL, logFC = NULL, gs.annots, baseGSEAs = egsea.base(),
-  minSize = 2, display.top = 20, combineMethod = "wilkinson",
-  combineWeights = NULL, sort.by = "p.adj", report.dir = NULL,
-  kegg.dir = NULL, logFC.cutoff = 0, fdr.cutoff = 0.05,
-  sum.plot.axis = "p.adj", sum.plot.cutoff = NULL, vote.bin.width = 5,
-  num.threads = 4, report = TRUE, interactive = FALSE,
-  keep.base = FALSE, verbose = FALSE, keep.limma = TRUE,
-  keep.set.scores = FALSE)
+egsea.ma(
+  expr,
+  group,
+  probe.annot,
+  probeMap.method = "avg",
+  design = NULL,
+  contrasts = NULL,
+  logFC = NULL,
+  gs.annots,
+  baseGSEAs = egsea.base(),
+  minSize = 2,
+  display.top = 20,
+  combineMethod = "wilkinson",
+  combineWeights = NULL,
+  sort.by = "p.adj",
+  report.dir = NULL,
+  kegg.dir = NULL,
+  logFC.cutoff = 0,
+  fdr.cutoff = 0.05,
+  sum.plot.axis = "p.adj",
+  sum.plot.cutoff = NULL,
+  vote.bin.width = 5,
+  num.threads = 4,
+  report = TRUE,
+  interactive = FALSE,
+  keep.base = FALSE,
+  verbose = FALSE,
+  keep.limma = TRUE,
+  keep.set.scores = FALSE
+)
 }
 \arguments{
 \item{voom.results}{list, an EList object generated using the
@@ -415,7 +488,6 @@ gs.annots=gs.annots,
 topSets(gsa) 
 
 # Example of egsea.ma
-library(Glimma)
 data(arraydata)
 expr = arraydata$arrays$E
 group = as.factor(arraydata$targets$Condition)

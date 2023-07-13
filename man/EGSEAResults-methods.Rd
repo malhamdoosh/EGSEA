@@ -39,8 +39,15 @@
 \usage{
 \S4method{$}{EGSEAResults}(x, name)
 
-topSets(object, gs.label = 1, contrast = 1, sort.by = NULL, number = 10,
-  names.only = TRUE, verbose = TRUE)
+topSets(
+  object,
+  gs.label = 1,
+  contrast = 1,
+  sort.by = NULL,
+  number = 10,
+  names.only = TRUE,
+  verbose = TRUE
+)
 
 \S4method{show}{EGSEAResults}(object)
 
@@ -48,36 +55,99 @@ topSets(object, gs.label = 1, contrast = 1, sort.by = NULL, number = 10,
 
 limmaTopTable(object, contrast = 1)
 
-generateReport(object, number = 20, sort.by = NULL, report.dir = NULL,
-  kegg.dir = NULL, x.axis = NULL, x.cutoff = NULL, num.threads = 4,
-  print.base = FALSE, interactive = FALSE, verbose = FALSE)
+generateReport(
+  object,
+  number = 20,
+  sort.by = NULL,
+  report.dir = NULL,
+  kegg.dir = NULL,
+  x.axis = NULL,
+  x.cutoff = NULL,
+  num.threads = 4,
+  print.base = FALSE,
+  interactive = FALSE,
+  verbose = FALSE
+)
 
 getlimmaResults(object)
 
-plotHeatmap(object, gene.set, gs.label = 1, contrast = 1,
-  file.name = "heatmap", format = "pdf", fc.colors = c("#67A9CF",
-  "#F7F7F7", "#EF8A62"), verbose = TRUE)
+plotHeatmap(
+  object,
+  gene.set,
+  gs.label = 1,
+  contrast = 1,
+  file.name = "heatmap",
+  format = "pdf",
+  fc.colors = c("#67A9CF", "#F7F7F7", "#EF8A62"),
+  verbose = TRUE
+)
 
-plotSummaryHeatmap(object, gs.label = 1, number = 20, sort.by = NULL,
-  hm.vals = NULL, show.vals = NULL, file.name = "sum_heatmap",
-  format = "pdf", verbose = TRUE)
+plotSummaryHeatmap(
+  object,
+  gs.label = 1,
+  number = 20,
+  sort.by = NULL,
+  hm.vals = NULL,
+  show.vals = NULL,
+  file.name = "sum_heatmap",
+  format = "pdf",
+  verbose = TRUE
+)
 
-plotPathway(object, gene.set, gs.label = 1, contrast = 1,
-  file.name = "pathway", verbose = TRUE)
+plotPathway(
+  object,
+  gene.set,
+  gs.label = 1,
+  contrast = 1,
+  file.name = "pathway",
+  verbose = TRUE
+)
 
-plotMethods(object, gs.label = 1, contrast = 1, file.name = "methods.mds",
-  format = "pdf", verbose = TRUE)
+plotMethods(
+  object,
+  gs.label = 1,
+  contrast = 1,
+  file.name = "methods.mds",
+  format = "pdf",
+  verbose = TRUE
+)
 
-plotSummary(object, gs.label = 1, contrast = 1, file.name = "summary",
-  format = "pdf", x.axis = "p.adj", x.cutoff = NULL, sort.by = NULL,
-  use.names = FALSE, interactive = FALSE, verbose = TRUE)
+plotSummary(
+  object,
+  gs.label = 1,
+  contrast = 1,
+  file.name = "summary",
+  format = "pdf",
+  x.axis = "p.adj",
+  x.cutoff = NULL,
+  sort.by = NULL,
+  use.names = FALSE,
+  interactive = FALSE,
+  verbose = TRUE
+)
 
-plotGOGraph(object, gs.label = "c5", contrast = 1, sort.by = NULL,
-  noSig = 5, file.name = "c5-top-", format = "pdf", verbose = TRUE)
+plotGOGraph(
+  object,
+  gs.label = "c5",
+  contrast = 1,
+  sort.by = NULL,
+  noSig = 5,
+  file.name = "c5-top-",
+  format = "pdf",
+  verbose = TRUE
+)
 
-plotBars(object, gs.label = 1, contrast = 1, number = 20,
-  sort.by = NULL, bar.vals = "p.adj", file.name = "bars_plot",
-  format = "pdf", verbose = TRUE)
+plotBars(
+  object,
+  gs.label = 1,
+  contrast = 1,
+  number = 20,
+  sort.by = NULL,
+  bar.vals = "p.adj",
+  file.name = "bars_plot",
+  format = "pdf",
+  verbose = TRUE
+)
 
 showSetByName(object, gs.label = 1, set.name)
 

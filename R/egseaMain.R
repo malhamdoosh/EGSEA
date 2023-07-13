@@ -343,31 +343,6 @@ egsea <- function(voom.results, contrasts = NULL, logFC=NULL,
 #' the linear model fitting. N is the number of coefficients in model. 
 #' If this parameter is 
 #' \code{NULL}, \code{model.matrix(~0+group)} is used to create a deisgn matrix.
-#' @inheritParams contrasts 
-#' @inheritParams logFC 
-#' @inheritParams gs.annots 
-#' @inheritParams symbolsMap 
-#' @inheritParams baseGSEAs 
-#' @inheritParams minSize 
-#' @inheritParams display.top 
-#' @inheritParams combineMethod 
-#' @inheritParams combineWeights 
-#' @inheritParams sort.by 
-#' @inheritParams report.dir 
-#' @inheritParams kegg.dir 
-#' @inheritParams logFC.cutoff 
-#' @inheritParams fdr.cutoff 
-#' @inheritParams sum.plot.axis 
-#' @inheritParams sum.plot.cutoff 
-#' @inheritParams vote.bin.width 
-#' @inheritParams num.threads 
-#' @inheritParams report 
-#' @inheritParams interactive
-#' @inheritParams keep.base 
-#' @inheritParams verbose 
-#' @inheritParams keep.limma 
-#' @inheritParams keep.set.scores 
-#' 
 #' @return \code{egsea.cnt} returns an object of the class EGSEAResults, which
 #' stores the top gene sets and the detailed analysis
 #' results for each contrast and the comparative analysis results.
@@ -466,22 +441,7 @@ egsea.cnt <- function(counts, group, design = NULL, contrasts = NULL, logFC=NULL
 #' @param universe character, a vector of Enterz IDs to be used as a background 
 #' list. If universe=NULL, the background list is created from the 
 #' \pkg{AnnotationDbi} package.
-#' @inheritParams logFC 
 #' @param title character, a short description of the experimental contrast. 
-#' @inheritParams gs.annots 
-#' @inheritParams symbolsMap 
-#' @inheritParams minSize 
-#' @inheritParams display.top 
-#' @inheritParams sort.by 
-#' @inheritParams report.dir 
-#' @inheritParams kegg.dir 
-#' @inheritParams sum.plot.axis 
-#' @inheritParams sum.plot.cutoff 
-#' @inheritParams num.threads
-#' @inheritParams report 
-#' @inheritParams interactive
-#' @inheritParams verbose 
-#' 
 #' @return \code{egsea.ora} returns an object of the class EGSEAResults, which
 #' stores the top gene sets and the detailed analysis
 #' results.
@@ -586,7 +546,6 @@ egsea.ora <- function(geneIDs, universe=NULL, logFC=NULL, title=NULL,
 #' and filtered, i.e. rows corresponding to control and low-quality 
 #' probes removed. Row names of \code{expr} must match the first column in 
 #' \code{probe.annot}.  This is REQUIRED.
-#' @inheritParams group 
 #' @param probe.annot double, an K x n numeric matrix where rows are 
 #' probes, the first column 
 #' contains probe IDs, the second column contains Entrez Gene IDs, 
@@ -601,31 +560,6 @@ egsea.ora <- function(geneIDs, universe=NULL, logFC=NULL, title=NULL,
 #' EGSEA selects the probe with the highest
 #' average, median, variance, sum or IQR of expression, respectively,  
 #' as a representative for each expressed gene. 
-#' @inheritParams design 
-#' @inheritParams contrasts 
-#' @inheritParams logFC 
-#' @inheritParams gs.annots  
-#' @inheritParams baseGSEAs 
-#' @inheritParams minSize 
-#' @inheritParams display.top 
-#' @inheritParams combineMethod 
-#' @inheritParams combineWeights 
-#' @inheritParams sort.by 
-#' @inheritParams report.dir 
-#' @inheritParams kegg.dir 
-#' @inheritParams logFC.cutoff 
-#' @inheritParams fdr.cutoff 
-#' @inheritParams sum.plot.axis 
-#' @inheritParams sum.plot.cutoff 
-#' @inheritParams vote.bin.width 
-#' @inheritParams num.threads 
-#' @inheritParams report 
-#' @inheritParams interactive
-#' @inheritParams keep.base 
-#' @inheritParams verbose 
-#' @inheritParams keep.limma 
-#' @inheritParams keep.set.scores 
-#' 
 #' @return \code{egsea.ma} returns an object of the class EGSEAResults, which
 #' stores the top gene sets and the detailed analysis
 #' results for each contrast and the comparative analysis results.
@@ -634,7 +568,6 @@ egsea.ora <- function(geneIDs, universe=NULL, logFC=NULL, title=NULL,
 #' @importFrom limma neqc 
 #' @importFrom stats model.matrix median var IQR
 #' @importClassesFrom limma EListRaw EList
-#' @import Glimma
 #' @export
 #' 
 #' @name egsea.cnt
@@ -643,7 +576,6 @@ egsea.ora <- function(geneIDs, universe=NULL, logFC=NULL, title=NULL,
 #' 
 #' @examples
 #' # Example of egsea.ma
-#' library(Glimma)
 #' data(arraydata)
 #' expr = arraydata$arrays$E
 #' group = as.factor(arraydata$targets$Condition)

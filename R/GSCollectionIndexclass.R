@@ -131,11 +131,6 @@ setMethod(f = "selectGeneSets",
 #' @title Print a summary of the gene set collection
 #' @description \code{summary} displays a brief summary of a gene set collection
 #' 
-#' @inheritParams object GSCollectionIndex, the indexed gene set collection generated
-#' from \code{\link{buildIdx}}, \code{\link{buildMSigDBIdx}}, 
-#' \code{\link{buildKEGGIdx}},
-#' \code{\link{buildGeneSetDBIdx}}, and \code{\link{buildCustomIdx}}. 
-#' 
 #' @export
 #' @return \code{summary} does not return data.
 #' 
@@ -168,11 +163,6 @@ setMethod(f = "summary",
 
 #' @title Display the content of the gene set collection
 #' @description \code{show} displays the details of a gene set collection
-#' 
-#' @inheritParams object GSCollectionIndex, the indexed gene set collection generated
-#' from \code{\link{buildIdx}}, \code{\link{buildMSigDBIdx}}, 
-#' \code{\link{buildKEGGIdx}},
-#' \code{\link{buildGeneSetDBIdx}}, and \code{\link{buildCustomIdx}}. 
 #' 
 #' @export
 #' @return \code{show} does not return data.
@@ -277,10 +267,6 @@ setMethod(f = "getSetByName",
 #' @title Display the information of a given gene set ID
 #' @description \code{getSetByID} retrieves the details of a given gene set indicated by ID
 #' 
-#' @inheritParams object GSCollectionIndex, the indexed gene set collection generated
-#' from \code{\link{buildIdx}}, \code{\link{buildMSigDBIdx}}, 
-#' \code{\link{buildKEGGIdx}},
-#' \code{\link{buildGeneSetDBIdx}}, and \code{\link{buildCustomIdx}}. 
 #' @param id character, a vector of gene set IDs as they appears in the 
 #' \code{\link{plotSummary}}.
 #' 

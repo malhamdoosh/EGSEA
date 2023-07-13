@@ -146,9 +146,6 @@ buildIdx <- function(entrezIDs, species="human",
 #' @details \code{buildKEGGIdx} indexes the KEGG pathway gene sets and 
 #' loads gene set annotation.
 #'   
-#' @inheritParams entrezIDs 
-#' @inheritParams species 
-#' @inheritParams min.size 
 #' @param updated logical, set to TRUE if you want to download the most recent 
 #' KEGG pathways.
 #' @param exclude character, vector used to exclude KEGG pathways of 
@@ -260,8 +257,6 @@ sapply(gsets.ez, length)),
 #' @details \code{buildMSigDBIdx} indexes the MSigDB gene sets and loads gene 
 #' set annotation.
 #'   
-#' @inheritParams entrezIDs 
-#' @inheritParams species 
 #' @param geneSets character, a vector determines which gene set collections 
 #' should be used. For MSigDB, it can take values from this list: 
 #' "all", "h", "c1", "c2", "c3", "c4", "c5", "c6","c7". "c1"
@@ -271,9 +266,6 @@ sapply(gsets.ez, length)),
 #'  "gsdbdrug" to load the drug/chemical collection, 
 #' "gsdbpath" to load the pathways collection and "gsdbreg" to load the gene regulation
 #' collection.  If "all", all available gene set collections are loaded. 
-#' @inheritParams go.part 
-#' @inheritParams min.size 
-#'
 #' @return \code{buildMSigDBIdx} returns a list of gene set collection indexes, where
 #' each element of the list is an object of the class GSCollectionIndex. 
 #' 
@@ -456,12 +448,6 @@ buildMSigDBIdx <- function(entrezIDs,
 #' @details \code{buildGeneSetDBIdx} indexes the GeneSetDB gene sets and 
 #' loads gene set annotation.
 #'   
-#' @inheritParams entrezIDs 
-#' @inheritParams species 
-#' @inheritParams geneSets
-#' @inheritParams go.part 
-#' @inheritParams min.size 
-#'
 #' @return \code{buildGeneSetDBIdx} returns a list of gene set collection indexes, where
 #' each element of the list is an object of the class GSCollectionIndex. 
 #' 
@@ -611,9 +597,6 @@ buildGeneSetDBIdx <- function(entrezIDs, species, geneSets="all",
 #' @param label character,a unique id that identifies the collection of gene 
 #' sets
 #' @param name character,the collection name to be used in the EGSEA report
-#' @inheritParams species 
-#' @inheritParams min.size 
-#'
 #' @return \code{buildCustomIdx} returns an object of the class GSCollectionIndex.
 #' 
 #' @importFrom limma ids2indices
@@ -686,18 +669,12 @@ buildCustomIdx <- function(geneIDs, gsets, anno=NULL,label="custom",
 #' @details \code{buildGMTIdx} indexes newly created gene sets and 
 #' attach gene set annotation if provided.
 #'   
-#' @inheritParams geneIDs
 #' @param gmt.file character, the path and name of the GMT file
 #' @param anno.cols integer, number of columns in the GMT file that are 
 #' used for annotation. These columns should be inserted immediately after
 #' the second column. 
 #' @param anno.col.names character, vector of the names of the annotation
 #' columns. 
-#' @inheritParams label 
-#' @inheritParams name 
-#' @inheritParams species 
-#' @inheritParams min.size 
-#'
 #' @return \code{buildGMTIdx} returns an object of the class GSCollectionIndex.
 #' 
 #' @export 
