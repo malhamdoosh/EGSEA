@@ -89,10 +89,23 @@ calculateSetScores.parallel <- function(data.log, gsets, method, num.workers){
 
 rungsva.subcollection <- function(args){
     #set.seed(519863)
-    gs.es = gsva(expr=args$data.log, gset.idx.list=args$gsets, mx.diff=TRUE, 
-            min.sz=1, 
-            method=args$method, parallel.sz=1, 
-            verbose=FALSE, kcdf = "Gaussian")#$es.obs
+  if (args$method = "gsva"){
+    gsvaPar <- gsvaParam(expr=args$data.log, gset.idx.list=args$gsets, 
+                        mx.diff=TRUE, min.sz=1,
+                        kcdf = "Gaussian")
+  } else if (args$method = "plage"){
+    gsvaPar <- plageParam(expr=args$data.log, gset.idx.list=args$gsets, 
+                          min.sz=1)
+  } else if (args$method = "zscore"){
+    gsvaPar <- zscoreParam(expr=args$data.log, gset.idx.list=args$gsets, 
+                         min.sz=1)
+  } else if (args$method = "ssgsea"){
+    gsvaPar <- ssgseaParam(expr=args$data.log, gset.idx.list=args$gsets, 
+                         min.sz=1)
+  }
+    
+    gs.es = gsva(gsvaPar, 
+                 verbose=FALSE)#$es.obs
 
     # Depreciated in Version 1.25.6  
     # if (args$method == "gsva"){
