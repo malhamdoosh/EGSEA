@@ -690,7 +690,7 @@ mapProbesIntoEntrezIDs <- function(elist, probe.annot, probeMap.method){
             # APPROACH 5: IQR (used in Agilent's GeneSpring)
                 exprs = sapply(1:length(reps), 
                     function(x) IQR(elist$E[reps[x], ]))            
-            sel = c(sel, reps[which(max(exprs) == exprs)])
+            sel = c(sel, reps[which(max(exprs) == exprs)][1])
         }else
             sel = c(sel, reps)
     }
