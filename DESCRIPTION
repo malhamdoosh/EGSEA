@@ -9,7 +9,9 @@ Authors@R:
           person("Matthew", "Ritchie",role=c("ctb"),
                     email="mritchie@wehi.edu.au"))
 Description: This package implements the Ensemble of Gene Set Enrichment
-    Analyses (EGSEA) method for gene set testing.
+    Analyses (EGSEA) method for gene set testing. EGSEA algorithm utilizes 
+    the analysis results of twelve prominent GSE algorithms in the literature 
+    to calculate collective significance scores for each gene set.
 biocViews: ImmunoOncology, DifferentialExpression, GO, GeneExpression,
         GeneSetEnrichment, Genetics, Microarray, MultipleComparison,
         OneChannel, Pathways, RNASeq, Sequencing, Software,
@@ -17,7 +19,7 @@ biocViews: ImmunoOncology, DifferentialExpression, GO, GeneExpression,
         Proteomics, KEGG, GraphAndNetwork,
         GeneSignaling, GeneTarget, NetworkEnrichment, Network,
       Classification
-Depends: R (>= 3.5), Biobase, gage (>= 2.14.4), 
+Depends: R (>= 4.3.0), Biobase, gage (>= 2.14.4), 
 		AnnotationDbi, topGO (>= 2.16.0), pathview (>= 1.4.2)
 Imports: PADOG (>= 1.6.0), GSVA (>= 1.12.0),
         globaltest (>= 5.18.0), limma (>= 3.20.9), edgeR (>= 3.6.8),
