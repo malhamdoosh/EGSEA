@@ -19,11 +19,12 @@ rungsva <- function(method, voom.results, contrast, gs.annot,
     }
     names(gsets) = names(gs.annot@idx)
 
-    if (verbose)
+    if (verbose){
         message("   Calculating gene set-level stats using ", 
                         toupper(method))
-    else
+    }else{
         message(".", appendLF = FALSE)
+    }
     # transform scores in gene set space using parallel computing
     data.log = voom.results$E
     rownames(data.log) = as.character(seq(1, nrow(data.log)))
@@ -79,7 +80,7 @@ calculateSetScores.parallel <- function(data.log, gsets, method, num.workers){
     else
         gs.es.all = mclapply(args.all, rungsva.subcollection, 
                 mc.cores=num.workers)
-    # collect gene set scores from differet workers
+    # collect gene set scores from different workers
     gs.es = c()
     for (i in 1:total.tasks)
         gs.es = rbind(gs.es, gs.es.all[[paste0("task", i)]])
@@ -89,19 +90,19 @@ calculateSetScores.parallel <- function(data.log, gsets, method, num.workers){
 
 rungsva.subcollection <- function(args){
     #set.seed(519863)
-  if (args$method = "gsva"){
-    gsvaPar <- gsvaParam(expr=args$data.log, gset.idx.list=args$gsets, 
-                        mx.diff=TRUE, min.sz=1,
+  if (args$method == "gsva"){
+    gsvaPar <- GSVA::gsvaParam(exprData=args$data.log, geneSets=args$gsets, 
+                        maxDiff=TRUE, minSize=1,
                         kcdf = "Gaussian")
-  } else if (args$method = "plage"){
-    gsvaPar <- plageParam(expr=args$data.log, gset.idx.list=args$gsets, 
-                          min.sz=1)
-  } else if (args$method = "zscore"){
-    gsvaPar <- zscoreParam(expr=args$data.log, gset.idx.list=args$gsets, 
-                         min.sz=1)
-  } else if (args$method = "ssgsea"){
-    gsvaPar <- ssgseaParam(expr=args$data.log, gset.idx.list=args$gsets, 
-                         min.sz=1)
+  } else if (args$method == "plage"){
+    gsvaPar <- GSVA::plageParam(exprData=args$data.log, geneSets=args$gsets, 
+                          minSize=1)
+  } else if (args$method == "zscore"){
+    gsvaPar <- GSVA::zscoreParam(exprData=args$data.log, geneSets=args$gsets, 
+                           minSize=1)
+  } else if (args$method == "ssgsea"){
+    gsvaPar <- GSVA::ssgseaParam(exprData=args$data.log, geneSets=args$gsets, 
+                           minSize=1)
   }
     
     gs.es = gsva(gsvaPar, 

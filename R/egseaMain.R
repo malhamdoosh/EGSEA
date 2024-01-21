@@ -247,7 +247,7 @@ NULL
 #' @importFrom limma camera mroast fry lmFit  contrasts.fit eBayes topTable plotMDS
 #' @importFrom globaltest gt gt.options result
 #' @importFrom PADOG padog
-#' @importFrom GSVA gsva
+#' @importFrom GSVA gsva gsvaParam plageParam zscoreParam ssgseaParam
 #' @importFrom safe safe safe.toptable getCmatrix
 #' @importFrom parallel mclapply detectCores
 #' @importFrom AnnotationDbi Ontology
