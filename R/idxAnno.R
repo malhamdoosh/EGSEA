@@ -174,7 +174,7 @@ buildKEGGIdx <- function(entrezIDs, species = "human", min.size=1,
     updatedSuccess = FALSE
     entrezIDs = as.character(entrezIDs)    
     kegg = NULL
-    print("Building KEGG pathways annotation object ... ")      
+    message("Building KEGG pathways annotation object ... ")      
     if (!updated){
         kegg.pathways = loadKeggData()
         kegg = kegg.pathways[[species.fullToShort[[tolower(species)]]]]
@@ -316,7 +316,7 @@ buildMSigDBIdx <- function(entrezIDs,
     entrezIDs = as.character(entrezIDs)
     gs.annots = list() # Gene set annotation indexes
     # Read all gene set collections
-    print("Loading MSigDB Gene Sets ... ")
+    message("Loading MSigDB Gene Sets ... ")
     # SymbolIdentifier(), EntrezIdentifier()   
     data("msigdb", package="EGSEAdata")
     gsc.all = msigdb              
@@ -352,7 +352,7 @@ buildMSigDBIdx <- function(entrezIDs,
         else if (species == "Homo sapiens")
             gs.annot@original = sapply(gsc.small, function (x) 
                 strsplit(x["MEMBERS_EZID"], ",")[[1]])      
-        print(paste0("Loaded gene sets for the collection ", geneSet,  
+        message(paste0("Loaded gene sets for the collection ", geneSet,  
 					" ..."))
         gs.annot@idx = ids2indices(gs.annot@original, entrezIDs, 
                 remove.empty=TRUE) # pathways
@@ -360,7 +360,7 @@ buildMSigDBIdx <- function(entrezIDs,
         gs.annot@original = 
                 gs.annot@original[names(gs.annot@idx)] 
 #empty sets
-        print(paste0("Indexed the collection ", geneSet, 
+        message(paste0("Indexed the collection ", geneSet, 
                         " ..."))  
         if (length(gs.annot@idx) == 0){
             cat(paste0("None of the genes in ", geneSet, 
@@ -390,7 +390,7 @@ buildMSigDBIdx <- function(entrezIDs,
             gs.annot@anno[, "Contributor"] = sapply(gsc.small, 
                 function(x) x["CONTRIBUTOR"])   # KEGG      
             rownames(gs.annot@anno) = names(gs.annot@original)
-            print(paste0("Created annotation for the collection ", geneSet, 
+            message(paste0("Created annotation for the collection ", geneSet, 
                 " ..."))
             gs.annot = selectGeneSets(gs.annot, min.size=min.size)   
             if (length(gs.annot@idx) == 0)
@@ -474,7 +474,7 @@ buildGeneSetDBIdx <- function(entrezIDs, species, geneSets="all",
     geneSets = tolower(geneSets)
     stopifnot(geneSets %in% c("all", "gsdbdis", "gsdbgo", "gsdbdrug", 
                     "gsdbpath" , "gsdbreg"))
-    print("Loading GeneSetDB Gene Sets ... ")
+    message("Loading GeneSetDB Gene Sets ... ")
     species = normalizeSpecies(species)     
     data(list=paste0('gsetdb.', 
             species.fullToShort[[tolower(species)]]), 
@@ -657,7 +657,7 @@ buildCustomIdx <- function(geneIDs, gsets, anno=NULL,label="custom",
     gs.annot = selectGeneSets(gs.annot, min.size=min.size)   
     if (length(gs.annot@idx) == 0)
         cat(paste0("The cutsom gene set collection is empty.\n"))
-    print(paste0("Created the ", name, " collection ... "))
+    message(paste0("Created the ", name, " collection ... "))
     return(gs.annot)
 }
 
